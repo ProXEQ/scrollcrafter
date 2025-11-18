@@ -8,7 +8,7 @@ abstract class Widget_Base extends Elementor_Widget_Base
 {
 	public function get_categories(): array
 	{
-		// Możesz dodać własną kategorię Elementora, tutaj użyjemy common.
+		// Możesz dodać własną kategorię Elementora, tutaj użyjemy general.
 		return [ 'general' ];
 	}
 
@@ -28,16 +28,19 @@ abstract class Widget_Base extends Elementor_Widget_Base
 	/**
 	 * Zwraca konfigurację widżetu (dla JS).
 	 *
+	 * Uwaga: NAZWA INNA NIŻ get_config(), bo get_config()
+	 * w Controls_Stack/Widget_Base Elementora jest final.
+	 *
 	 * @return array<string,mixed>
 	 */
-	abstract protected function get_config(): array;
+	abstract protected function get_widget_config_array(): array;
 
 	/**
 	 * Główne renderowanie widżetu.
 	 */
 	protected function render(): void
 	{
-		$config = $this->get_config();
+		$config = $this->get_widget_config_array();
 
 		// Bezpieczne kodowanie JSON.
 		$json = wp_json_encode( $config );

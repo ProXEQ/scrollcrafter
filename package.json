@@ -1,0 +1,14 @@
+{
+  "name": "scrollcrafter",
+  "version": "0.1.0",
+  "description": "ScrollCrafter for Elementor - GSAP scroll animations",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "build:watch": "node esbuild.config.mjs --watch",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "jest": "^29.7.0"
+  }
+}

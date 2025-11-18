@@ -4,6 +4,8 @@ namespace ScrollCrafter;
 
 use ScrollCrafter\Assets\Asset_Manager;
 use ScrollCrafter\Elementor\Plugin_Integration;
+use ScrollCrafter\Elementor\Controls\Animation_Injector;
+use ScrollCrafter\Elementor\Frontend\Animation_Render;
 
 final class Plugin
 {
@@ -13,10 +15,16 @@ final class Plugin
 
 	private Plugin_Integration $elementor;
 
+	private Animation_Injector $animation_injector;
+
+	private Animation_Render $animation_render;
+
 	private function __construct()
 	{
-		$this->assets    = new Asset_Manager();
+		$this->assets = new Asset_Manager();
 		$this->elementor = new Plugin_Integration();
+		$this->animation_injector = new Animation_Injector();
+		$this->animation_render = new Animation_Render();
 	}
 
 	public static function instance(): Plugin
@@ -37,6 +45,14 @@ final class Plugin
 
 		// Integracja z Elementorem.
 		$this->elementor->hooks();
+
+		add_action(
+			'elementor/init',
+			function () {
+				$this->animation_injector->hooks();
+				$this->animation_render->hooks();
+			}
+		);
 	}
 
 	public function load_textdomain(): void

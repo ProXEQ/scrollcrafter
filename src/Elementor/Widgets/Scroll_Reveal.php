@@ -4,6 +4,7 @@ namespace ScrollCrafter\Elementor\Widgets;
 
 use Elementor\Controls_Manager;
 use ScrollCrafter\Elementor\Widget_Base;
+use ScrollCrafter\Support\Logger;
 
 class Scroll_Reveal extends Widget_Base
 {
@@ -292,57 +293,67 @@ class Scroll_Reveal extends Widget_Base
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_config(): array
-	{
-		$settings = $this->get_settings_for_display();
+	protected function get_widget_config_array(): array
+{
+    $settings = $this->get_settings_for_display();
 
-		$target_selector = 'wrapper' === ( $settings['target_type'] ?? 'wrapper' )
-			? '.elementor-element-' . $this->get_id()
-			: ( $settings['target_selector'] ?? '' );
+    $target_selector = 'wrapper' === ( $settings['target_type'] ?? 'wrapper' )
+        ? '.elementor-element-' . $this->get_id()
+        : ( $settings['target_selector'] ?? '' );
 
-		$config = [
-			'widget'  => 'scroll_reveal',
-			'id'      => $this->get_id(),
-			'target'  => [
-				'type'     => $settings['target_type'] ?? 'wrapper',
-				'selector' => $target_selector,
-			],
-			'animation' => [
-				'type'     => $settings['anim_type'] ?? 'from',
-				'from'     => [
-					'y'       => isset( $settings['from_y'] ) ? (float) $settings['from_y'] : 50.0,
-					'opacity' => isset( $settings['from_opacity'] ) ? (float) $settings['from_opacity'] : 0.0,
-				],
-				'to'       => [
-					'y'       => isset( $settings['to_y'] ) ? (float) $settings['to_y'] : 0.0,
-					'opacity' => isset( $settings['to_opacity'] ) ? (float) $settings['to_opacity'] : 1.0,
-				],
-				'duration' => isset( $settings['duration'] ) ? (float) $settings['duration'] : 0.8,
-				'delay'    => isset( $settings['delay'] ) ? (float) $settings['delay'] : 0.0,
-				'ease'     => $settings['ease'] ?? 'power2.out',
-				'stagger'  => isset( $settings['stagger'] ) ? (float) $settings['stagger'] : 0.0,
-			],
-			'scrollTrigger' => [
-				'start'         => $settings['trigger_start'] ?? 'top 80%',
-				'end'           => $settings['trigger_end'] ?? 'bottom 20%',
-				'toggleActions' => $settings['toggle_actions'] ?? 'play none none reverse',
-				'once'          => ( 'yes' === ( $settings['once'] ?? '' ) ),
-				'scrub'         => ( 'yes' === ( $settings['scrub'] ?? '' ) ),
-			],
-			'advanced' => [
-				'childSelector'   => $settings['child_selector'] ?? '',
-				'disableOnMobile' => ( 'yes' === ( $settings['disable_on_mobile'] ?? '' ) ),
-			],
-		];
+    $config = [
+        'widget'  => 'scroll_reveal',
+        'id'      => $this->get_id(),
+        'target'  => [
+            'type'     => $settings['target_type'] ?? 'wrapper',
+            'selector' => $target_selector,
+        ],
+        'animation' => [
+            'type'     => $settings['anim_type'] ?? 'from',
+            'from'     => [
+                'y'       => isset( $settings['from_y'] ) ? (float) $settings['from_y'] : 50.0,
+                'opacity' => isset( $settings['from_opacity'] ) ? (float) $settings['from_opacity'] : 0.0,
+            ],
+            'to'       => [
+                'y'       => isset( $settings['to_y'] ) ? (float) $settings['to_y'] : 0.0,
+                'opacity' => isset( $settings['to_opacity'] ) ? (float) $settings['to_opacity'] : 1.0,
+            ],
+            'duration' => isset( $settings['duration'] ) ? (float) $settings['duration'] : 0.8,
+            'delay'    => isset( $settings['delay'] ) ? (float) $settings['delay'] : 0.0,
+            'ease'     => $settings['ease'] ?? 'power2.out',
+            'stagger'  => isset( $settings['stagger'] ) ? (float) $settings['stagger'] : 0.0,
+        ],
+        'scrollTrigger' => [
+            'start'         => $settings['trigger_start'] ?? 'top 80%',
+            'end'           => $settings['trigger_end'] ?? 'bottom 20%',
+            'toggleActions' => $settings['toggle_actions'] ?? 'play none none reverse',
+            'once'          => ( 'yes' === ( $settings['once'] ?? '' ) ),
+            'scrub'         => ( 'yes' === ( $settings['scrub'] ?? '' ) ),
+        ],
+        'advanced' => [
+            'childSelector'   => $settings['child_selector'] ?? '',
+            'disableOnMobile' => ( 'yes' === ( $settings['disable_on_mobile'] ?? '' ) ),
+        ],
+    ];
 
-		/**
-		 * Pozwala modyfikować config przed wysłaniem do JS.
-		 *
-		 * @param array        $config
-		 * @param Scroll_Reveal $widget
-		 */
-		return (array) apply_filters( 'scrollcrafter/scroll_reveal_config', $config, $this );
-	}
+	Logger::log(
+        [
+            'widget'  => 'scroll_reveal',
+            'id'      => $this->get_id(),
+            'config'  => $config,
+        ],
+        'widget_scroll_reveal'
+    );
+
+    /**
+     * Pozwala modyfikować config przed wysłaniem do JS.
+     *
+     * @param array         $config
+     * @param Scroll_Reveal $widget
+     */
+    return (array) apply_filters( 'scrollcrafter/scroll_reveal_config', $config, $this );
+}
+
 
 	protected function render_inner_content(): void
 	{

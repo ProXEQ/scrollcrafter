@@ -121,7 +121,7 @@ add_action(
 				}
 			}
 		);
-
+		error_log('[ScrollCrafter][check] plain error_log test');
 		// Bootstrap pluginu.
 		ScrollCrafter\Plugin::instance()->boot();
 	}

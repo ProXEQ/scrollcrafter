@@ -3,6 +3,7 @@
 namespace ScrollCrafter\Elementor;
 
 use Elementor\Widgets_Manager;
+use ScrollCrafter\Support\Logger;
 
 class Plugin_Integration
 {
@@ -16,17 +17,16 @@ class Plugin_Integration
 	{
 		$widgets = apply_filters(
 			'scrollcrafter/widgets',
-			[
-				Widgets\Scroll_Reveal::class,
-				// Load more widget classes here...
-			]
+			[]
 		);
+		Logger::log( 'Registering Elementor widgets: ' . implode( ', ', $widgets ), 'elementor' );
 
 		foreach ( $widgets as $widget_class ) {
 			if ( class_exists( $widget_class ) ) {
 				$widgets_manager->register( new $widget_class() );
 			}
 		}
+		Logger::log( 'Elementor widgets registered', 'elementor' );
 	}
 
 	public function enqueue_elementor_assets(): void

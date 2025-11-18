@@ -1,19 +1,17 @@
-// index.js
 import { initWidgetsInScope } from './core/registry';
-import './widgets/scroll-reveal';
+import './widgets/scroll-animation';
+import './widgets/scroll-timeline';
 
 function init() {
   initWidgetsInScope(document);
 }
 
-// DOM gotowy.
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
 }
 
-// Elementor popup / dynamic content.
 document.addEventListener('elementor/popup/show', (event) => {
   initWidgetsInScope(event.target);
 });
