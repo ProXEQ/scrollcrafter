@@ -4,8 +4,10 @@ import { getGsap, getScrollTrigger } from '../core/gsap-loader';
 registerWidget('scroll_animation', (node, config) => {
   const debug = !!window.ScrollCrafterConfig?.debug;
 
+  if (debug) {
     // eslint-disable-next-line no-console
     console.log('[ScrollCrafter][scroll_animation] init', { node, config });
+  }
 
   let gsap;
   let ScrollTrigger;
@@ -21,7 +23,7 @@ registerWidget('scroll_animation', (node, config) => {
     return;
   }
 
-  const { target, animation, scrollTrigger } = config;
+  const { target, animation, scrollTrigger } = config || {};
 
   const selector = target?.selector;
   if (!selector) {
@@ -46,19 +48,39 @@ registerWidget('scroll_animation', (node, config) => {
   const animType = animation?.type || 'from';
   const fromVars = animation?.from || {};
   const toVars = animation?.to || {};
-  const duration = animation?.duration ?? 0.8;
-  const delay = animation?.delay ?? 0;
+  const duration = typeof animation?.duration === 'number' ? animation.duration : 0.8;
+  const delay = typeof animation?.delay === 'number' ? animation.delay : 0;
   const ease = animation?.ease || 'power2.out';
+  const stagger = typeof animation?.stagger === 'number' ? animation.stagger : undefined;
+
+  const stRaw = scrollTrigger || {};
 
   const stConfig = {
     trigger: elements[0],
-    start: scrollTrigger?.start || 'top 80%',
-    end: scrollTrigger?.end || 'bottom 20%',
-    toggleActions: scrollTrigger?.toggleActions || 'play none none reverse',
-    once: !!scrollTrigger?.once,
-    scrub: !!scrollTrigger?.scrub,
-    markers: !!window.ScrollCrafterConfig?.debug,
+    start: stRaw.start || 'top 80%',
+    end: stRaw.end || 'bottom 20%',
+    toggleActions: stRaw.toggleActions || 'play none none reverse',
+    ...(typeof stRaw.scrub !== 'undefined' ? { scrub: stRaw.scrub } : {}),
+    ...(typeof stRaw.once !== 'undefined' ? { once: !!stRaw.once } : {}),
+    ...(typeof stRaw.markers !== 'undefined'
+      ? { markers: !!stRaw.markers }
+      : { markers: !!window.ScrollCrafterConfig?.debug }),
+    ...(typeof stRaw.pin !== 'undefined' ? { pin: !!stRaw.pin } : {}),
+    ...(typeof stRaw.pinSpacing !== 'undefined' ? { pinSpacing: !!stRaw.pinSpacing } : {}),
+    ...(typeof stRaw.anticipatePin !== 'undefined'
+      ? { anticipatePin: Number(stRaw.anticipatePin) }
+      : {}),
+    ...(typeof stRaw.snap !== 'undefined' ? { snap: stRaw.snap } : {}),
   };
+
+  const base = {
+    duration,
+    delay,
+    ease,
+  };
+  if (typeof stagger === 'number') {
+    base.stagger = stagger;
+  }
 
   let tween;
 
@@ -68,24 +90,18 @@ registerWidget('scroll_animation', (node, config) => {
       { ...fromVars },
       {
         ...toVars,
-        duration,
-        delay,
-        ease,
+        ...base,
       },
     );
   } else if (animType === 'to') {
     tween = gsap.to(elements, {
       ...toVars,
-      duration,
-      delay,
-      ease,
+      ...base,
     });
   } else {
     tween = gsap.from(elements, {
       ...fromVars,
-      duration,
-      delay,
-      ease,
+      ...base,
     });
   }
 

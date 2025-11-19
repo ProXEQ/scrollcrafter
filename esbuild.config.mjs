@@ -4,18 +4,32 @@ import * as esbuild from 'esbuild';
 const isWatch = process.argv.includes('--watch');
 const isProd = process.env.NODE_ENV === 'production';
 
-const config = {
-  entryPoints: ['assets/src/frontend/index.js'],
+const shared = {
   bundle: true,
   sourcemap: !isProd,
   minify: isProd,
-  outfile: 'assets/js/frontend.bundle.js',
   target: ['es2018'],
   format: 'iife',
 };
 
+const configs = [
+  {
+    ...shared,
+    entryPoints: ['assets/src/frontend/index.js'],
+    outfile: 'assets/js/frontend.bundle.js',
+  },
+  {
+    ...shared,
+    entryPoints: ['assets/src/editor/scrollcrafter-editor.js'],
+    outfile: 'assets/js/scrollcrafter-editor.js',
+  },
+];
+
 if (isWatch) {
-  esbuild.context(config).then((ctx) => ctx.watch());
+  // watch wszystkie configi
+  Promise.all(configs.map((cfg) => esbuild.context(cfg))).then((contexts) => {
+    contexts.forEach((ctx) => ctx.watch());
+  });
 } else {
-  esbuild.build(config).catch(() => process.exit(1));
+  Promise.all(configs.map((cfg) => esbuild.build(cfg))).catch(() => process.exit(1));
 }

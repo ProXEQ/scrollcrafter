@@ -6,6 +6,7 @@ use ScrollCrafter\Assets\Asset_Manager;
 use ScrollCrafter\Elementor\Plugin_Integration;
 use ScrollCrafter\Elementor\Controls\Animation_Injector;
 use ScrollCrafter\Elementor\Frontend\Animation_Render;
+use ScrollCrafter\Admin\Validation_Controller;
 
 final class Plugin
 {
@@ -19,12 +20,15 @@ final class Plugin
 
 	private Animation_Render $animation_render;
 
+	private Validation_Controller $validation_controller;
+
 	private function __construct()
 	{
 		$this->assets = new Asset_Manager();
 		$this->elementor = new Plugin_Integration();
 		$this->animation_injector = new Animation_Injector();
 		$this->animation_render = new Animation_Render();
+		$this->validation_controller = new Validation_Controller();
 	}
 
 	public static function instance(): Plugin
@@ -45,6 +49,9 @@ final class Plugin
 
 		// Integracja z Elementorem.
 		$this->elementor->hooks();
+
+		// Kontroler walidacji skryptu (REST API).
+		$this->validation_controller->hooks();
 
 		add_action(
 			'elementor/init',

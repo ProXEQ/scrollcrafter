@@ -88,6 +88,20 @@ class Animation_Injector
             ]
         );
 
+        $element->add_control(
+            'scrollcrafter_open_editor',
+            [
+                'type'        => Controls_Manager::BUTTON,
+                'text'        => esc_html__( 'Open DSL Editor', 'scrollcrafter' ),
+                'button_type' => 'default',
+                'event'       => 'scrollcrafter:open_editor',
+                'separator'   => 'before',
+                'condition'   => [
+                    'scrollcrafter_enable' => 'yes',
+                ],
+            ]
+        );
+
         $element->end_controls_section();
     }
 }

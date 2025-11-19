@@ -1,0 +1,148 @@
+.sc-dsl-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: none;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.sc-dsl-editor--open {
+  display: block;
+}
+
+.sc-dsl-editor__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 17, 19, 0.55);
+}
+
+.sc-dsl-editor__panel {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  right: 8px;
+  width: min(560px, 95vw);
+  max-height: calc(100vh - 16px);
+  background: #111318;
+  color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.sc-dsl-editor__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: linear-gradient(90deg, #1a1d25, #181b22);
+}
+
+.sc-dsl-editor__title-main {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sc-dsl-editor__title-sub {
+  display: block;
+  font-size: 11px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.sc-dsl-editor__close {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.65;
+  padding: 0 4px;
+}
+.sc-dsl-editor__close:hover {
+  opacity: 1;
+}
+
+.sc-dsl-editor__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  gap: 8px;
+  min-height: 0;
+}
+
+.sc-dsl-editor__editor-container {
+  flex: 1;
+  min-height: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #14161d;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-dsl-editor__editor {
+  flex: 1;
+  min-height: 0;
+  overflow: auto; /* scroll dla długiego kodu */
+}
+
+/* Status bar */
+.sc-dsl-editor__status {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #a1a5b0;
+  padding: 4px 2px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sc-dsl-editor__status--error {
+  color: #ff6b81;
+}
+
+/* Footer buttons */
+.sc-dsl-editor__footer {
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background: #111318;
+}
+
+.sc-dsl-editor__btn {
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.sc-dsl-editor__btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f5f5f5;
+}
+
+/* Responsywność */
+@media (max-width: 1200px) {
+  .sc-dsl-editor__panel {
+    width: min(480px, 100vw - 16px);
+  }
+}
+
+@media (max-width: 900px) {
+  .sc-dsl-editor__panel {
+    width: min(100vw - 16px, 600px);
+    right: 8px;
+    left: 8px;
+  }
+}

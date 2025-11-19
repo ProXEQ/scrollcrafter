@@ -69,9 +69,11 @@
 
   // assets/src/frontend/widgets/scroll-animation.js
   registerWidget("scroll_animation", (node, config) => {
-    var _a, _b, _c, _d;
+    var _a, _b;
     const debug = !!((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug);
-    console.log("[ScrollCrafter][scroll_animation] init", { node, config });
+    if (debug) {
+      console.log("[ScrollCrafter][scroll_animation] init", { node, config });
+    }
     let gsap;
     let ScrollTrigger;
     try {
@@ -83,7 +85,7 @@
       }
       return;
     }
-    const { target, animation, scrollTrigger } = config;
+    const { target, animation, scrollTrigger } = config || {};
     const selector = target == null ? void 0 : target.selector;
     if (!selector) {
       if (debug) {
@@ -102,18 +104,32 @@
     const animType = (animation == null ? void 0 : animation.type) || "from";
     const fromVars = (animation == null ? void 0 : animation.from) || {};
     const toVars = (animation == null ? void 0 : animation.to) || {};
-    const duration = (_b = animation == null ? void 0 : animation.duration) != null ? _b : 0.8;
-    const delay = (_c = animation == null ? void 0 : animation.delay) != null ? _c : 0;
+    const duration = typeof (animation == null ? void 0 : animation.duration) === "number" ? animation.duration : 0.8;
+    const delay = typeof (animation == null ? void 0 : animation.delay) === "number" ? animation.delay : 0;
     const ease = (animation == null ? void 0 : animation.ease) || "power2.out";
+    const stagger = typeof (animation == null ? void 0 : animation.stagger) === "number" ? animation.stagger : void 0;
+    const stRaw = scrollTrigger || {};
     const stConfig = {
       trigger: elements[0],
-      start: (scrollTrigger == null ? void 0 : scrollTrigger.start) || "top 80%",
-      end: (scrollTrigger == null ? void 0 : scrollTrigger.end) || "bottom 20%",
-      toggleActions: (scrollTrigger == null ? void 0 : scrollTrigger.toggleActions) || "play none none reverse",
-      once: !!(scrollTrigger == null ? void 0 : scrollTrigger.once),
-      scrub: !!(scrollTrigger == null ? void 0 : scrollTrigger.scrub),
-      markers: !!((_d = window.ScrollCrafterConfig) == null ? void 0 : _d.debug)
+      start: stRaw.start || "top 80%",
+      end: stRaw.end || "bottom 20%",
+      toggleActions: stRaw.toggleActions || "play none none reverse",
+      ...typeof stRaw.scrub !== "undefined" ? { scrub: stRaw.scrub } : {},
+      ...typeof stRaw.once !== "undefined" ? { once: !!stRaw.once } : {},
+      ...typeof stRaw.markers !== "undefined" ? { markers: !!stRaw.markers } : { markers: !!((_b = window.ScrollCrafterConfig) == null ? void 0 : _b.debug) },
+      ...typeof stRaw.pin !== "undefined" ? { pin: !!stRaw.pin } : {},
+      ...typeof stRaw.pinSpacing !== "undefined" ? { pinSpacing: !!stRaw.pinSpacing } : {},
+      ...typeof stRaw.anticipatePin !== "undefined" ? { anticipatePin: Number(stRaw.anticipatePin) } : {},
+      ...typeof stRaw.snap !== "undefined" ? { snap: stRaw.snap } : {}
     };
+    const base = {
+      duration,
+      delay,
+      ease
+    };
+    if (typeof stagger === "number") {
+      base.stagger = stagger;
+    }
     let tween;
     if (animType === "fromTo") {
       tween = gsap.fromTo(
@@ -121,24 +137,18 @@
         { ...fromVars },
         {
           ...toVars,
-          duration,
-          delay,
-          ease
+          ...base
         }
       );
     } else if (animType === "to") {
       tween = gsap.to(elements, {
         ...toVars,
-        duration,
-        delay,
-        ease
+        ...base
       });
     } else {
       tween = gsap.from(elements, {
         ...fromVars,
-        duration,
-        delay,
-        ease
+        ...base
       });
     }
     ScrollTrigger.create({
@@ -149,7 +159,7 @@
 
   // assets/src/frontend/widgets/scroll-timeline.js
   registerWidget("scroll_timeline", (node, config) => {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n;
+    var _a, _b, _c, _d, _e;
     const debug = !!((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug);
     let gsap;
     let ScrollTrigger;
@@ -157,28 +167,34 @@
       gsap = getGsap();
       ScrollTrigger = getScrollTrigger();
     } catch (e) {
-      if (debug) console.error("[ScrollCrafter][scroll_timeline] GSAP error", e);
+      if (debug) {
+        console.error("[ScrollCrafter][scroll_timeline] GSAP/ScrollTrigger error", e);
+      }
       return;
     }
     const selector = (_b = config == null ? void 0 : config.target) == null ? void 0 : _b.selector;
     const elements = selector ? node.ownerDocument.querySelectorAll(selector) : [node];
     if (!elements.length) {
-      if (debug) console.warn("[ScrollCrafter][scroll_timeline] no target", selector);
+      if (debug) {
+        console.warn("[ScrollCrafter][scroll_timeline] no target elements for selector", selector);
+      }
       return;
     }
     const steps = ((_c = config == null ? void 0 : config.timeline) == null ? void 0 : _c.steps) || [];
     const defaults = ((_d = config == null ? void 0 : config.timeline) == null ? void 0 : _d.defaults) || {};
+    const stRaw = (config == null ? void 0 : config.scrollTrigger) || {};
     const stConfig = {
       trigger: elements[0],
-      start: ((_e = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _e.start) || "top 80%",
-      end: ((_f = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _f.end) || "bottom 20%",
-      toggleActions: ((_g = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _g.toggleActions) || "play none none reverse",
-      ...typeof ((_h = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _h.scrub) !== "undefined" ? { scrub: config.scrollTrigger.scrub } : {},
-      ...typeof ((_i = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _i.markers) !== "undefined" ? { markers: !!config.scrollTrigger.markers } : { markers: !!((_j = window.ScrollCrafterConfig) == null ? void 0 : _j.debug) },
-      ...typeof ((_k = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _k.pin) !== "undefined" ? { pin: !!config.scrollTrigger.pin } : {},
-      ...typeof ((_l = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _l.pinSpacing) !== "undefined" ? { pinSpacing: !!config.scrollTrigger.pinSpacing } : {},
-      ...typeof ((_m = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _m.anticipatePin) !== "undefined" ? { anticipatePin: Number(config.scrollTrigger.anticipatePin) } : {},
-      ...typeof ((_n = config == null ? void 0 : config.scrollTrigger) == null ? void 0 : _n.snap) !== "undefined" ? { snap: config.scrollTrigger.snap } : {}
+      start: stRaw.start || "top 80%",
+      end: stRaw.end || "bottom 20%",
+      toggleActions: stRaw.toggleActions || "play none none reverse",
+      ...typeof stRaw.scrub !== "undefined" ? { scrub: stRaw.scrub } : {},
+      ...typeof stRaw.once !== "undefined" ? { once: !!stRaw.once } : {},
+      ...typeof stRaw.markers !== "undefined" ? { markers: !!stRaw.markers } : { markers: !!((_e = window.ScrollCrafterConfig) == null ? void 0 : _e.debug) },
+      ...typeof stRaw.pin !== "undefined" ? { pin: !!stRaw.pin } : {},
+      ...typeof stRaw.pinSpacing !== "undefined" ? { pinSpacing: !!stRaw.pinSpacing } : {},
+      ...typeof stRaw.anticipatePin !== "undefined" ? { anticipatePin: Number(stRaw.anticipatePin) } : {},
+      ...typeof stRaw.snap !== "undefined" ? { snap: stRaw.snap } : {}
     };
     const tl = gsap.timeline({ defaults, scrollTrigger: stConfig });
     steps.forEach((step) => {

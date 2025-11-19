@@ -12,6 +12,7 @@ class Asset_Manager
     {
         add_action( 'wp_enqueue_scripts', [ $this, 'register_frontend_assets' ], 5 );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ], 20 );
+		add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
 		Logger::log( 'Asset_Manager hooks registered', 'assets' );
 	}
 
@@ -111,4 +112,27 @@ class Asset_Manager
         wp_enqueue_script( 'scrollcrafter-frontend' );
 		Logger::log( 'Enqueued ScrollCrafter frontend assets', 'assets' );
     }
+	public function enqueue_editor_assets(): void
+{
+    // GSAP + runtime (ten sam co na froncie):
+    // $this->enqueue_frontend_assets();
+
+    wp_enqueue_script(
+        'scrollcrafter-editor',
+        plugins_url( '/assets/js/scrollcrafter-editor.js', SCROLLCRAFTER_FILE ),
+        [ 'jquery', 'elementor-editor' ],
+        SCROLLCRAFTER_VERSION,
+        true
+    );
+	Logger::log( 'Enqueued ScrollCrafter editor script', 'assets' );
+
+    wp_enqueue_style(
+        'scrollcrafter-editor',
+        plugins_url( '/assets/src/editor/scrollcrafter-editor.css', SCROLLCRAFTER_FILE ),
+        [],
+        SCROLLCRAFTER_VERSION
+    );
+	Logger::log( 'Enqueued ScrollCrafter editor styles', 'assets' );
+}
+
 }
