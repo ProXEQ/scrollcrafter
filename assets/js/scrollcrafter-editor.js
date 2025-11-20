@@ -19005,6 +19005,13 @@
     { key: "Enter", run: acceptCompletion }
   ];
   var completionKeymapExt = /* @__PURE__ */ Prec.highest(/* @__PURE__ */ keymap.computeN([completionConfig], (state) => state.facet(completionConfig).defaultKeymap ? [completionKeymap] : []));
+  function completionStatus(state) {
+    let cState = state.field(completionState, false);
+    return cState && cState.active.some((a) => a.isPending) ? "pending" : cState && cState.active.some(
+      (a) => a.state != 0
+      /* State.Inactive */
+    ) ? "active" : null;
+  }
 
   // node_modules/@codemirror/highlight/node_modules/@lezer/common/dist/index.js
   var DefaultBufferLength2 = 1024;
@@ -33098,36 +33105,229 @@
     },
     { dark: true }
   );
-  var dslCompletions = [
-    // Sekcje
+  var sectionCompletions = [
     { label: "[animation]", type: "keyword", detail: "Section" },
     { label: "[scroll]", type: "keyword", detail: "Section" },
     { label: "[target]", type: "keyword", detail: "Section" },
     { label: "[timeline]", type: "keyword", detail: "Section" },
-    { label: "[step.1]", type: "keyword", detail: "Section" },
-    // Klucze animation
+    { label: "[step.1]", type: "keyword", detail: "Section" }
+  ];
+  var animationKeyCompletions = [
     { label: "type:", type: "property", detail: "from | to | fromTo" },
     { label: "from:", type: "property", detail: "y=50, opacity=0" },
     { label: "to:", type: "property", detail: "y=0, opacity=1" },
     { label: "duration:", type: "property", detail: "seconds" },
     { label: "delay:", type: "property", detail: "seconds" },
-    { label: "ease:", type: "property", detail: "none |" },
-    { label: "stagger:", type: "property", detail: "seconds" },
-    // Klucze scroll
+    { label: "ease:", type: "property", detail: "GSAP ease" },
+    { label: "stagger:", type: "property", detail: "seconds" }
+  ];
+  function withSlashApply(options) {
+    return options.map((opt) => ({
+      ...opt,
+      apply(view, completion, from, to) {
+        const slashPos = from - 1;
+        if (slashPos >= 0) {
+          view.dispatch({
+            changes: { from: slashPos, to: from, insert: "" }
+          });
+          from = slashPos;
+          to = slashPos;
+        }
+        view.dispatch({
+          changes: { from, to, insert: completion.label },
+          selection: { anchor: from + completion.label.length }
+        });
+      }
+    }));
+  }
+  var scrollKeyCompletions = [
     { label: "start:", type: "property", detail: "top 80%" },
     { label: "end:", type: "property", detail: "bottom 20%" },
     { label: "scrub:", type: "property", detail: "true | false | 0.5" },
     { label: "once:", type: "property", detail: "true | false" },
-    { label: "toggleActions:", type: "property" },
+    { label: "toggleActions:", type: "property", detail: "play none none reverse" },
     { label: "pin:", type: "property", detail: "true | false" },
     { label: "pinSpacing:", type: "property", detail: "true | false" },
     { label: "anticipatePin:", type: "property", detail: "number" },
     { label: "markers:", type: "property", detail: "true | false" },
-    { label: "snap:", type: "property", detail: "true | false | number" },
-    // target
+    { label: "snap:", type: "property", detail: "true | false | number | string" }
+  ];
+  var targetKeyCompletions = [
     { label: "selector:", type: "property", detail: ".my-selector" }
   ];
-  var dslCompletionSource = completeFromList(dslCompletions);
+  var timelineKeyCompletions = [
+    { label: "timeline.defaults.duration:", type: "property", detail: "seconds" },
+    { label: "timeline.defaults.delay:", type: "property", detail: "seconds" },
+    { label: "timeline.defaults.stagger:", type: "property", detail: "seconds" },
+    { label: "timeline.defaults.ease:", type: "property", detail: "GSAP ease" }
+  ];
+  var stepKeyCompletions = [
+    { label: "type:", type: "property", detail: "from | to | fromTo" },
+    { label: "from:", type: "property", detail: "y=50, opacity=0" },
+    { label: "to:", type: "property", detail: "y=0, opacity=1" },
+    { label: "duration:", type: "property", detail: "seconds" },
+    { label: "delay:", type: "property", detail: "seconds" },
+    { label: "ease:", type: "property", detail: "GSAP ease" },
+    { label: "stagger:", type: "property", detail: "seconds" },
+    { label: "startAt:", type: "property", detail: "timeline offset (number)" }
+  ];
+  var allKeyCompletions = [
+    ...animationKeyCompletions,
+    ...scrollKeyCompletions,
+    ...targetKeyCompletions,
+    ...timelineKeyCompletions,
+    ...stepKeyCompletions
+  ];
+  function getCurrentSection(context) {
+    const { state, pos } = context;
+    const line = state.doc.lineAt(pos);
+    const currentText = line.text.trim();
+    if (currentText.startsWith("[") && currentText.endsWith("]")) {
+      const name3 = currentText.slice(1, -1).trim().toLowerCase();
+      return { name: name3, inSection: false };
+    }
+    let lastSectionLine = null;
+    let lastSectionName = null;
+    let hasContentAfterSection = false;
+    for (let ln = line.number; ln >= 1; ln -= 1) {
+      const text = state.doc.line(ln).text;
+      const trimmed = text.trim();
+      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+        lastSectionLine = ln;
+        lastSectionName = trimmed.slice(1, -1).trim().toLowerCase();
+        break;
+      }
+      if (trimmed !== "") {
+        hasContentAfterSection = true;
+      }
+    }
+    if (!lastSectionName) {
+      return { name: null, inSection: false };
+    }
+    if (currentText === "") {
+      return {
+        name: hasContentAfterSection ? lastSectionName : null,
+        inSection: hasContentAfterSection
+      };
+    }
+    return {
+      name: lastSectionName,
+      inSection: true
+    };
+  }
+  function filterMissingKeys(sectionName, context) {
+    const { state, pos } = context;
+    const line = state.doc.lineAt(pos);
+    const used = /* @__PURE__ */ new Set();
+    for (let ln = line.number - 1; ln >= 1; ln -= 1) {
+      const text = state.doc.line(ln).text.trim();
+      if (text === "") continue;
+      if (text.startsWith("[") && text.endsWith("]")) {
+        const name3 = text.slice(1, -1).trim().toLowerCase();
+        if (name3 === sectionName) {
+          break;
+        }
+        return [];
+      }
+      const colonIndex = text.indexOf(":");
+      if (colonIndex > 0) {
+        const key = text.slice(0, colonIndex + 1).trim();
+        used.add(key);
+      }
+    }
+    let base2 = [];
+    if (sectionName === "animation") {
+      base2 = animationKeyCompletions;
+    } else if (sectionName === "scroll") {
+      base2 = scrollKeyCompletions;
+    } else if (sectionName === "target") {
+      base2 = targetKeyCompletions;
+    } else if (sectionName === "timeline") {
+      base2 = timelineKeyCompletions;
+    } else if (sectionName && sectionName.startsWith("step.")) {
+      base2 = stepKeyCompletions;
+    }
+    return base2.filter((entry) => !used.has(entry.label));
+  }
+  function dslCompletionSource(context) {
+    const { state, pos } = context;
+    const line = state.doc.lineAt(pos);
+    const text = line.text;
+    const beforeCursor = text.slice(0, pos - line.from);
+    const bracketMatch = beforeCursor.match(/\[([a-z]*)$/i);
+    if (bracketMatch) {
+      const prefix = bracketMatch[1].toLowerCase();
+      const opts = sectionCompletions.filter((opt) => {
+        const name3 = opt.label.slice(1, -1).toLowerCase();
+        return name3.startsWith(prefix);
+      });
+      return {
+        from: pos - prefix.length - 1,
+        options: opts.length ? opts : sectionCompletions
+      };
+    }
+    if (/\[target\]\s*$/.test(beforeCursor)) {
+      return {
+        from: pos,
+        options: targetKeyCompletions
+      };
+    }
+    const word = context.matchBefore(/[a-zA-Z0-9_./]+/);
+    let from = context.pos;
+    if (word) from = word.from;
+    const sectionInfo = getCurrentSection(context);
+    const sectionName = (sectionInfo == null ? void 0 : sectionInfo.name) || null;
+    const inSection = !!(sectionInfo == null ? void 0 : sectionInfo.inSection);
+    if (word && word.text.startsWith("/")) {
+      if (!sectionName || !inSection) {
+        return null;
+      }
+      let options2 = [];
+      if (sectionName === "animation") {
+        options2 = filterMissingKeys("animation", context);
+      } else if (sectionName === "scroll") {
+        options2 = filterMissingKeys("scroll", context);
+      } else if (sectionName === "target") {
+        options2 = filterMissingKeys("target", context);
+      } else if (sectionName === "timeline") {
+        options2 = [
+          ...filterMissingKeys("timeline", context),
+          { label: "[step.1]", type: "keyword", detail: "Timeline step" }
+        ];
+      } else if (sectionName.startsWith("step.")) {
+        options2 = filterMissingKeys(sectionName, context);
+      }
+      if (!options2.length) return null;
+      return {
+        from: word.from + 1,
+        options: withSlashApply(options2)
+      };
+    }
+    let options;
+    if (!sectionName) {
+      options = sectionCompletions;
+    } else if (inSection && sectionName === "animation") {
+      options = filterMissingKeys("animation", context);
+    } else if (inSection && sectionName === "scroll") {
+      options = filterMissingKeys("scroll", context);
+    } else if (inSection && sectionName === "target") {
+      options = filterMissingKeys("target", context);
+    } else if (inSection && sectionName === "timeline") {
+      options = [
+        ...filterMissingKeys("timeline", context),
+        { label: "[step.1]", type: "keyword", detail: "Timeline step" }
+      ];
+    } else if (inSection && sectionName.startsWith("step.")) {
+      options = filterMissingKeys(sectionName, context);
+    } else {
+      options = allKeyCompletions;
+    }
+    if (!options || !options.length) return null;
+    return {
+      from,
+      options
+    };
+  }
   var cmView = null;
   function createEditor(parentNode, initialDoc) {
     if (cmView) {
@@ -33141,16 +33341,24 @@
         history(),
         keymap.of([
           ...defaultKeymap,
-          ...historyKeymap
+          ...historyKeymap,
+          {
+            key: "Tab",
+            run(view) {
+              const status = completionStatus(view.state);
+              if (status === "active") return acceptCompletion(view);
+              return false;
+            }
+          }
         ]),
         highlightSpecialChars(),
         drawSelection(),
         dslTheme,
         dslLanguage,
-        // nasz tokenizer DSL
         syntaxHighlighting(dslHighlightStyle),
         autocompletion({
-          override: [dslCompletionSource]
+          override: [dslCompletionSource],
+          activateOnTyping: true
         }),
         EditorView.lineWrapping
       ]

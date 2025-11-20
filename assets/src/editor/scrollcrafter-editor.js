@@ -2,7 +2,7 @@ import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, highlightSpecialChars, drawSelection } from '@codemirror/view';
 import { history, historyKeymap } from '@codemirror/commands';
 import { defaultKeymap } from '@codemirror/commands';
-import { autocompletion, completeFromList } from '@codemirror/autocomplete';
+import { autocompletion, completionStatus, CompletionContext, acceptCompletion} from '@codemirror/autocomplete';
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags } from '@codemirror/highlight';
 import { StreamLanguage } from '@codemirror/language'; // Upewnij się, że zainstalowałeś @codemirror/language
@@ -109,40 +109,332 @@ const dslTheme = EditorView.theme(
 );
 
 // Autocomplete – lista słów kluczowych DSL
-const dslCompletions = [
-  // Sekcje
+
+// Sekcje
+const sectionCompletions = [
   { label: '[animation]', type: 'keyword', detail: 'Section' },
   { label: '[scroll]', type: 'keyword', detail: 'Section' },
   { label: '[target]', type: 'keyword', detail: 'Section' },
   { label: '[timeline]', type: 'keyword', detail: 'Section' },
   { label: '[step.1]', type: 'keyword', detail: 'Section' },
+];
 
-  // Klucze animation
+// Klucze per sekcja
+const animationKeyCompletions = [
   { label: 'type:', type: 'property', detail: 'from | to | fromTo' },
   { label: 'from:', type: 'property', detail: 'y=50, opacity=0' },
   { label: 'to:', type: 'property', detail: 'y=0, opacity=1' },
   { label: 'duration:', type: 'property', detail: 'seconds' },
   { label: 'delay:', type: 'property', detail: 'seconds' },
-  { label: 'ease:', type: 'property', detail: 'none |' },
+  { label: 'ease:', type: 'property', detail: 'GSAP ease' },
   { label: 'stagger:', type: 'property', detail: 'seconds' },
+];
 
-  // Klucze scroll
+function withSlashApply(options) {
+  return options.map((opt) => ({
+    ...opt,
+    apply(view, completion, from, to) {
+      // 1. Usuń znak '/' tuż przed 'from'
+      const slashPos = from - 1;
+      if (slashPos >= 0) {
+        view.dispatch({
+          changes: { from: slashPos, to: from, insert: '' },
+        });
+        from = slashPos;
+        to = slashPos;
+      }
+
+      // 2. Wstaw label completionu w miejsce usuniętego '/'
+      view.dispatch({
+        changes: { from, to, insert: completion.label },
+        selection: { anchor: from + completion.label.length },
+      });
+    },
+  }));
+}
+
+
+const scrollKeyCompletions = [
   { label: 'start:', type: 'property', detail: 'top 80%' },
   { label: 'end:', type: 'property', detail: 'bottom 20%' },
   { label: 'scrub:', type: 'property', detail: 'true | false | 0.5' },
   { label: 'once:', type: 'property', detail: 'true | false' },
-  { label: 'toggleActions:', type: 'property' },
+  { label: 'toggleActions:', type: 'property', detail: 'play none none reverse' },
   { label: 'pin:', type: 'property', detail: 'true | false' },
   { label: 'pinSpacing:', type: 'property', detail: 'true | false' },
   { label: 'anticipatePin:', type: 'property', detail: 'number' },
   { label: 'markers:', type: 'property', detail: 'true | false' },
-  { label: 'snap:', type: 'property', detail: 'true | false | number' },
+  { label: 'snap:', type: 'property', detail: 'true | false | number | string' },
+];
 
-  // target
+const targetKeyCompletions = [
   { label: 'selector:', type: 'property', detail: '.my-selector' },
 ];
 
-const dslCompletionSource = completeFromList(dslCompletions);
+const timelineKeyCompletions = [
+  { label: 'timeline.defaults.duration:', type: 'property', detail: 'seconds' },
+  { label: 'timeline.defaults.delay:', type: 'property', detail: 'seconds' },
+  { label: 'timeline.defaults.stagger:', type: 'property', detail: 'seconds' },
+  { label: 'timeline.defaults.ease:', type: 'property', detail: 'GSAP ease' },
+];
+
+const stepKeyCompletions = [
+  { label: 'type:', type: 'property', detail: 'from | to | fromTo' },
+  { label: 'from:', type: 'property', detail: 'y=50, opacity=0' },
+  { label: 'to:', type: 'property', detail: 'y=0, opacity=1' },
+  { label: 'duration:', type: 'property', detail: 'seconds' },
+  { label: 'delay:', type: 'property', detail: 'seconds' },
+  { label: 'ease:', type: 'property', detail: 'GSAP ease' },
+  { label: 'stagger:', type: 'property', detail: 'seconds' },
+  { label: 'startAt:', type: 'property', detail: 'timeline offset (number)' },
+];
+
+const easeValueCompletions = [
+  { label: 'power1.in', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power1.out', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power1.inOut', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power2.in', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power2.out', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power2.inOut', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power3.in', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power3.out', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power3.inOut', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power4.in', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power4.out', type: 'enum', detail: 'GSAP ease' },
+  { label: 'power4.inOut', type: 'enum', detail: 'GSAP ease' },
+  { label: 'back.in', type: 'enum', detail: 'GSAP ease' },
+  { label: 'back.out', type: 'enum', detail: 'GSAP ease' },
+  { label: 'back.inOut', type: 'enum', detail: 'GSAP ease' },
+  { label: 'elastic.in', type: 'enum', detail: 'GSAP ease' },
+  { label: 'elastic.out', type: 'enum', detail: 'GSAP ease' },
+  { label: 'elastic.inOut', type: 'enum', detail: 'GSAP ease' },
+  { label: 'bounce.in', type: 'enum', detail: 'GSAP ease' },
+  { label: 'bounce.out', type: 'enum', detail: 'GSAP ease' },
+  { label: 'bounce.inOut', type: 'enum', detail: 'GSAP ease' },
+  { label: 'steps(4)', type: 'enum', detail: 'GSAP ease' },
+  { label: 'steps(8)', type: 'enum', detail: 'GSAP ease' },
+];
+
+
+// Fallback – wszystkie klucze razem (w razie nieznanej sekcji)
+const allKeyCompletions = [
+  ...animationKeyCompletions,
+  ...scrollKeyCompletions,
+  ...targetKeyCompletions,
+  ...timelineKeyCompletions,
+  ...stepKeyCompletions,
+];
+
+// Helper: znajdź aktualną sekcję na podstawie linii powyżej kursora
+function getCurrentSection(context) {
+  const { state, pos } = context;
+  const line = state.doc.lineAt(pos);
+  const currentText = line.text.trim();
+
+  // Jeśli linia zaczyna się od sekcji, używamy jej
+  if (currentText.startsWith('[') && currentText.endsWith(']')) {
+    const name = currentText.slice(1, -1).trim().toLowerCase();
+    return { name, inSection: false };
+  }
+
+  // Szukamy najbliższej poprzedniej sekcji i sprawdzamy,
+  // czy pomiędzy nią a obecną linią były jakieś niepuste linie (pola).
+  let lastSectionLine = null;
+  let lastSectionName = null;
+  let hasContentAfterSection = false;
+
+  for (let ln = line.number; ln >= 1; ln -= 1) {
+    const text = state.doc.line(ln).text;
+    const trimmed = text.trim();
+
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      lastSectionLine = ln;
+      lastSectionName = trimmed.slice(1, -1).trim().toLowerCase();
+      break;
+    }
+
+    if (trimmed !== '') {
+      hasContentAfterSection = true;
+    }
+  }
+
+  if (!lastSectionName) {
+    // Brak poprzedniej sekcji – jesteśmy „poza sekcjami”
+    return { name: null, inSection: false };
+  }
+
+  if (currentText === '') {
+    // Pusta linia: jeśli po sekcji już były jakieś pola,
+    // traktujemy to jako „pusta w sekcji” (można dodać kolejne pola).
+    // Jeśli nie było żadnych pól, traktujemy jako „między sekcjami”.
+    return {
+      name: hasContentAfterSection ? lastSectionName : null,
+      inSection: hasContentAfterSection,
+    };
+  }
+
+  // Jesteśmy w niepustej linii wewnątrz sekcji
+  return {
+    name: lastSectionName,
+    inSection: true,
+  };
+}
+
+// Helper do wycięcia już użytych pól w danej sekcji
+function filterMissingKeys(sectionName, context) {
+  const { state, pos } = context;
+  const line = state.doc.lineAt(pos);
+  const used = new Set();
+
+  // Szukamy od sekcji w dół do bieżącej linii
+  for (let ln = line.number - 1; ln >= 1; ln -= 1) {
+    const text = state.doc.line(ln).text.trim();
+    if (text === '') continue;
+
+    if (text.startsWith('[') && text.endsWith(']')) {
+      const name = text.slice(1, -1).trim().toLowerCase();
+      if (name === sectionName) {
+        break;
+      }
+      // jeśli trafiliśmy inną sekcję, przerywamy
+      return [];
+    }
+
+    // linia z kluczem: key:
+    const colonIndex = text.indexOf(':');
+    if (colonIndex > 0) {
+      const key = text.slice(0, colonIndex + 1).trim(); // np. 'type:'
+      used.add(key);
+    }
+  }
+
+  let base = [];
+  if (sectionName === 'animation') {
+    base = animationKeyCompletions;
+  } else if (sectionName === 'scroll') {
+    base = scrollKeyCompletions;
+  } else if (sectionName === 'target') {
+    base = targetKeyCompletions;
+  } else if (sectionName === 'timeline') {
+    base = timelineKeyCompletions;
+  } else if (sectionName && sectionName.startsWith('step.')) {
+    base = stepKeyCompletions;
+  }
+
+  return base.filter(entry => !used.has(entry.label));
+}
+// Helper: czy linia pod kursorem jest pusta
+function isEmptyLine(state, pos) {
+  const line = state.doc.lineAt(pos);
+  return line.text.trim() === '';
+}
+
+
+// Główne źródło podpowiedzi
+function dslCompletionSource(context) {
+  const { state, pos } = context;
+  const line = state.doc.lineAt(pos);
+  const text = line.text;
+  const beforeCursor = text.slice(0, pos - line.from);
+
+  // 1) Sekcje – '[' lub '[prefix'
+  const bracketMatch = beforeCursor.match(/\[([a-z]*)$/i);
+  if (bracketMatch) {
+    const prefix = bracketMatch[1].toLowerCase();
+    const opts = sectionCompletions.filter((opt) => {
+      const name = opt.label.slice(1, -1).toLowerCase();
+      return name.startsWith(prefix);
+    });
+
+    return {
+      from: pos - prefix.length - 1,
+      options: opts.length ? opts : sectionCompletions,
+    };
+  }
+
+  // 2) [target] → pola targetu
+  if (/\[target\]\s*$/.test(beforeCursor)) {
+    return {
+      from: pos,
+      options: targetKeyCompletions,
+    };
+  }
+
+  // 3) Wewnętrzne pola / prefiksy: słowo może zaczynać się od '/'
+  const word = context.matchBefore(/[a-zA-Z0-9_./]+/);
+  let from = context.pos;
+  if (word) from = word.from;
+
+  const sectionInfo = getCurrentSection(context);
+  const sectionName = sectionInfo?.name || null;
+  const inSection = !!sectionInfo?.inSection;
+
+  // 3a) Jeśli słowo zaczyna się od '/' → trigger pól sekcji
+  if (word && word.text.startsWith('/')) {
+    if (!sectionName || !inSection) {
+      return null;
+    }
+
+    let options = [];
+
+    if (sectionName === 'animation') {
+      options = filterMissingKeys('animation', context);
+    } else if (sectionName === 'scroll') {
+      options = filterMissingKeys('scroll', context);
+    } else if (sectionName === 'target') {
+      options = filterMissingKeys('target', context);
+    } else if (sectionName === 'timeline') {
+      options = [
+        ...filterMissingKeys('timeline', context),
+        { label: '[step.1]', type: 'keyword', detail: 'Timeline step' },
+      ];
+    } else if (sectionName.startsWith('step.')) {
+      options = filterMissingKeys(sectionName, context);
+    }
+
+    if (!options.length) return null;
+
+    // Nadpisujemy cały prefiks '/', więc from = word.from
+    return {
+      from: word.from + 1,
+      options: withSlashApply(options),
+    };
+  }
+
+  // 4) Zwykłe zachowanie – brakujące pola sekcji lub sekcje
+  let options;
+
+  if (!sectionName) {
+    options = sectionCompletions;
+  } else if (inSection && sectionName === 'animation') {
+    options = filterMissingKeys('animation', context);
+  } else if (inSection && sectionName === 'scroll') {
+    options = filterMissingKeys('scroll', context);
+  } else if (inSection && sectionName === 'target') {
+    options = filterMissingKeys('target', context);
+  } else if (inSection && sectionName === 'timeline') {
+    options = [
+      ...filterMissingKeys('timeline', context),
+      { label: '[step.1]', type: 'keyword', detail: 'Timeline step' },
+    ];
+  } else if (inSection && sectionName.startsWith('step.')) {
+    options = filterMissingKeys(sectionName, context);
+  } else {
+    options = allKeyCompletions;
+  }
+
+  if (!options || !options.length) return null;
+
+  return {
+    from,
+    options,
+  };
+}
+
+
+
+
+
 
 // ---------- Editor instance management ----------
 
@@ -160,16 +452,25 @@ function createEditor(parentNode, initialDoc) {
     extensions: [
       history(),
       keymap.of([
-        ...defaultKeymap,
-        ...historyKeymap,
-      ]),
+  ...defaultKeymap,
+  ...historyKeymap,
+  {
+    key: 'Tab',
+    run(view) {
+      const status = completionStatus(view.state);
+      if (status === 'active') return acceptCompletion(view);
+      return false;
+    },
+  },
+]),
       highlightSpecialChars(),
       drawSelection(),
       dslTheme,
-      dslLanguage, // nasz tokenizer DSL
+      dslLanguage,
       syntaxHighlighting(dslHighlightStyle),
       autocompletion({
         override: [dslCompletionSource],
+        activateOnTyping: true,
       }),
       EditorView.lineWrapping,
     ],
