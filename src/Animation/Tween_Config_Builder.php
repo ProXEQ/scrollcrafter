@@ -2,7 +2,7 @@
 
 namespace ScrollCrafter\Animation;
 
-use Elementor\Element_Base;
+// use Elementor\Element_Base;
 
 class Tween_Config_Builder
 {
@@ -18,7 +18,7 @@ class Tween_Config_Builder
      * @return array<string,mixed>
      */
     public function build(
-        Element_Base $element,
+        $element,
         array $parsed,
         array $scrollTrigger,
         string $targetSelector,

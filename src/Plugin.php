@@ -20,7 +20,7 @@ final class Plugin
 
 	private Animation_Render $animation_render;
 
-	private Validation_Controller $validation_controller;
+	private Validation_Controller $validation;
 
 	private function __construct()
 	{
@@ -28,7 +28,7 @@ final class Plugin
 		$this->elementor = new Plugin_Integration();
 		$this->animation_injector = new Animation_Injector();
 		$this->animation_render = new Animation_Render();
-		$this->validation_controller = new Validation_Controller();
+		$this->validation = new Validation_Controller();
 	}
 
 	public static function instance(): Plugin
@@ -51,7 +51,7 @@ final class Plugin
 		$this->elementor->hooks();
 
 		// Kontroler walidacji skryptu (REST API).
-		$this->validation_controller->hooks();
+		$this->validation->hooks();
 
 		add_action(
 			'elementor/init',

@@ -188,11 +188,14 @@ function getEditorDoc() {
 }
 
 // ---------- DSL Validation via REST API ----------
+const apiRoot =
+  (window.wpApiSettings && window.wpApiSettings.root)
+  || `${window.location.origin}/wp-json/`;
 
 async function validateDsl(script, mode = 'auto') {
   try {
     const response = await fetch(
-      `${window.ajaxurl.replace('admin-ajax.php', 'index.php')}/wp-json/scrollcrafter/v1/validate`,
+      `${apiRoot}scrollcrafter/v1/validate`,
       {
         method: 'POST',
         headers: {
@@ -212,6 +215,7 @@ async function validateDsl(script, mode = 'auto') {
     return { ok: false, errors: [String(e)], warnings: [], config: null };
   }
 }
+
 
 
 // ---------- Elementor integration ----------
@@ -307,7 +311,11 @@ async function validateDsl(script, mode = 'auto') {
     modal.querySelector('.sc-dsl-editor__apply').onclick = () => {
       const newScript = getEditorDoc();
       settings.set('scrollcrafter_script', newScript);
+
       statusText.textContent = 'Applied (preview on front-end refresh)';
+      modal.classList.remove('sc-dsl-editor__status--error');
+      modal.classList.add('sc-dsl-editor__status--ok');
+      
       close();
     };
     // Apply & Preview Button
@@ -315,14 +323,31 @@ async function validateDsl(script, mode = 'auto') {
       const newScript = getEditorDoc();
       settings.set('scrollcrafter_script', newScript);
 
+      // Status
+      statusText.textContent = 'Validating...';
+      modal.classList.remove('sc-dsl-editor__status--error');
+      modal.classList.remove('sc-dsl-editor__status--ok');
+      modal.classList.remove('sc-dsl-editor__status--warning');
+
       const result = await validateDsl(newScript, 'auto');
+
       if (!result.ok) {
-        statusText.textContent = `Error: ${result.errors.join(', ')}`;
-      } else if (result.warnings.length) {
-        statusText.textContent = `Warnings: ${result.warnings.join(' | ')}`;
-      } else {
-        statusText.textContent = 'OK';
+        // Błąd krytyczny
+        statusText.textContent = `Error: ${result.errors.join(' | ') || 'Unknown error'}`;
+        modal.classList.add('sc-dsl-editor__status--error');
+        return;
       }
+
+      if (result.warnings && result.warnings.length) {
+        // Ostrzeżenia – nie zamykamy modala, użytkownik może poprawić DSL
+        statusText.textContent = `Warnings: ${result.warnings.join(' | ')}`;
+        modal.classList.add('sc-dsl-editor__status--warning');
+        return;
+      }
+
+      // Sukces – zamykamy modal i odświeżamy podgląd
+      statusText.textContent = 'OK – applying & previewing';
+      modal.classList.add('sc-dsl-editor__status--ok');
 
       if (typeof model.trigger === 'function') {
         model.trigger('change', model);
@@ -336,7 +361,6 @@ async function validateDsl(script, mode = 'auto') {
         id: model.get('id'),
       });
 
-      statusText.textContent = 'Applied & previewed';
       close();
     };
 

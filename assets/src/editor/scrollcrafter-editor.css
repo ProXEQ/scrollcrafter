@@ -109,6 +109,12 @@
 .sc-dsl-editor__status--error {
   color: #ff6b81;
 }
+.sc-dsl-editor__status--ok {
+  color: #63e6be;
+}
+.sc-dsl-editor__status--warning {
+  color: #ffcc66;
+}
 
 /* Footer buttons */
 .sc-dsl-editor__footer {

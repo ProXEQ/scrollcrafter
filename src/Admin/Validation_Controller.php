@@ -7,6 +7,7 @@ use WP_REST_Response;
 use ScrollCrafter\Animation\Script_Parser;
 use ScrollCrafter\Animation\Tween_Config_Builder;
 use ScrollCrafter\Animation\Timeline_Config_Builder;
+use ScrollCrafter\Support\Logger;
 
 class Validation_Controller
 {
@@ -28,6 +29,8 @@ class Validation_Controller
 
     public function register_routes(): void
     {
+        Logger::log( 'Registering validation REST route', 'validation' );
+
         register_rest_route(
             'scrollcrafter/v1',
             '/validate',
@@ -35,6 +38,7 @@ class Validation_Controller
                 'methods'             => 'POST',
                 'callback'            => [ $this, 'handle_validate' ],
                 'permission_callback' => function () {
+                    Logger::log( 'Checking permissions for validation REST route', 'validation' );
                     return current_user_can( 'edit_posts' );
                 },
                 'args'                => [
@@ -56,10 +60,16 @@ class Validation_Controller
 
     public function handle_validate( WP_REST_Request $request ): WP_REST_Response
     {
+
+
         $script = (string) $request->get_param( 'script' );
         $mode   = (string) $request->get_param( 'mode' );
 
+        Logger::log( "Validating script in mode '{$mode}'", 'validation' );
+
         if ( '' === trim( $script ) ) {
+            Logger::log( 'Validation failed: empty script', 'validation' );
+
             return new WP_REST_Response(
                 [
                     'ok'       => false,
@@ -73,7 +83,10 @@ class Validation_Controller
 
         try {
             $parsed = $this->parser->parse( $script );
+            Logger::log( 'Script parsed successfully', 'validation' );
         } catch ( \Throwable $e ) {
+            Logger::log_exception( $e, 'validation' );
+
             return new WP_REST_Response(
                 [
                     'ok'       => false,
@@ -88,7 +101,7 @@ class Validation_Controller
         $warnings = (array) ( $parsed['_warnings'] ?? [] );
         $scroll   = $parsed['scroll'] ?? [];
 
-        // Używamy fake elementu – config interesuje nas strukturalnie, bez realnego ID.
+        // "Element" tylko dla potrzeb builderów – ID nie ma znaczenia.
         $fakeElement = new class() {
             public function get_id(): string
             {
@@ -103,7 +116,10 @@ class Validation_Controller
 
         $isTimeline = ! empty( $parsed['timeline']['steps'] );
 
-        $config = null;
+        Logger::log(
+            "Determining config type for validation: mode='{$mode}', isTimeline=" . ( $isTimeline ? 'true' : 'false' ),
+            'validation'
+        );
 
         if ( 'timeline' === $mode || ( 'auto' === $mode && $isTimeline ) ) {
             $config = $this->timelineBuilder->build(
@@ -113,6 +129,7 @@ class Validation_Controller
                 $targetSelector,
                 $targetType
             );
+            Logger::log( 'Built timeline config for validation', 'validation' );
         } else {
             $config = $this->tweenBuilder->build(
                 $fakeElement,
@@ -121,7 +138,18 @@ class Validation_Controller
                 $targetSelector,
                 $targetType
             );
+            Logger::log( 'Built tween config for validation', 'validation' );
         }
+
+        Logger::log(
+            [
+                'warnings' => $warnings,
+                'config'   => $config,
+            ],
+            'validation_result'
+        );
+
+        Logger::log( 'Validation completed successfully', 'validation' );
 
         return new WP_REST_Response(
             [
@@ -135,9 +163,6 @@ class Validation_Controller
     }
 
     /**
-     * Skopiowane z Animation_Render::build_scroll_trigger_config
-     * (można rozważyć współdzielenie w przyszłości).
-     *
      * @param array<string,mixed> $scroll
      * @return array<string,mixed>
      */
@@ -178,6 +203,8 @@ class Validation_Controller
         if ( array_key_exists( 'snap', $scroll ) ) {
             $scrollTrigger['snap'] = $scroll['snap'];
         }
+
+        Logger::log( 'Built scrollTrigger config for validation', 'validation' );
 
         return $scrollTrigger;
     }
