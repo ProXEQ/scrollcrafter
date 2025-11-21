@@ -137,6 +137,21 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: #f5f5f5;
 }
+/* Styl dla popupu CodeMirror 6 */
+.cm-completionInfo {
+  max-width: 200px;            
+  white-space: nowrap;
+  left: 0 !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: 100% !important;
+  margin-bottom: 6px;
+  padding: 6px 8px;
+  background: #1e2128;
+  color: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 
 /* Responsywność */
 @media (max-width: 1200px) {

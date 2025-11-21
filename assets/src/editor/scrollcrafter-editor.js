@@ -108,27 +108,307 @@ const dslTheme = EditorView.theme(
   { dark: true }
 );
 
-// Autocomplete – lista słów kluczowych DSL
 
-// Sekcje
+// ---------- DSL Field Definitions (GSAP-based) ----------
+
+const FIELD_DEFS = {
+  animation: {
+    type: {
+      label: 'type:',
+      detail: 'from | to | fromTo',
+      description: 'Typ tweena w GSAP: from, to lub fromTo.',
+      gsap: 'gsap.to / gsap.from / gsap.fromTo',
+    },
+    from: {
+      label: 'from:',
+      detail: 'np. y=50, opacity=0',
+      description: 'Początkowe wartości właściwości (mapowane na TweenVars "from").',
+      gsap: 'TweenVars',
+    },
+    to: {
+      label: 'to:',
+      detail: 'np. y=0, opacity=1',
+      description: 'Końcowe wartości właściwości (TweenVars).',
+      gsap: 'TweenVars',
+    },
+    duration: {
+      label: 'duration:',
+      detail: 'seconds',
+      description: 'Czas trwania tweena w sekundach.',
+      gsap: 'TweenVars.duration',
+      values: [
+        { label: '0.5', detail: '0.5s' },
+        { label: '1', detail: '1s' },
+        { label: '2', detail: '2s' },
+      ],
+    },
+    delay: {
+      label: 'delay:',
+      detail: 'seconds',
+      description: 'Opóźnienie startu tweena w sekundach.',
+      gsap: 'TweenVars.delay',
+    },
+    ease: {
+      label: 'ease:',
+      detail: 'GSAP ease',
+      description: 'Krzywa łagodzenia animacji (np. power1.out, back.inOut).',
+      gsap: 'TweenVars.ease',
+      values: [
+        { label: 'power1.out', detail: 'Łagodny ease' },
+        { label: 'power2.out', detail: 'Średnio łagodny ease' },
+        { label: 'power3.out', detail: 'Mocniejszy ease' },
+        { label: 'power4.out', detail: 'Najmocniejszy ease' },
+        { label: 'back.out', detail: 'Najmocniejszy ease' },
+        { label: 'bounce.out', detail: 'Najmocniejszy ease' },
+        { label: 'circ.out', detail: 'Najmocniejszy ease' },
+        { label: 'elastic.out', detail: 'Najmocniejszy ease' },
+        { label: 'expo.out', detail: 'Najmocniejszy ease' },
+        { label: 'shine.out', detail: 'Najmocniejszy ease' },
+        { label: 'steps(2)', detail: 'Stepowy' },
+      ],
+    },
+    stagger: {
+      label: 'stagger:',
+      detail: 'seconds',
+      description: 'Opóźnienie między kolejnymi elementami (stagger each).',
+      gsap: 'StaggerVars.each',
+    },
+  },
+
+  scroll: {
+    start: {
+      label: 'start:',
+      detail: 'np. top 80%',
+      description: 'Pozycja startu triggera względem viewportu (np. "top 80%").',
+      gsap: 'ScrollTrigger.vars.start',
+      values: [
+        { label: 'top 80%', detail: 'Gdy góra targetu osiąga 80% wysokości okna' },
+        { label: 'top center', detail: 'Gdy góra targetu jest w środku okna' },
+        { label: 'top bottom', detail: 'Gdy góra targetu dotyka dołu okna' },
+      ],
+    },
+    end: {
+      label: 'end:',
+      detail: 'np. bottom 20%',
+      description: 'Pozycja zakończenia triggera (np. "bottom 20%").',
+      gsap: 'ScrollTrigger.vars.end',
+    },
+    scrub: {
+      label: 'scrub:',
+      detail: 'true | false | number',
+      description: 'Synchronizuje progres animacji z pozycją scrolla (true lub liczba).',
+      gsap: 'ScrollTrigger.vars.scrub',
+      values: [
+        { label: 'true', detail: 'Płynnie zsynchronizowane z domyślnym smoothingiem' },
+        { label: '0.5', detail: '0.5s smoothingu scrolla' },
+        { label: '1', detail: '1s smoothingu scrolla' },
+      ],
+    },
+    once: {
+      label: 'once:',
+      detail: 'true | false',
+      description: 'Czy animacja ma odpalić się tylko raz.',
+      gsap: 'ScrollTrigger.vars.once',
+      values: [
+        { label: 'true', detail: 'Uruchom tylko raz' },
+        { label: 'false', detail: 'Może uruchamiać się wielokrotnie' },
+      ],
+    },
+    toggleActions: {
+      label: 'toggleActions:',
+      detail: 'np. play none none reverse',
+      description: 'Akcje przy enter/leave/back (np. "play none none reverse").',
+      gsap: 'ScrollTrigger.vars.toggleActions',
+      values: [
+        { label: 'play none none reverse', detail: 'Standardowy play + reverse przy wyjściu' },
+        { label: 'play none none none', detail: 'Odtwórz tylko przy wejściu' },
+        { label: 'restart none none none', detail: 'Restart przy każdym wejściu' },
+      ],
+    },
+    pin: {
+      label: 'pin:',
+      detail: 'true | false',
+      description: 'Przypina target na czas trwania triggera.',
+      gsap: 'ScrollTrigger.vars.pin',
+      values: [
+        { label: 'true', detail: 'Pin na czas triggera' },
+        { label: 'false', detail: 'Bez pina' },
+      ],
+    },
+    pinSpacing: {
+      label: 'pinSpacing:',
+      detail: 'true | false',
+      description: 'Czy zachować przestrzeń po przypięciu.',
+      gsap: 'ScrollTrigger.vars.pinSpacing',
+      values: [
+        { label: 'true', detail: 'Domyślne zachowanie (zostaw miejsce)' },
+        { label: 'false', detail: 'Bez dodatkowego spacingu' },
+      ],
+    },
+    anticipatePin: {
+      label: 'anticipatePin:',
+      detail: 'number',
+      description: 'Przewiduje pin, aby uniknąć skoków layoutu.',
+      gsap: 'ScrollTrigger.vars.anticipatePin',
+    },
+    markers: {
+      label: 'markers:',
+      detail: 'true | false',
+      description: 'Pokazuje debugowe markery start/end na osi scrolla.',
+      gsap: 'ScrollTrigger.vars.markers',
+      values: [
+        { label: 'true', detail: 'Pokaż markery' },
+        { label: 'false', detail: 'Ukryj markery' },
+      ],
+    },
+    snap: {
+      label: 'snap:',
+      detail: 'true | number | string',
+      description: 'Przyciąganie scrolla do punktów (np. 0.1, "labels").',
+      gsap: 'ScrollTrigger.vars.snap',
+      values: [
+        { label: 'true', detail: 'Snap do najbliższego punktu' },
+        { label: '0.1', detail: 'Snap co 10% progresu' },
+      ],
+    },
+  },
+
+  target: {
+    selector: {
+      label: 'selector:',
+      detail: '.my-selector',
+      description: 'CSS selector dla elementu animacji (np. ".my-box").',
+      gsap: 'GSAP target (element / selector)',
+    },
+  },
+
+  timeline: {
+    'timeline.defaults.duration': {
+      label: 'timeline.defaults.duration:',
+      detail: 'seconds',
+      description: 'Domyślne duration dla wszystkich tweenów w timeline.',
+      gsap: 'Timeline.vars.defaults.duration',
+    },
+    'timeline.defaults.delay': {
+      label: 'timeline.defaults.delay:',
+      detail: 'seconds',
+      description: 'Domyślne delay dla tweenów w timeline.',
+      gsap: 'Timeline.vars.defaults.delay',
+    },
+    'timeline.defaults.stagger': {
+      label: 'timeline.defaults.stagger:',
+      detail: 'seconds',
+      description: 'Domyślne stagger dla tweenów w timeline.',
+      gsap: 'Timeline.vars.defaults.stagger',
+    },
+    'timeline.defaults.ease': {
+      label: 'timeline.defaults.ease:',
+      detail: 'GSAP ease',
+      description: 'Domyślny ease dla tweenów w timeline.',
+      gsap: 'Timeline.vars.defaults.ease',
+    },
+  },
+
+  // step.* traktujemy jako osobny typ sekcji, ale z tym samym zestawem co animation
+  'step.*': {
+    type: {
+      label: 'type:',
+      detail: 'from | to | fromTo',
+      description: 'Typ tweena w kroku timeline.',
+      gsap: 'gsap.to / from / fromTo',
+    },
+    from: {
+      label: 'from:',
+      detail: 'np. y=50, opacity=0',
+      description: 'Początkowe wartości kroku timeline.',
+      gsap: 'TweenVars',
+    },
+    to: {
+      label: 'to:',
+      detail: 'np. y=0, opacity=1',
+      description: 'Końcowe wartości kroku timeline.',
+      gsap: 'TweenVars',
+    },
+    duration: {
+      label: 'duration:',
+      detail: 'seconds',
+      description: 'Czas trwania kroku timeline.',
+      gsap: 'TweenVars.duration',
+    },
+    delay: {
+      label: 'delay:',
+      detail: 'seconds',
+      description: 'Opóźnienie startu kroku timeline.',
+      gsap: 'TweenVars.delay',
+    },
+    ease: {
+      label: 'ease:',
+      detail: 'GSAP ease',
+      description: 'Ease kroku timeline.',
+      gsap: 'TweenVars.ease',
+    },
+    stagger: {
+      label: 'stagger:',
+      detail: 'seconds',
+      description: 'Stagger dla kroku timeline.',
+      gsap: 'StaggerVars.each',
+    },
+    startAt: {
+      label: 'startAt:',
+      detail: 'timeline offset (number)',
+      description: 'Przesunięcie startu względem czasu timeline.',
+      gsap: 'Timeline.add(position)',
+    },
+  },
+};
+
+// Sekcje (nagłówki) – generowane z FIELD_DEFS + dodatkowe
 const sectionCompletions = [
-  { label: '[animation]', type: 'keyword', detail: 'Section' },
-  { label: '[scroll]', type: 'keyword', detail: 'Section' },
-  { label: '[target]', type: 'keyword', detail: 'Section' },
-  { label: '[timeline]', type: 'keyword', detail: 'Section' },
-  { label: '[step.1]', type: 'keyword', detail: 'Section' },
+  { label: '[animation]', type: 'keyword', detail: 'GSAP tween section' },
+  { label: '[scroll]', type: 'keyword', detail: 'GSAP ScrollTrigger section' },
+  { label: '[target]', type: 'keyword', detail: 'Target selector section' },
+  { label: '[timeline]', type: 'keyword', detail: 'Timeline container' },
+  { label: '[step.1]', type: 'keyword', detail: 'Timeline step section' },
 ];
 
-// Klucze per sekcja
-const animationKeyCompletions = [
-  { label: 'type:', type: 'property', detail: 'from | to | fromTo' },
-  { label: 'from:', type: 'property', detail: 'y=50, opacity=0' },
-  { label: 'to:', type: 'property', detail: 'y=0, opacity=1' },
-  { label: 'duration:', type: 'property', detail: 'seconds' },
-  { label: 'delay:', type: 'property', detail: 'seconds' },
-  { label: 'ease:', type: 'property', detail: 'GSAP ease' },
-  { label: 'stagger:', type: 'property', detail: 'seconds' },
-];
+// Zwraca definicję pól dla danej sekcji (uwzględnia step.N)
+function getSectionFieldDefs(sectionName) {
+  if (!sectionName) return null;
+  if (FIELD_DEFS[sectionName]) return FIELD_DEFS[sectionName];
+  if (sectionName.startsWith('step.')) return FIELD_DEFS['step.*'];
+  return null;
+}
+
+// Tworzy listę completions pól dla sekcji
+function getFieldCompletionsForSection(sectionName) {
+  const defs = getSectionFieldDefs(sectionName);
+  if (!defs) return [];
+  return Object.keys(defs).map((key) => {
+    const def = defs[key];
+    return {
+      label: def.label,
+      type: 'property',
+      detail: def.detail,
+      info: def.description + (def.gsap ? ` (${def.gsap})` : ''),
+    };
+  });
+}
+
+// Tworzy listę completions wartości dla danego pola
+function getValueCompletionsForField(sectionName, fieldKey) {
+  const defs = getSectionFieldDefs(sectionName);
+  if (!defs) return [];
+  const def = defs[fieldKey];
+  if (!def || !def.values) return [];
+  return def.values.map((v) => ({
+    label: v.label,
+    type: 'enum',
+    detail: v.detail || def.detail,
+    info: def.description + (def.gsap ? ` (${def.gsap})` : ''),
+  }));
+}
+// Completions dla pól sekcji
+
 
 function withSlashApply(options) {
   return options.map((opt) => ({
@@ -152,78 +432,6 @@ function withSlashApply(options) {
     },
   }));
 }
-
-
-const scrollKeyCompletions = [
-  { label: 'start:', type: 'property', detail: 'top 80%' },
-  { label: 'end:', type: 'property', detail: 'bottom 20%' },
-  { label: 'scrub:', type: 'property', detail: 'true | false | 0.5' },
-  { label: 'once:', type: 'property', detail: 'true | false' },
-  { label: 'toggleActions:', type: 'property', detail: 'play none none reverse' },
-  { label: 'pin:', type: 'property', detail: 'true | false' },
-  { label: 'pinSpacing:', type: 'property', detail: 'true | false' },
-  { label: 'anticipatePin:', type: 'property', detail: 'number' },
-  { label: 'markers:', type: 'property', detail: 'true | false' },
-  { label: 'snap:', type: 'property', detail: 'true | false | number | string' },
-];
-
-const targetKeyCompletions = [
-  { label: 'selector:', type: 'property', detail: '.my-selector' },
-];
-
-const timelineKeyCompletions = [
-  { label: 'timeline.defaults.duration:', type: 'property', detail: 'seconds' },
-  { label: 'timeline.defaults.delay:', type: 'property', detail: 'seconds' },
-  { label: 'timeline.defaults.stagger:', type: 'property', detail: 'seconds' },
-  { label: 'timeline.defaults.ease:', type: 'property', detail: 'GSAP ease' },
-];
-
-const stepKeyCompletions = [
-  { label: 'type:', type: 'property', detail: 'from | to | fromTo' },
-  { label: 'from:', type: 'property', detail: 'y=50, opacity=0' },
-  { label: 'to:', type: 'property', detail: 'y=0, opacity=1' },
-  { label: 'duration:', type: 'property', detail: 'seconds' },
-  { label: 'delay:', type: 'property', detail: 'seconds' },
-  { label: 'ease:', type: 'property', detail: 'GSAP ease' },
-  { label: 'stagger:', type: 'property', detail: 'seconds' },
-  { label: 'startAt:', type: 'property', detail: 'timeline offset (number)' },
-];
-
-const easeValueCompletions = [
-  { label: 'power1.in', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power1.out', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power1.inOut', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power2.in', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power2.out', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power2.inOut', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power3.in', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power3.out', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power3.inOut', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power4.in', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power4.out', type: 'enum', detail: 'GSAP ease' },
-  { label: 'power4.inOut', type: 'enum', detail: 'GSAP ease' },
-  { label: 'back.in', type: 'enum', detail: 'GSAP ease' },
-  { label: 'back.out', type: 'enum', detail: 'GSAP ease' },
-  { label: 'back.inOut', type: 'enum', detail: 'GSAP ease' },
-  { label: 'elastic.in', type: 'enum', detail: 'GSAP ease' },
-  { label: 'elastic.out', type: 'enum', detail: 'GSAP ease' },
-  { label: 'elastic.inOut', type: 'enum', detail: 'GSAP ease' },
-  { label: 'bounce.in', type: 'enum', detail: 'GSAP ease' },
-  { label: 'bounce.out', type: 'enum', detail: 'GSAP ease' },
-  { label: 'bounce.inOut', type: 'enum', detail: 'GSAP ease' },
-  { label: 'steps(4)', type: 'enum', detail: 'GSAP ease' },
-  { label: 'steps(8)', type: 'enum', detail: 'GSAP ease' },
-];
-
-
-// Fallback – wszystkie klucze razem (w razie nieznanej sekcji)
-const allKeyCompletions = [
-  ...animationKeyCompletions,
-  ...scrollKeyCompletions,
-  ...targetKeyCompletions,
-  ...timelineKeyCompletions,
-  ...stepKeyCompletions,
-];
 
 // Helper: znajdź aktualną sekcję na podstawie linii powyżej kursora
 function getCurrentSection(context) {
@@ -286,47 +494,34 @@ function filterMissingKeys(sectionName, context) {
   const line = state.doc.lineAt(pos);
   const used = new Set();
 
-  // Szukamy od sekcji w dół do bieżącej linii
+  // Szukamy od bieżącej linii w górę do sekcji, zbierając klucze
   for (let ln = line.number - 1; ln >= 1; ln -= 1) {
     const text = state.doc.line(ln).text.trim();
     if (text === '') continue;
 
     if (text.startsWith('[') && text.endsWith(']')) {
       const name = text.slice(1, -1).trim().toLowerCase();
-      if (name === sectionName) {
-        break;
-      }
-      // jeśli trafiliśmy inną sekcję, przerywamy
+      if (name === sectionName) break;
       return [];
     }
 
-    // linia z kluczem: key:
     const colonIndex = text.indexOf(':');
     if (colonIndex > 0) {
-      const key = text.slice(0, colonIndex + 1).trim(); // np. 'type:'
+      const key = text.slice(0, colonIndex + 1).trim(); // np. "type:"
       used.add(key);
     }
   }
 
-  let base = [];
-  if (sectionName === 'animation') {
-    base = animationKeyCompletions;
-  } else if (sectionName === 'scroll') {
-    base = scrollKeyCompletions;
-  } else if (sectionName === 'target') {
-    base = targetKeyCompletions;
-  } else if (sectionName === 'timeline') {
-    base = timelineKeyCompletions;
-  } else if (sectionName && sectionName.startsWith('step.')) {
-    base = stepKeyCompletions;
-  }
-
-  return base.filter(entry => !used.has(entry.label));
+  const all = getFieldCompletionsForSection(sectionName);
+  return all.filter(entry => !used.has(entry.label));
 }
-// Helper: czy linia pod kursorem jest pusta
-function isEmptyLine(state, pos) {
-  const line = state.doc.lineAt(pos);
-  return line.text.trim() === '';
+
+function valueResult(from, options) {
+  return {
+    from,
+    options,
+    validFor: /^[a-z0-9._()"%-]*$/i,
+  };
 }
 
 
@@ -337,8 +532,75 @@ function dslCompletionSource(context) {
   const text = line.text;
   const beforeCursor = text.slice(0, pos - line.from);
 
-  // 1) Sekcje – '[' lub '[prefix'
-  const bracketMatch = beforeCursor.match(/\[([a-z]*)$/i);
+  const sectionInfo = getCurrentSection(context);
+  const sectionName = sectionInfo?.name || null;
+  const inSection = !!sectionInfo?.inSection;
+
+  // ----- AUTOCOMPLETE WARTOŚCI PÓL (bez '/') -----
+
+  // ease: value
+  if (sectionName && /ease:\s*([a-z0-9._()-]*)$/i.test(beforeCursor)) {
+    const m = /ease:\s*([a-z0-9._()-]*)$/i.exec(beforeCursor);
+    const prefix = m[1].toLowerCase();
+    let options = getValueCompletionsForField(sectionName === 'timeline' ? 'timeline' : 'animation', 'ease');
+    if (prefix) {
+      options = options.filter(o => o.label.toLowerCase().startsWith(prefix));
+    }
+    const from = pos - prefix.length;
+    if (options.length) return valueResult(from, options);
+  }
+
+  // once: value
+  if (sectionName === 'scroll' && /once:\s*([a-z]*)$/i.test(beforeCursor)) {
+    const m = /once:\s*([a-z]*)$/i.exec(beforeCursor);
+    const prefix = m[1].toLowerCase();
+    let options = getValueCompletionsForField('scroll', 'once');
+    if (prefix) {
+      options = options.filter(o => o.label.startsWith(prefix));
+    }
+    const from = pos - prefix.length;
+    if (options.length) return valueResult(from, options);
+  }
+
+  // scrub: value
+  if (sectionName === 'scroll' && /scrub:\s*([a-z0-9.]*)$/i.test(beforeCursor)) {
+    const m = /scrub:\s*([a-z0-9.]*)$/i.exec(beforeCursor);
+    const prefix = m[1].toLowerCase();
+    let options = getValueCompletionsForField('scroll', 'scrub');
+    if (prefix) {
+      options = options.filter(o => o.label.toLowerCase().startsWith(prefix));
+    }
+    const from = pos - prefix.length;
+    if (options.length) return valueResult(from, options);
+  }
+
+  // toggleActions: value
+  if (sectionName === 'scroll' && /toggleActions:\s*([a-z ]*)$/i.test(beforeCursor)) {
+    const m = /toggleActions:\s*([a-z ]*)$/i.exec(beforeCursor);
+    const prefix = m[1].toLowerCase();
+    let options = getValueCompletionsForField('scroll', 'toggleActions');
+    if (prefix) {
+      options = options.filter(o => o.label.toLowerCase().startsWith(prefix));
+    }
+    const from = pos - prefix.length;
+    if (options.length) return valueResult(from, options);
+  }
+
+  // snap: value
+  if (sectionName === 'scroll' && /snap:\s*([a-z0-9."%]*)$/i.test(beforeCursor)) {
+    const m = /snap:\s*([a-z0-9."%]*)$/i.exec(beforeCursor);
+    const prefix = m[1].toLowerCase();
+    let options = getValueCompletionsForField('scroll', 'snap');
+    if (prefix) {
+      options = options.filter(o => o.label.toLowerCase().startsWith(prefix));
+    }
+    const from = pos - prefix.length;
+    if (options.length) return valueResult(from, options);
+  }
+
+  // ----- SEKcJE (nagłówki) -----
+
+  const bracketMatch = beforeCursor.match(/\[([a-z.]*)$/i);
   if (bracketMatch) {
     const prefix = bracketMatch[1].toLowerCase();
     const opts = sectionCompletions.filter((opt) => {
@@ -352,75 +614,53 @@ function dslCompletionSource(context) {
     };
   }
 
-  // 2) [target] → pola targetu
+  // [target] → sugeruj pola targetu
   if (/\[target\]\s*$/.test(beforeCursor)) {
+    const options = getFieldCompletionsForSection('target');
     return {
       from: pos,
-      options: targetKeyCompletions,
+      options,
     };
   }
 
-  // 3) Wewnętrzne pola / prefiksy: słowo może zaczynać się od '/'
+  // ----- POLA W SEKCJI NA "/" -----
+
   const word = context.matchBefore(/[a-zA-Z0-9_./]+/);
   let from = context.pos;
   if (word) from = word.from;
 
-  const sectionInfo = getCurrentSection(context);
-  const sectionName = sectionInfo?.name || null;
-  const inSection = !!sectionInfo?.inSection;
-
-  // 3a) Jeśli słowo zaczyna się od '/' → trigger pól sekcji
+  // "/" jako trigger pól
   if (word && word.text.startsWith('/')) {
-    if (!sectionName || !inSection) {
-      return null;
-    }
+    if (!sectionName || !inSection) return null;
 
-    let options = [];
+    let options = filterMissingKeys(sectionName, context);
 
-    if (sectionName === 'animation') {
-      options = filterMissingKeys('animation', context);
-    } else if (sectionName === 'scroll') {
-      options = filterMissingKeys('scroll', context);
-    } else if (sectionName === 'target') {
-      options = filterMissingKeys('target', context);
-    } else if (sectionName === 'timeline') {
+    // specjalny przypadek: w timeline dodatkowo sugeruj [step.1]
+    if (sectionName === 'timeline') {
       options = [
-        ...filterMissingKeys('timeline', context),
-        { label: '[step.1]', type: 'keyword', detail: 'Timeline step' },
+        ...options,
+        { label: '[step.1]', type: 'keyword', detail: 'Timeline step section' },
       ];
-    } else if (sectionName.startsWith('step.')) {
-      options = filterMissingKeys(sectionName, context);
     }
 
     if (!options.length) return null;
 
-    // Nadpisujemy cały prefiks '/', więc from = word.from
     return {
-      from: word.from + 1,
+      from: word.from + 1,   // zostaw "/", a apply go skasuje
       options: withSlashApply(options),
     };
   }
 
-  // 4) Zwykłe zachowanie – brakujące pola sekcji lub sekcje
+  // ----- Fallback: pola sekcji lub sekcje -----
+
   let options;
 
   if (!sectionName) {
     options = sectionCompletions;
-  } else if (inSection && sectionName === 'animation') {
-    options = filterMissingKeys('animation', context);
-  } else if (inSection && sectionName === 'scroll') {
-    options = filterMissingKeys('scroll', context);
-  } else if (inSection && sectionName === 'target') {
-    options = filterMissingKeys('target', context);
-  } else if (inSection && sectionName === 'timeline') {
-    options = [
-      ...filterMissingKeys('timeline', context),
-      { label: '[step.1]', type: 'keyword', detail: 'Timeline step' },
-    ];
-  } else if (inSection && sectionName.startsWith('step.')) {
+  } else if (inSection) {
     options = filterMissingKeys(sectionName, context);
   } else {
-    options = allKeyCompletions;
+    options = getFieldCompletionsForSection(sectionName) || sectionCompletions;
   }
 
   if (!options || !options.length) return null;
@@ -430,11 +670,6 @@ function dslCompletionSource(context) {
     options,
   };
 }
-
-
-
-
-
 
 // ---------- Editor instance management ----------
 

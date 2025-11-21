@@ -33105,22 +33105,290 @@
     },
     { dark: true }
   );
+  var FIELD_DEFS = {
+    animation: {
+      type: {
+        label: "type:",
+        detail: "from | to | fromTo",
+        description: "Typ tweena w GSAP: from, to lub fromTo.",
+        gsap: "gsap.to / gsap.from / gsap.fromTo"
+      },
+      from: {
+        label: "from:",
+        detail: "np. y=50, opacity=0",
+        description: 'Pocz\u0105tkowe warto\u015Bci w\u0142a\u015Bciwo\u015Bci (mapowane na TweenVars "from").',
+        gsap: "TweenVars"
+      },
+      to: {
+        label: "to:",
+        detail: "np. y=0, opacity=1",
+        description: "Ko\u0144cowe warto\u015Bci w\u0142a\u015Bciwo\u015Bci (TweenVars).",
+        gsap: "TweenVars"
+      },
+      duration: {
+        label: "duration:",
+        detail: "seconds",
+        description: "Czas trwania tweena w sekundach.",
+        gsap: "TweenVars.duration",
+        values: [
+          { label: "0.5", detail: "0.5s" },
+          { label: "1", detail: "1s" },
+          { label: "2", detail: "2s" }
+        ]
+      },
+      delay: {
+        label: "delay:",
+        detail: "seconds",
+        description: "Op\xF3\u017Anienie startu tweena w sekundach.",
+        gsap: "TweenVars.delay"
+      },
+      ease: {
+        label: "ease:",
+        detail: "GSAP ease",
+        description: "Krzywa \u0142agodzenia animacji (np. power1.out, back.inOut).",
+        gsap: "TweenVars.ease",
+        values: [
+          { label: "power1.out", detail: "\u0141agodny ease" },
+          { label: "power2.out", detail: "\u015Arednio \u0142agodny ease" },
+          { label: "power3.out", detail: "Mocniejszy ease" },
+          { label: "power4.out", detail: "Najmocniejszy ease" },
+          { label: "back.out", detail: "Najmocniejszy ease" },
+          { label: "bounce.out", detail: "Najmocniejszy ease" },
+          { label: "circ.out", detail: "Najmocniejszy ease" },
+          { label: "elastic.out", detail: "Najmocniejszy ease" },
+          { label: "expo.out", detail: "Najmocniejszy ease" },
+          { label: "shine.out", detail: "Najmocniejszy ease" },
+          { label: "steps(2)", detail: "Stepowy" }
+        ]
+      },
+      stagger: {
+        label: "stagger:",
+        detail: "seconds",
+        description: "Op\xF3\u017Anienie mi\u0119dzy kolejnymi elementami (stagger each).",
+        gsap: "StaggerVars.each"
+      }
+    },
+    scroll: {
+      start: {
+        label: "start:",
+        detail: "np. top 80%",
+        description: 'Pozycja startu triggera wzgl\u0119dem viewportu (np. "top 80%").',
+        gsap: "ScrollTrigger.vars.start",
+        values: [
+          { label: "top 80%", detail: "Gdy g\xF3ra targetu osi\u0105ga 80% wysoko\u015Bci okna" },
+          { label: "top center", detail: "Gdy g\xF3ra targetu jest w \u015Brodku okna" },
+          { label: "top bottom", detail: "Gdy g\xF3ra targetu dotyka do\u0142u okna" }
+        ]
+      },
+      end: {
+        label: "end:",
+        detail: "np. bottom 20%",
+        description: 'Pozycja zako\u0144czenia triggera (np. "bottom 20%").',
+        gsap: "ScrollTrigger.vars.end"
+      },
+      scrub: {
+        label: "scrub:",
+        detail: "true | false | number",
+        description: "Synchronizuje progres animacji z pozycj\u0105 scrolla (true lub liczba).",
+        gsap: "ScrollTrigger.vars.scrub",
+        values: [
+          { label: "true", detail: "P\u0142ynnie zsynchronizowane z domy\u015Blnym smoothingiem" },
+          { label: "0.5", detail: "0.5s smoothingu scrolla" },
+          { label: "1", detail: "1s smoothingu scrolla" }
+        ]
+      },
+      once: {
+        label: "once:",
+        detail: "true | false",
+        description: "Czy animacja ma odpali\u0107 si\u0119 tylko raz.",
+        gsap: "ScrollTrigger.vars.once",
+        values: [
+          { label: "true", detail: "Uruchom tylko raz" },
+          { label: "false", detail: "Mo\u017Ce uruchamia\u0107 si\u0119 wielokrotnie" }
+        ]
+      },
+      toggleActions: {
+        label: "toggleActions:",
+        detail: "np. play none none reverse",
+        description: 'Akcje przy enter/leave/back (np. "play none none reverse").',
+        gsap: "ScrollTrigger.vars.toggleActions",
+        values: [
+          { label: "play none none reverse", detail: "Standardowy play + reverse przy wyj\u015Bciu" },
+          { label: "play none none none", detail: "Odtw\xF3rz tylko przy wej\u015Bciu" },
+          { label: "restart none none none", detail: "Restart przy ka\u017Cdym wej\u015Bciu" }
+        ]
+      },
+      pin: {
+        label: "pin:",
+        detail: "true | false",
+        description: "Przypina target na czas trwania triggera.",
+        gsap: "ScrollTrigger.vars.pin",
+        values: [
+          { label: "true", detail: "Pin na czas triggera" },
+          { label: "false", detail: "Bez pina" }
+        ]
+      },
+      pinSpacing: {
+        label: "pinSpacing:",
+        detail: "true | false",
+        description: "Czy zachowa\u0107 przestrze\u0144 po przypi\u0119ciu.",
+        gsap: "ScrollTrigger.vars.pinSpacing",
+        values: [
+          { label: "true", detail: "Domy\u015Blne zachowanie (zostaw miejsce)" },
+          { label: "false", detail: "Bez dodatkowego spacingu" }
+        ]
+      },
+      anticipatePin: {
+        label: "anticipatePin:",
+        detail: "number",
+        description: "Przewiduje pin, aby unikn\u0105\u0107 skok\xF3w layoutu.",
+        gsap: "ScrollTrigger.vars.anticipatePin"
+      },
+      markers: {
+        label: "markers:",
+        detail: "true | false",
+        description: "Pokazuje debugowe markery start/end na osi scrolla.",
+        gsap: "ScrollTrigger.vars.markers",
+        values: [
+          { label: "true", detail: "Poka\u017C markery" },
+          { label: "false", detail: "Ukryj markery" }
+        ]
+      },
+      snap: {
+        label: "snap:",
+        detail: "true | number | string",
+        description: 'Przyci\u0105ganie scrolla do punkt\xF3w (np. 0.1, "labels").',
+        gsap: "ScrollTrigger.vars.snap",
+        values: [
+          { label: "true", detail: "Snap do najbli\u017Cszego punktu" },
+          { label: "0.1", detail: "Snap co 10% progresu" }
+        ]
+      }
+    },
+    target: {
+      selector: {
+        label: "selector:",
+        detail: ".my-selector",
+        description: 'CSS selector dla elementu animacji (np. ".my-box").',
+        gsap: "GSAP target (element / selector)"
+      }
+    },
+    timeline: {
+      "timeline.defaults.duration": {
+        label: "timeline.defaults.duration:",
+        detail: "seconds",
+        description: "Domy\u015Blne duration dla wszystkich tween\xF3w w timeline.",
+        gsap: "Timeline.vars.defaults.duration"
+      },
+      "timeline.defaults.delay": {
+        label: "timeline.defaults.delay:",
+        detail: "seconds",
+        description: "Domy\u015Blne delay dla tween\xF3w w timeline.",
+        gsap: "Timeline.vars.defaults.delay"
+      },
+      "timeline.defaults.stagger": {
+        label: "timeline.defaults.stagger:",
+        detail: "seconds",
+        description: "Domy\u015Blne stagger dla tween\xF3w w timeline.",
+        gsap: "Timeline.vars.defaults.stagger"
+      },
+      "timeline.defaults.ease": {
+        label: "timeline.defaults.ease:",
+        detail: "GSAP ease",
+        description: "Domy\u015Blny ease dla tween\xF3w w timeline.",
+        gsap: "Timeline.vars.defaults.ease"
+      }
+    },
+    // step.* traktujemy jako osobny typ sekcji, ale z tym samym zestawem co animation
+    "step.*": {
+      type: {
+        label: "type:",
+        detail: "from | to | fromTo",
+        description: "Typ tweena w kroku timeline.",
+        gsap: "gsap.to / from / fromTo"
+      },
+      from: {
+        label: "from:",
+        detail: "np. y=50, opacity=0",
+        description: "Pocz\u0105tkowe warto\u015Bci kroku timeline.",
+        gsap: "TweenVars"
+      },
+      to: {
+        label: "to:",
+        detail: "np. y=0, opacity=1",
+        description: "Ko\u0144cowe warto\u015Bci kroku timeline.",
+        gsap: "TweenVars"
+      },
+      duration: {
+        label: "duration:",
+        detail: "seconds",
+        description: "Czas trwania kroku timeline.",
+        gsap: "TweenVars.duration"
+      },
+      delay: {
+        label: "delay:",
+        detail: "seconds",
+        description: "Op\xF3\u017Anienie startu kroku timeline.",
+        gsap: "TweenVars.delay"
+      },
+      ease: {
+        label: "ease:",
+        detail: "GSAP ease",
+        description: "Ease kroku timeline.",
+        gsap: "TweenVars.ease"
+      },
+      stagger: {
+        label: "stagger:",
+        detail: "seconds",
+        description: "Stagger dla kroku timeline.",
+        gsap: "StaggerVars.each"
+      },
+      startAt: {
+        label: "startAt:",
+        detail: "timeline offset (number)",
+        description: "Przesuni\u0119cie startu wzgl\u0119dem czasu timeline.",
+        gsap: "Timeline.add(position)"
+      }
+    }
+  };
   var sectionCompletions = [
-    { label: "[animation]", type: "keyword", detail: "Section" },
-    { label: "[scroll]", type: "keyword", detail: "Section" },
-    { label: "[target]", type: "keyword", detail: "Section" },
-    { label: "[timeline]", type: "keyword", detail: "Section" },
-    { label: "[step.1]", type: "keyword", detail: "Section" }
+    { label: "[animation]", type: "keyword", detail: "GSAP tween section" },
+    { label: "[scroll]", type: "keyword", detail: "GSAP ScrollTrigger section" },
+    { label: "[target]", type: "keyword", detail: "Target selector section" },
+    { label: "[timeline]", type: "keyword", detail: "Timeline container" },
+    { label: "[step.1]", type: "keyword", detail: "Timeline step section" }
   ];
-  var animationKeyCompletions = [
-    { label: "type:", type: "property", detail: "from | to | fromTo" },
-    { label: "from:", type: "property", detail: "y=50, opacity=0" },
-    { label: "to:", type: "property", detail: "y=0, opacity=1" },
-    { label: "duration:", type: "property", detail: "seconds" },
-    { label: "delay:", type: "property", detail: "seconds" },
-    { label: "ease:", type: "property", detail: "GSAP ease" },
-    { label: "stagger:", type: "property", detail: "seconds" }
-  ];
+  function getSectionFieldDefs(sectionName) {
+    if (!sectionName) return null;
+    if (FIELD_DEFS[sectionName]) return FIELD_DEFS[sectionName];
+    if (sectionName.startsWith("step.")) return FIELD_DEFS["step.*"];
+    return null;
+  }
+  function getFieldCompletionsForSection(sectionName) {
+    const defs = getSectionFieldDefs(sectionName);
+    if (!defs) return [];
+    return Object.keys(defs).map((key) => {
+      const def = defs[key];
+      return {
+        label: def.label,
+        type: "property",
+        detail: def.detail,
+        info: def.description + (def.gsap ? ` (${def.gsap})` : "")
+      };
+    });
+  }
+  function getValueCompletionsForField(sectionName, fieldKey) {
+    const defs = getSectionFieldDefs(sectionName);
+    if (!defs) return [];
+    const def = defs[fieldKey];
+    if (!def || !def.values) return [];
+    return def.values.map((v) => ({
+      label: v.label,
+      type: "enum",
+      detail: v.detail || def.detail,
+      info: def.description + (def.gsap ? ` (${def.gsap})` : "")
+    }));
+  }
   function withSlashApply(options) {
     return options.map((opt) => ({
       ...opt,
@@ -33140,44 +33408,6 @@
       }
     }));
   }
-  var scrollKeyCompletions = [
-    { label: "start:", type: "property", detail: "top 80%" },
-    { label: "end:", type: "property", detail: "bottom 20%" },
-    { label: "scrub:", type: "property", detail: "true | false | 0.5" },
-    { label: "once:", type: "property", detail: "true | false" },
-    { label: "toggleActions:", type: "property", detail: "play none none reverse" },
-    { label: "pin:", type: "property", detail: "true | false" },
-    { label: "pinSpacing:", type: "property", detail: "true | false" },
-    { label: "anticipatePin:", type: "property", detail: "number" },
-    { label: "markers:", type: "property", detail: "true | false" },
-    { label: "snap:", type: "property", detail: "true | false | number | string" }
-  ];
-  var targetKeyCompletions = [
-    { label: "selector:", type: "property", detail: ".my-selector" }
-  ];
-  var timelineKeyCompletions = [
-    { label: "timeline.defaults.duration:", type: "property", detail: "seconds" },
-    { label: "timeline.defaults.delay:", type: "property", detail: "seconds" },
-    { label: "timeline.defaults.stagger:", type: "property", detail: "seconds" },
-    { label: "timeline.defaults.ease:", type: "property", detail: "GSAP ease" }
-  ];
-  var stepKeyCompletions = [
-    { label: "type:", type: "property", detail: "from | to | fromTo" },
-    { label: "from:", type: "property", detail: "y=50, opacity=0" },
-    { label: "to:", type: "property", detail: "y=0, opacity=1" },
-    { label: "duration:", type: "property", detail: "seconds" },
-    { label: "delay:", type: "property", detail: "seconds" },
-    { label: "ease:", type: "property", detail: "GSAP ease" },
-    { label: "stagger:", type: "property", detail: "seconds" },
-    { label: "startAt:", type: "property", detail: "timeline offset (number)" }
-  ];
-  var allKeyCompletions = [
-    ...animationKeyCompletions,
-    ...scrollKeyCompletions,
-    ...targetKeyCompletions,
-    ...timelineKeyCompletions,
-    ...stepKeyCompletions
-  ];
   function getCurrentSection(context) {
     const { state, pos } = context;
     const line = state.doc.lineAt(pos);
@@ -33224,9 +33454,7 @@
       if (text === "") continue;
       if (text.startsWith("[") && text.endsWith("]")) {
         const name3 = text.slice(1, -1).trim().toLowerCase();
-        if (name3 === sectionName) {
-          break;
-        }
+        if (name3 === sectionName) break;
         return [];
       }
       const colonIndex = text.indexOf(":");
@@ -33235,26 +33463,75 @@
         used.add(key);
       }
     }
-    let base2 = [];
-    if (sectionName === "animation") {
-      base2 = animationKeyCompletions;
-    } else if (sectionName === "scroll") {
-      base2 = scrollKeyCompletions;
-    } else if (sectionName === "target") {
-      base2 = targetKeyCompletions;
-    } else if (sectionName === "timeline") {
-      base2 = timelineKeyCompletions;
-    } else if (sectionName && sectionName.startsWith("step.")) {
-      base2 = stepKeyCompletions;
-    }
-    return base2.filter((entry) => !used.has(entry.label));
+    const all = getFieldCompletionsForSection(sectionName);
+    return all.filter((entry) => !used.has(entry.label));
+  }
+  function valueResult(from, options) {
+    return {
+      from,
+      options,
+      validFor: /^[a-z0-9._()"%-]*$/i
+    };
   }
   function dslCompletionSource(context) {
     const { state, pos } = context;
     const line = state.doc.lineAt(pos);
     const text = line.text;
     const beforeCursor = text.slice(0, pos - line.from);
-    const bracketMatch = beforeCursor.match(/\[([a-z]*)$/i);
+    const sectionInfo = getCurrentSection(context);
+    const sectionName = (sectionInfo == null ? void 0 : sectionInfo.name) || null;
+    const inSection = !!(sectionInfo == null ? void 0 : sectionInfo.inSection);
+    if (sectionName && /ease:\s*([a-z0-9._()-]*)$/i.test(beforeCursor)) {
+      const m = /ease:\s*([a-z0-9._()-]*)$/i.exec(beforeCursor);
+      const prefix = m[1].toLowerCase();
+      let options2 = getValueCompletionsForField(sectionName === "timeline" ? "timeline" : "animation", "ease");
+      if (prefix) {
+        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
+      }
+      const from2 = pos - prefix.length;
+      if (options2.length) return valueResult(from2, options2);
+    }
+    if (sectionName === "scroll" && /once:\s*([a-z]*)$/i.test(beforeCursor)) {
+      const m = /once:\s*([a-z]*)$/i.exec(beforeCursor);
+      const prefix = m[1].toLowerCase();
+      let options2 = getValueCompletionsForField("scroll", "once");
+      if (prefix) {
+        options2 = options2.filter((o) => o.label.startsWith(prefix));
+      }
+      const from2 = pos - prefix.length;
+      if (options2.length) return valueResult(from2, options2);
+    }
+    if (sectionName === "scroll" && /scrub:\s*([a-z0-9.]*)$/i.test(beforeCursor)) {
+      const m = /scrub:\s*([a-z0-9.]*)$/i.exec(beforeCursor);
+      const prefix = m[1].toLowerCase();
+      let options2 = getValueCompletionsForField("scroll", "scrub");
+      if (prefix) {
+        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
+      }
+      const from2 = pos - prefix.length;
+      if (options2.length) return valueResult(from2, options2);
+    }
+    if (sectionName === "scroll" && /toggleActions:\s*([a-z ]*)$/i.test(beforeCursor)) {
+      const m = /toggleActions:\s*([a-z ]*)$/i.exec(beforeCursor);
+      const prefix = m[1].toLowerCase();
+      let options2 = getValueCompletionsForField("scroll", "toggleActions");
+      if (prefix) {
+        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
+      }
+      const from2 = pos - prefix.length;
+      if (options2.length) return valueResult(from2, options2);
+    }
+    if (sectionName === "scroll" && /snap:\s*([a-z0-9."%]*)$/i.test(beforeCursor)) {
+      const m = /snap:\s*([a-z0-9."%]*)$/i.exec(beforeCursor);
+      const prefix = m[1].toLowerCase();
+      let options2 = getValueCompletionsForField("scroll", "snap");
+      if (prefix) {
+        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
+      }
+      const from2 = pos - prefix.length;
+      if (options2.length) return valueResult(from2, options2);
+    }
+    const bracketMatch = beforeCursor.match(/\[([a-z.]*)$/i);
     if (bracketMatch) {
       const prefix = bracketMatch[1].toLowerCase();
       const opts = sectionCompletions.filter((opt) => {
@@ -33267,60 +33544,38 @@
       };
     }
     if (/\[target\]\s*$/.test(beforeCursor)) {
+      const options2 = getFieldCompletionsForSection("target");
       return {
         from: pos,
-        options: targetKeyCompletions
+        options: options2
       };
     }
     const word = context.matchBefore(/[a-zA-Z0-9_./]+/);
     let from = context.pos;
     if (word) from = word.from;
-    const sectionInfo = getCurrentSection(context);
-    const sectionName = (sectionInfo == null ? void 0 : sectionInfo.name) || null;
-    const inSection = !!(sectionInfo == null ? void 0 : sectionInfo.inSection);
     if (word && word.text.startsWith("/")) {
-      if (!sectionName || !inSection) {
-        return null;
-      }
-      let options2 = [];
-      if (sectionName === "animation") {
-        options2 = filterMissingKeys("animation", context);
-      } else if (sectionName === "scroll") {
-        options2 = filterMissingKeys("scroll", context);
-      } else if (sectionName === "target") {
-        options2 = filterMissingKeys("target", context);
-      } else if (sectionName === "timeline") {
+      if (!sectionName || !inSection) return null;
+      let options2 = filterMissingKeys(sectionName, context);
+      if (sectionName === "timeline") {
         options2 = [
-          ...filterMissingKeys("timeline", context),
-          { label: "[step.1]", type: "keyword", detail: "Timeline step" }
+          ...options2,
+          { label: "[step.1]", type: "keyword", detail: "Timeline step section" }
         ];
-      } else if (sectionName.startsWith("step.")) {
-        options2 = filterMissingKeys(sectionName, context);
       }
       if (!options2.length) return null;
       return {
         from: word.from + 1,
+        // zostaw "/", a apply go skasuje
         options: withSlashApply(options2)
       };
     }
     let options;
     if (!sectionName) {
       options = sectionCompletions;
-    } else if (inSection && sectionName === "animation") {
-      options = filterMissingKeys("animation", context);
-    } else if (inSection && sectionName === "scroll") {
-      options = filterMissingKeys("scroll", context);
-    } else if (inSection && sectionName === "target") {
-      options = filterMissingKeys("target", context);
-    } else if (inSection && sectionName === "timeline") {
-      options = [
-        ...filterMissingKeys("timeline", context),
-        { label: "[step.1]", type: "keyword", detail: "Timeline step" }
-      ];
-    } else if (inSection && sectionName.startsWith("step.")) {
+    } else if (inSection) {
       options = filterMissingKeys(sectionName, context);
     } else {
-      options = allKeyCompletions;
+      options = getFieldCompletionsForSection(sectionName) || sectionCompletions;
     }
     if (!options || !options.length) return null;
     return {
