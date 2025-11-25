@@ -402,11 +402,11 @@
         /* Tree.BranchShift */
       ), maxChunk = chunk << 1, minChunk = chunk >> 1;
       let chunked = [], currentLines = 0, currentLen = -1, currentChunk = [];
-      function add(child) {
+      function add2(child) {
         let last;
         if (child.lines > maxChunk && child instanceof _TextNode) {
           for (let node of child.children)
-            add(node);
+            add2(node);
         } else if (child.lines > minChunk && (currentLines > minChunk || !currentLines)) {
           flush();
           chunked.push(child);
@@ -430,7 +430,7 @@
         currentLines = currentChunk.length = 0;
       }
       for (let child of children)
-        add(child);
+        add2(child);
       flush();
       return chunked.length == 1 ? chunked[0] : new _TextNode(chunked, length);
     }
@@ -2606,7 +2606,7 @@
   EditorState.transactionFilter = transactionFilter;
   EditorState.transactionExtender = transactionExtender;
   Compartment.reconfigure = /* @__PURE__ */ StateEffect.define();
-  function combineConfig(configs, defaults, combine = {}) {
+  function combineConfig(configs, defaults2, combine = {}) {
     let result = {};
     for (let config of configs)
       for (let key of Object.keys(config)) {
@@ -2619,9 +2619,9 @@
         else
           throw new Error("Config merge conflict for field " + key);
       }
-    for (let key in defaults)
+    for (let key in defaults2)
       if (result[key] === void 0)
-        result[key] = defaults[key];
+        result[key] = defaults2[key];
     return result;
   }
   var RangeValue = class {
@@ -2773,22 +2773,22 @@
     `Y`.)
     */
     update(updateSpec) {
-      let { add = [], sort = false, filterFrom = 0, filterTo = this.length } = updateSpec;
+      let { add: add2 = [], sort = false, filterFrom = 0, filterTo = this.length } = updateSpec;
       let filter = updateSpec.filter;
-      if (add.length == 0 && !filter)
+      if (add2.length == 0 && !filter)
         return this;
       if (sort)
-        add = add.slice().sort(cmpRange);
+        add2 = add2.slice().sort(cmpRange);
       if (this.isEmpty)
-        return add.length ? _RangeSet.of(add) : this;
+        return add2.length ? _RangeSet.of(add2) : this;
       let cur2 = new LayerCursor(this, null, -1).goto(0), i = 0, spill = [];
       let builder = new RangeSetBuilder();
-      while (cur2.value || i < add.length) {
-        if (i < add.length && (cur2.from - add[i].from || cur2.startSide - add[i].value.startSide) >= 0) {
-          let range = add[i++];
+      while (cur2.value || i < add2.length) {
+        if (i < add2.length && (cur2.from - add2[i].from || cur2.startSide - add2[i].value.startSide) >= 0) {
+          let range = add2[i++];
           if (!builder.addInner(range.from, range.to, range.value))
             spill.push(range);
-        } else if (cur2.rangeIndex == 1 && cur2.chunkIndex < this.chunk.length && (i == add.length || this.chunkEnd(cur2.chunkIndex) < add[i].from) && (!filter || filterFrom > this.chunkEnd(cur2.chunkIndex) || filterTo < this.chunkPos[cur2.chunkIndex]) && builder.addChunk(this.chunkPos[cur2.chunkIndex], this.chunk[cur2.chunkIndex])) {
+        } else if (cur2.rangeIndex == 1 && cur2.chunkIndex < this.chunk.length && (i == add2.length || this.chunkEnd(cur2.chunkIndex) < add2[i].from) && (!filter || filterFrom > this.chunkEnd(cur2.chunkIndex) || filterTo < this.chunkPos[cur2.chunkIndex]) && builder.addChunk(this.chunkPos[cur2.chunkIndex], this.chunk[cur2.chunkIndex])) {
           cur2.nextChunk();
         } else {
           if (!filter || filterFrom > cur2.to || filterTo < cur2.from || filter(cur2.from, cur2.to, cur2.value)) {
@@ -3650,6 +3650,35 @@
     if (name3 == "Right") name3 = "ArrowRight";
     if (name3 == "Down") name3 = "ArrowDown";
     return name3;
+  }
+
+  // node_modules/crelt/index.js
+  function crelt() {
+    var elt = arguments[0];
+    if (typeof elt == "string") elt = document.createElement(elt);
+    var i = 1, next = arguments[1];
+    if (next && typeof next == "object" && next.nodeType == null && !Array.isArray(next)) {
+      for (var name3 in next) if (Object.prototype.hasOwnProperty.call(next, name3)) {
+        var value = next[name3];
+        if (typeof value == "string") elt.setAttribute(name3, value);
+        else if (value != null) elt[name3] = value;
+      }
+      i++;
+    }
+    for (; i < arguments.length; i++) add(elt, arguments[i]);
+    return elt;
+  }
+  function add(elt, child) {
+    if (typeof child == "string") {
+      elt.appendChild(document.createTextNode(child));
+    } else if (child == null) {
+    } else if (child.nodeType != null) {
+      elt.appendChild(child);
+    } else if (Array.isArray(child)) {
+      for (var i = 0; i < child.length; i++) add(elt, child[i]);
+    } else {
+      throw new RangeError("Unsupported child node: " + child);
+    }
   }
 
   // node_modules/@codemirror/view/dist/index.js
@@ -6028,9 +6057,9 @@
             update.to = to;
             level = update.inner;
           } else {
-            let add = { from, to, direction, inner: [] };
-            level.push(add);
-            level = add.inner;
+            let add2 = { from, to, direction, inner: [] };
+            level.push(add2);
+            level = add2.inner;
           }
         }
       }
@@ -11577,7 +11606,7 @@
       else if (current != is)
         throw new Error("Key binding " + name3 + " is used both as a regular binding and as a multi-stroke prefix");
     };
-    let add = (scope, key, command2, preventDefault, stopPropagation) => {
+    let add2 = (scope, key, command2, preventDefault, stopPropagation) => {
       var _a3, _b;
       let scopeObj = bound[scope] || (bound[scope] = /* @__PURE__ */ Object.create(null));
       let parts = key.split(/ (?!$)/).map((k) => normalizeKeyName(k, platform));
@@ -11627,9 +11656,9 @@
       if (!name3)
         continue;
       for (let scope of scopes) {
-        add(scope, name3, b.run, b.preventDefault, b.stopPropagation);
+        add2(scope, name3, b.run, b.preventDefault, b.stopPropagation);
         if (b.shift)
-          add(scope, "Shift-" + name3, b.shift, b.preventDefault, b.stopPropagation);
+          add2(scope, "Shift-" + name3, b.shift, b.preventDefault, b.stopPropagation);
       }
     }
     return bound;
@@ -12039,15 +12068,15 @@
         throw new RangeError("The regular expression given to MatchDecorator should have its 'g' flag set");
       this.regexp = regexp;
       if (decorate) {
-        this.addMatch = (match, view, from, add) => decorate(add, from, from + match[0].length, match, view);
+        this.addMatch = (match, view, from, add2) => decorate(add2, from, from + match[0].length, match, view);
       } else if (typeof decoration == "function") {
-        this.addMatch = (match, view, from, add) => {
+        this.addMatch = (match, view, from, add2) => {
           let deco = decoration(match, view, from);
           if (deco)
-            add(from, from + match[0].length, deco);
+            add2(from, from + match[0].length, deco);
         };
       } else if (decoration) {
-        this.addMatch = (match, _view, from, add) => add(from, from + match[0].length, decoration);
+        this.addMatch = (match, _view, from, add2) => add2(from, from + match[0].length, decoration);
       } else {
         throw new RangeError("Either 'decorate' or 'decoration' should be provided to MatchDecorator");
       }
@@ -12060,9 +12089,9 @@
     plugin.
     */
     createDeco(view) {
-      let build = new RangeSetBuilder(), add = build.add.bind(build);
+      let build = new RangeSetBuilder(), add2 = build.add.bind(build);
       for (let { from, to } of matchRanges(view, this.maxLength))
-        iterMatches(view.state.doc, this.regexp, from, to, (from2, m) => this.addMatch(m, view, from2, add));
+        iterMatches(view.state.doc, this.regexp, from, to, (from2, m) => this.addMatch(m, view, from2, add2));
       return build.finish();
     }
     /**
@@ -12104,13 +12133,13 @@
               }
           }
           let ranges = [], m;
-          let add = (from2, to2, deco2) => ranges.push(deco2.range(from2, to2));
+          let add2 = (from2, to2, deco2) => ranges.push(deco2.range(from2, to2));
           if (fromLine == toLine) {
             this.regexp.lastIndex = start - fromLine.from;
             while ((m = this.regexp.exec(fromLine.text)) && m.index < end - fromLine.from)
-              this.addMatch(m, view, m.index + fromLine.from, add);
+              this.addMatch(m, view, m.index + fromLine.from, add2);
           } else {
-            iterMatches(view.state.doc, this.regexp, start, end, (from2, m2) => this.addMatch(m2, view, from2, add));
+            iterMatches(view.state.doc, this.regexp, start, end, (from2, m2) => this.addMatch(m2, view, from2, add2));
           }
           deco = deco.update({ filterFrom: start, filterTo: end, filter: (from2, to2) => from2 < start || to2 > end, add: ranges });
         }
@@ -12643,6 +12672,277 @@
   var showTooltip = /* @__PURE__ */ Facet.define({
     enables: [tooltipPlugin, baseTheme]
   });
+  var showHoverTooltip = /* @__PURE__ */ Facet.define({
+    combine: (inputs) => inputs.reduce((a, i) => a.concat(i), [])
+  });
+  var HoverTooltipHost = class _HoverTooltipHost {
+    // Needs to be static so that host tooltip instances always match
+    static create(view) {
+      return new _HoverTooltipHost(view);
+    }
+    constructor(view) {
+      this.view = view;
+      this.mounted = false;
+      this.dom = document.createElement("div");
+      this.dom.classList.add("cm-tooltip-hover");
+      this.manager = new TooltipViewManager(view, showHoverTooltip, (t3, p) => this.createHostedView(t3, p), (t3) => t3.dom.remove());
+    }
+    createHostedView(tooltip, prev) {
+      let hostedView = tooltip.create(this.view);
+      hostedView.dom.classList.add("cm-tooltip-section");
+      this.dom.insertBefore(hostedView.dom, prev ? prev.dom.nextSibling : this.dom.firstChild);
+      if (this.mounted && hostedView.mount)
+        hostedView.mount(this.view);
+      return hostedView;
+    }
+    mount(view) {
+      for (let hostedView of this.manager.tooltipViews) {
+        if (hostedView.mount)
+          hostedView.mount(view);
+      }
+      this.mounted = true;
+    }
+    positioned(space) {
+      for (let hostedView of this.manager.tooltipViews) {
+        if (hostedView.positioned)
+          hostedView.positioned(space);
+      }
+    }
+    update(update) {
+      this.manager.update(update);
+    }
+    destroy() {
+      var _a3;
+      for (let t3 of this.manager.tooltipViews)
+        (_a3 = t3.destroy) === null || _a3 === void 0 ? void 0 : _a3.call(t3);
+    }
+    passProp(name3) {
+      let value = void 0;
+      for (let view of this.manager.tooltipViews) {
+        let given = view[name3];
+        if (given !== void 0) {
+          if (value === void 0)
+            value = given;
+          else if (value !== given)
+            return void 0;
+        }
+      }
+      return value;
+    }
+    get offset() {
+      return this.passProp("offset");
+    }
+    get getCoords() {
+      return this.passProp("getCoords");
+    }
+    get overlap() {
+      return this.passProp("overlap");
+    }
+    get resize() {
+      return this.passProp("resize");
+    }
+  };
+  var showHoverTooltipHost = /* @__PURE__ */ showTooltip.compute([showHoverTooltip], (state) => {
+    let tooltips = state.facet(showHoverTooltip);
+    if (tooltips.length === 0)
+      return null;
+    return {
+      pos: Math.min(...tooltips.map((t3) => t3.pos)),
+      end: Math.max(...tooltips.map((t3) => {
+        var _a3;
+        return (_a3 = t3.end) !== null && _a3 !== void 0 ? _a3 : t3.pos;
+      })),
+      create: HoverTooltipHost.create,
+      above: tooltips[0].above,
+      arrow: tooltips.some((t3) => t3.arrow)
+    };
+  });
+  var HoverPlugin = class {
+    constructor(view, source, field, setHover, hoverTime) {
+      this.view = view;
+      this.source = source;
+      this.field = field;
+      this.setHover = setHover;
+      this.hoverTime = hoverTime;
+      this.hoverTimeout = -1;
+      this.restartTimeout = -1;
+      this.pending = null;
+      this.lastMove = { x: 0, y: 0, target: view.dom, time: 0 };
+      this.checkHover = this.checkHover.bind(this);
+      view.dom.addEventListener("mouseleave", this.mouseleave = this.mouseleave.bind(this));
+      view.dom.addEventListener("mousemove", this.mousemove = this.mousemove.bind(this));
+    }
+    update() {
+      if (this.pending) {
+        this.pending = null;
+        clearTimeout(this.restartTimeout);
+        this.restartTimeout = setTimeout(() => this.startHover(), 20);
+      }
+    }
+    get active() {
+      return this.view.state.field(this.field);
+    }
+    checkHover() {
+      this.hoverTimeout = -1;
+      if (this.active.length)
+        return;
+      let hovered = Date.now() - this.lastMove.time;
+      if (hovered < this.hoverTime)
+        this.hoverTimeout = setTimeout(this.checkHover, this.hoverTime - hovered);
+      else
+        this.startHover();
+    }
+    startHover() {
+      clearTimeout(this.restartTimeout);
+      let { view, lastMove } = this;
+      let desc = view.docView.nearest(lastMove.target);
+      if (!desc)
+        return;
+      let pos, side = 1;
+      if (desc instanceof WidgetView) {
+        pos = desc.posAtStart;
+      } else {
+        pos = view.posAtCoords(lastMove);
+        if (pos == null)
+          return;
+        let posCoords = view.coordsAtPos(pos);
+        if (!posCoords || lastMove.y < posCoords.top || lastMove.y > posCoords.bottom || lastMove.x < posCoords.left - view.defaultCharacterWidth || lastMove.x > posCoords.right + view.defaultCharacterWidth)
+          return;
+        let bidi = view.bidiSpans(view.state.doc.lineAt(pos)).find((s) => s.from <= pos && s.to >= pos);
+        let rtl = bidi && bidi.dir == Direction.RTL ? -1 : 1;
+        side = lastMove.x < posCoords.left ? -rtl : rtl;
+      }
+      let open = this.source(view, pos, side);
+      if (open === null || open === void 0 ? void 0 : open.then) {
+        let pending = this.pending = { pos };
+        open.then((result) => {
+          if (this.pending == pending) {
+            this.pending = null;
+            if (result && !(Array.isArray(result) && !result.length))
+              view.dispatch({ effects: this.setHover.of(Array.isArray(result) ? result : [result]) });
+          }
+        }, (e) => logException(view.state, e, "hover tooltip"));
+      } else if (open && !(Array.isArray(open) && !open.length)) {
+        view.dispatch({ effects: this.setHover.of(Array.isArray(open) ? open : [open]) });
+      }
+    }
+    get tooltip() {
+      let plugin = this.view.plugin(tooltipPlugin);
+      let index = plugin ? plugin.manager.tooltips.findIndex((t3) => t3.create == HoverTooltipHost.create) : -1;
+      return index > -1 ? plugin.manager.tooltipViews[index] : null;
+    }
+    mousemove(event) {
+      var _a3, _b;
+      this.lastMove = { x: event.clientX, y: event.clientY, target: event.target, time: Date.now() };
+      if (this.hoverTimeout < 0)
+        this.hoverTimeout = setTimeout(this.checkHover, this.hoverTime);
+      let { active, tooltip } = this;
+      if (active.length && tooltip && !isInTooltip(tooltip.dom, event) || this.pending) {
+        let { pos } = active[0] || this.pending, end = (_b = (_a3 = active[0]) === null || _a3 === void 0 ? void 0 : _a3.end) !== null && _b !== void 0 ? _b : pos;
+        if (pos == end ? this.view.posAtCoords(this.lastMove) != pos : !isOverRange(this.view, pos, end, event.clientX, event.clientY)) {
+          this.view.dispatch({ effects: this.setHover.of([]) });
+          this.pending = null;
+        }
+      }
+    }
+    mouseleave(event) {
+      clearTimeout(this.hoverTimeout);
+      this.hoverTimeout = -1;
+      let { active } = this;
+      if (active.length) {
+        let { tooltip } = this;
+        let inTooltip = tooltip && tooltip.dom.contains(event.relatedTarget);
+        if (!inTooltip)
+          this.view.dispatch({ effects: this.setHover.of([]) });
+        else
+          this.watchTooltipLeave(tooltip.dom);
+      }
+    }
+    watchTooltipLeave(tooltip) {
+      let watch = (event) => {
+        tooltip.removeEventListener("mouseleave", watch);
+        if (this.active.length && !this.view.dom.contains(event.relatedTarget))
+          this.view.dispatch({ effects: this.setHover.of([]) });
+      };
+      tooltip.addEventListener("mouseleave", watch);
+    }
+    destroy() {
+      clearTimeout(this.hoverTimeout);
+      this.view.dom.removeEventListener("mouseleave", this.mouseleave);
+      this.view.dom.removeEventListener("mousemove", this.mousemove);
+    }
+  };
+  var tooltipMargin = 4;
+  function isInTooltip(tooltip, event) {
+    let { left, right, top: top2, bottom } = tooltip.getBoundingClientRect(), arrow;
+    if (arrow = tooltip.querySelector(".cm-tooltip-arrow")) {
+      let arrowRect = arrow.getBoundingClientRect();
+      top2 = Math.min(arrowRect.top, top2);
+      bottom = Math.max(arrowRect.bottom, bottom);
+    }
+    return event.clientX >= left - tooltipMargin && event.clientX <= right + tooltipMargin && event.clientY >= top2 - tooltipMargin && event.clientY <= bottom + tooltipMargin;
+  }
+  function isOverRange(view, from, to, x, y, margin) {
+    let rect = view.scrollDOM.getBoundingClientRect();
+    let docBottom = view.documentTop + view.documentPadding.top + view.contentHeight;
+    if (rect.left > x || rect.right < x || rect.top > y || Math.min(rect.bottom, docBottom) < y)
+      return false;
+    let pos = view.posAtCoords({ x, y }, false);
+    return pos >= from && pos <= to;
+  }
+  function hoverTooltip(source, options = {}) {
+    let setHover = StateEffect.define();
+    let hoverState = StateField.define({
+      create() {
+        return [];
+      },
+      update(value, tr) {
+        if (value.length) {
+          if (options.hideOnChange && (tr.docChanged || tr.selection))
+            value = [];
+          else if (options.hideOn)
+            value = value.filter((v) => !options.hideOn(tr, v));
+          if (tr.docChanged) {
+            let mapped = [];
+            for (let tooltip of value) {
+              let newPos = tr.changes.mapPos(tooltip.pos, -1, MapMode.TrackDel);
+              if (newPos != null) {
+                let copy = Object.assign(/* @__PURE__ */ Object.create(null), tooltip);
+                copy.pos = newPos;
+                if (copy.end != null)
+                  copy.end = tr.changes.mapPos(copy.end);
+                mapped.push(copy);
+              }
+            }
+            value = mapped;
+          }
+        }
+        for (let effect of tr.effects) {
+          if (effect.is(setHover))
+            value = effect.value;
+          if (effect.is(closeHoverTooltipEffect))
+            value = [];
+        }
+        return value;
+      },
+      provide: (f) => showHoverTooltip.from(f)
+    });
+    return {
+      active: hoverState,
+      extension: [
+        hoverState,
+        ViewPlugin.define((view) => new HoverPlugin(
+          view,
+          source,
+          hoverState,
+          setHover,
+          options.hoverTime || 300
+          /* Hover.Time */
+        )),
+        showHoverTooltipHost
+      ]
+    };
+  }
   function getTooltip(view, tooltip) {
     let plugin = view.plugin(tooltipPlugin);
     if (!plugin)
@@ -12650,6 +12950,154 @@
     let found = plugin.manager.tooltips.indexOf(tooltip);
     return found < 0 ? null : plugin.manager.tooltipViews[found];
   }
+  var closeHoverTooltipEffect = /* @__PURE__ */ StateEffect.define();
+  var panelConfig = /* @__PURE__ */ Facet.define({
+    combine(configs) {
+      let topContainer, bottomContainer;
+      for (let c of configs) {
+        topContainer = topContainer || c.topContainer;
+        bottomContainer = bottomContainer || c.bottomContainer;
+      }
+      return { topContainer, bottomContainer };
+    }
+  });
+  var panelPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
+    constructor(view) {
+      this.input = view.state.facet(showPanel);
+      this.specs = this.input.filter((s) => s);
+      this.panels = this.specs.map((spec) => spec(view));
+      let conf = view.state.facet(panelConfig);
+      this.top = new PanelGroup(view, true, conf.topContainer);
+      this.bottom = new PanelGroup(view, false, conf.bottomContainer);
+      this.top.sync(this.panels.filter((p) => p.top));
+      this.bottom.sync(this.panels.filter((p) => !p.top));
+      for (let p of this.panels) {
+        p.dom.classList.add("cm-panel");
+        if (p.mount)
+          p.mount();
+      }
+    }
+    update(update) {
+      let conf = update.state.facet(panelConfig);
+      if (this.top.container != conf.topContainer) {
+        this.top.sync([]);
+        this.top = new PanelGroup(update.view, true, conf.topContainer);
+      }
+      if (this.bottom.container != conf.bottomContainer) {
+        this.bottom.sync([]);
+        this.bottom = new PanelGroup(update.view, false, conf.bottomContainer);
+      }
+      this.top.syncClasses();
+      this.bottom.syncClasses();
+      let input = update.state.facet(showPanel);
+      if (input != this.input) {
+        let specs = input.filter((x) => x);
+        let panels = [], top2 = [], bottom = [], mount = [];
+        for (let spec of specs) {
+          let known = this.specs.indexOf(spec), panel;
+          if (known < 0) {
+            panel = spec(update.view);
+            mount.push(panel);
+          } else {
+            panel = this.panels[known];
+            if (panel.update)
+              panel.update(update);
+          }
+          panels.push(panel);
+          (panel.top ? top2 : bottom).push(panel);
+        }
+        this.specs = specs;
+        this.panels = panels;
+        this.top.sync(top2);
+        this.bottom.sync(bottom);
+        for (let p of mount) {
+          p.dom.classList.add("cm-panel");
+          if (p.mount)
+            p.mount();
+        }
+      } else {
+        for (let p of this.panels)
+          if (p.update)
+            p.update(update);
+      }
+    }
+    destroy() {
+      this.top.sync([]);
+      this.bottom.sync([]);
+    }
+  }, {
+    provide: (plugin) => EditorView.scrollMargins.of((view) => {
+      let value = view.plugin(plugin);
+      return value && { top: value.top.scrollMargin(), bottom: value.bottom.scrollMargin() };
+    })
+  });
+  var PanelGroup = class {
+    constructor(view, top2, container) {
+      this.view = view;
+      this.top = top2;
+      this.container = container;
+      this.dom = void 0;
+      this.classes = "";
+      this.panels = [];
+      this.syncClasses();
+    }
+    sync(panels) {
+      for (let p of this.panels)
+        if (p.destroy && panels.indexOf(p) < 0)
+          p.destroy();
+      this.panels = panels;
+      this.syncDOM();
+    }
+    syncDOM() {
+      if (this.panels.length == 0) {
+        if (this.dom) {
+          this.dom.remove();
+          this.dom = void 0;
+        }
+        return;
+      }
+      if (!this.dom) {
+        this.dom = document.createElement("div");
+        this.dom.className = this.top ? "cm-panels cm-panels-top" : "cm-panels cm-panels-bottom";
+        this.dom.style[this.top ? "top" : "bottom"] = "0";
+        let parent = this.container || this.view.dom;
+        parent.insertBefore(this.dom, this.top ? parent.firstChild : null);
+      }
+      let curDOM = this.dom.firstChild;
+      for (let panel of this.panels) {
+        if (panel.dom.parentNode == this.dom) {
+          while (curDOM != panel.dom)
+            curDOM = rm(curDOM);
+          curDOM = curDOM.nextSibling;
+        } else {
+          this.dom.insertBefore(panel.dom, curDOM);
+        }
+      }
+      while (curDOM)
+        curDOM = rm(curDOM);
+    }
+    scrollMargin() {
+      return !this.dom || this.container ? 0 : Math.max(0, this.top ? this.dom.getBoundingClientRect().bottom - Math.max(0, this.view.scrollDOM.getBoundingClientRect().top) : Math.min(innerHeight, this.view.scrollDOM.getBoundingClientRect().bottom) - this.dom.getBoundingClientRect().top);
+    }
+    syncClasses() {
+      if (!this.container || this.classes == this.view.themeClasses)
+        return;
+      for (let cls of this.classes.split(" "))
+        if (cls)
+          this.container.classList.remove(cls);
+      for (let cls of (this.classes = this.view.themeClasses).split(" "))
+        if (cls)
+          this.container.classList.add(cls);
+    }
+  };
+  function rm(node) {
+    let next = node.nextSibling;
+    node.remove();
+    return next;
+  }
+  var showPanel = /* @__PURE__ */ Facet.define({
+    enables: panelPlugin
+  });
   var GutterMarker = class extends RangeValue {
     /**
     @internal
@@ -12675,6 +13123,362 @@
   GutterMarker.prototype.mapMode = MapMode.TrackBefore;
   GutterMarker.prototype.startSide = GutterMarker.prototype.endSide = -1;
   GutterMarker.prototype.point = true;
+  var gutterLineClass = /* @__PURE__ */ Facet.define();
+  var gutterWidgetClass = /* @__PURE__ */ Facet.define();
+  var defaults = {
+    class: "",
+    renderEmptyElements: false,
+    elementStyle: "",
+    markers: () => RangeSet.empty,
+    lineMarker: () => null,
+    widgetMarker: () => null,
+    lineMarkerChange: null,
+    initialSpacer: null,
+    updateSpacer: null,
+    domEventHandlers: {},
+    side: "before"
+  };
+  var activeGutters = /* @__PURE__ */ Facet.define();
+  function gutter(config) {
+    return [gutters(), activeGutters.of({ ...defaults, ...config })];
+  }
+  var unfixGutters = /* @__PURE__ */ Facet.define({
+    combine: (values) => values.some((x) => x)
+  });
+  function gutters(config) {
+    let result = [
+      gutterView
+    ];
+    if (config && config.fixed === false)
+      result.push(unfixGutters.of(true));
+    return result;
+  }
+  var gutterView = /* @__PURE__ */ ViewPlugin.fromClass(class {
+    constructor(view) {
+      this.view = view;
+      this.domAfter = null;
+      this.prevViewport = view.viewport;
+      this.dom = document.createElement("div");
+      this.dom.className = "cm-gutters cm-gutters-before";
+      this.dom.setAttribute("aria-hidden", "true");
+      this.dom.style.minHeight = this.view.contentHeight / this.view.scaleY + "px";
+      this.gutters = view.state.facet(activeGutters).map((conf) => new SingleGutterView(view, conf));
+      this.fixed = !view.state.facet(unfixGutters);
+      for (let gutter2 of this.gutters) {
+        if (gutter2.config.side == "after")
+          this.getDOMAfter().appendChild(gutter2.dom);
+        else
+          this.dom.appendChild(gutter2.dom);
+      }
+      if (this.fixed) {
+        this.dom.style.position = "sticky";
+      }
+      this.syncGutters(false);
+      view.scrollDOM.insertBefore(this.dom, view.contentDOM);
+    }
+    getDOMAfter() {
+      if (!this.domAfter) {
+        this.domAfter = document.createElement("div");
+        this.domAfter.className = "cm-gutters cm-gutters-after";
+        this.domAfter.setAttribute("aria-hidden", "true");
+        this.domAfter.style.minHeight = this.view.contentHeight / this.view.scaleY + "px";
+        this.domAfter.style.position = this.fixed ? "sticky" : "";
+        this.view.scrollDOM.appendChild(this.domAfter);
+      }
+      return this.domAfter;
+    }
+    update(update) {
+      if (this.updateGutters(update)) {
+        let vpA = this.prevViewport, vpB = update.view.viewport;
+        let vpOverlap = Math.min(vpA.to, vpB.to) - Math.max(vpA.from, vpB.from);
+        this.syncGutters(vpOverlap < (vpB.to - vpB.from) * 0.8);
+      }
+      if (update.geometryChanged) {
+        let min = this.view.contentHeight / this.view.scaleY + "px";
+        this.dom.style.minHeight = min;
+        if (this.domAfter)
+          this.domAfter.style.minHeight = min;
+      }
+      if (this.view.state.facet(unfixGutters) != !this.fixed) {
+        this.fixed = !this.fixed;
+        this.dom.style.position = this.fixed ? "sticky" : "";
+        if (this.domAfter)
+          this.domAfter.style.position = this.fixed ? "sticky" : "";
+      }
+      this.prevViewport = update.view.viewport;
+    }
+    syncGutters(detach) {
+      let after = this.dom.nextSibling;
+      if (detach) {
+        this.dom.remove();
+        if (this.domAfter)
+          this.domAfter.remove();
+      }
+      let lineClasses = RangeSet.iter(this.view.state.facet(gutterLineClass), this.view.viewport.from);
+      let classSet = [];
+      let contexts = this.gutters.map((gutter2) => new UpdateContext(gutter2, this.view.viewport, -this.view.documentPadding.top));
+      for (let line of this.view.viewportLineBlocks) {
+        if (classSet.length)
+          classSet = [];
+        if (Array.isArray(line.type)) {
+          let first = true;
+          for (let b of line.type) {
+            if (b.type == BlockType.Text && first) {
+              advanceCursor(lineClasses, classSet, b.from);
+              for (let cx of contexts)
+                cx.line(this.view, b, classSet);
+              first = false;
+            } else if (b.widget) {
+              for (let cx of contexts)
+                cx.widget(this.view, b);
+            }
+          }
+        } else if (line.type == BlockType.Text) {
+          advanceCursor(lineClasses, classSet, line.from);
+          for (let cx of contexts)
+            cx.line(this.view, line, classSet);
+        } else if (line.widget) {
+          for (let cx of contexts)
+            cx.widget(this.view, line);
+        }
+      }
+      for (let cx of contexts)
+        cx.finish();
+      if (detach) {
+        this.view.scrollDOM.insertBefore(this.dom, after);
+        if (this.domAfter)
+          this.view.scrollDOM.appendChild(this.domAfter);
+      }
+    }
+    updateGutters(update) {
+      let prev = update.startState.facet(activeGutters), cur2 = update.state.facet(activeGutters);
+      let change = update.docChanged || update.heightChanged || update.viewportChanged || !RangeSet.eq(update.startState.facet(gutterLineClass), update.state.facet(gutterLineClass), update.view.viewport.from, update.view.viewport.to);
+      if (prev == cur2) {
+        for (let gutter2 of this.gutters)
+          if (gutter2.update(update))
+            change = true;
+      } else {
+        change = true;
+        let gutters2 = [];
+        for (let conf of cur2) {
+          let known = prev.indexOf(conf);
+          if (known < 0) {
+            gutters2.push(new SingleGutterView(this.view, conf));
+          } else {
+            this.gutters[known].update(update);
+            gutters2.push(this.gutters[known]);
+          }
+        }
+        for (let g of this.gutters) {
+          g.dom.remove();
+          if (gutters2.indexOf(g) < 0)
+            g.destroy();
+        }
+        for (let g of gutters2) {
+          if (g.config.side == "after")
+            this.getDOMAfter().appendChild(g.dom);
+          else
+            this.dom.appendChild(g.dom);
+        }
+        this.gutters = gutters2;
+      }
+      return change;
+    }
+    destroy() {
+      for (let view of this.gutters)
+        view.destroy();
+      this.dom.remove();
+      if (this.domAfter)
+        this.domAfter.remove();
+    }
+  }, {
+    provide: (plugin) => EditorView.scrollMargins.of((view) => {
+      let value = view.plugin(plugin);
+      if (!value || value.gutters.length == 0 || !value.fixed)
+        return null;
+      let before = value.dom.offsetWidth * view.scaleX, after = value.domAfter ? value.domAfter.offsetWidth * view.scaleX : 0;
+      return view.textDirection == Direction.LTR ? { left: before, right: after } : { right: before, left: after };
+    })
+  });
+  function asArray2(val) {
+    return Array.isArray(val) ? val : [val];
+  }
+  function advanceCursor(cursor, collect, pos) {
+    while (cursor.value && cursor.from <= pos) {
+      if (cursor.from == pos)
+        collect.push(cursor.value);
+      cursor.next();
+    }
+  }
+  var UpdateContext = class {
+    constructor(gutter2, viewport, height) {
+      this.gutter = gutter2;
+      this.height = height;
+      this.i = 0;
+      this.cursor = RangeSet.iter(gutter2.markers, viewport.from);
+    }
+    addElement(view, block, markers) {
+      let { gutter: gutter2 } = this, above = (block.top - this.height) / view.scaleY, height = block.height / view.scaleY;
+      if (this.i == gutter2.elements.length) {
+        let newElt = new GutterElement(view, height, above, markers);
+        gutter2.elements.push(newElt);
+        gutter2.dom.appendChild(newElt.dom);
+      } else {
+        gutter2.elements[this.i].update(view, height, above, markers);
+      }
+      this.height = block.bottom;
+      this.i++;
+    }
+    line(view, line, extraMarkers) {
+      let localMarkers = [];
+      advanceCursor(this.cursor, localMarkers, line.from);
+      if (extraMarkers.length)
+        localMarkers = localMarkers.concat(extraMarkers);
+      let forLine = this.gutter.config.lineMarker(view, line, localMarkers);
+      if (forLine)
+        localMarkers.unshift(forLine);
+      let gutter2 = this.gutter;
+      if (localMarkers.length == 0 && !gutter2.config.renderEmptyElements)
+        return;
+      this.addElement(view, line, localMarkers);
+    }
+    widget(view, block) {
+      let marker = this.gutter.config.widgetMarker(view, block.widget, block), markers = marker ? [marker] : null;
+      for (let cls of view.state.facet(gutterWidgetClass)) {
+        let marker2 = cls(view, block.widget, block);
+        if (marker2)
+          (markers || (markers = [])).push(marker2);
+      }
+      if (markers)
+        this.addElement(view, block, markers);
+    }
+    finish() {
+      let gutter2 = this.gutter;
+      while (gutter2.elements.length > this.i) {
+        let last = gutter2.elements.pop();
+        gutter2.dom.removeChild(last.dom);
+        last.destroy();
+      }
+    }
+  };
+  var SingleGutterView = class {
+    constructor(view, config) {
+      this.view = view;
+      this.config = config;
+      this.elements = [];
+      this.spacer = null;
+      this.dom = document.createElement("div");
+      this.dom.className = "cm-gutter" + (this.config.class ? " " + this.config.class : "");
+      for (let prop in config.domEventHandlers) {
+        this.dom.addEventListener(prop, (event) => {
+          let target = event.target, y;
+          if (target != this.dom && this.dom.contains(target)) {
+            while (target.parentNode != this.dom)
+              target = target.parentNode;
+            let rect = target.getBoundingClientRect();
+            y = (rect.top + rect.bottom) / 2;
+          } else {
+            y = event.clientY;
+          }
+          let line = view.lineBlockAtHeight(y - view.documentTop);
+          if (config.domEventHandlers[prop](view, line, event))
+            event.preventDefault();
+        });
+      }
+      this.markers = asArray2(config.markers(view));
+      if (config.initialSpacer) {
+        this.spacer = new GutterElement(view, 0, 0, [config.initialSpacer(view)]);
+        this.dom.appendChild(this.spacer.dom);
+        this.spacer.dom.style.cssText += "visibility: hidden; pointer-events: none";
+      }
+    }
+    update(update) {
+      let prevMarkers = this.markers;
+      this.markers = asArray2(this.config.markers(update.view));
+      if (this.spacer && this.config.updateSpacer) {
+        let updated = this.config.updateSpacer(this.spacer.markers[0], update);
+        if (updated != this.spacer.markers[0])
+          this.spacer.update(update.view, 0, 0, [updated]);
+      }
+      let vp = update.view.viewport;
+      return !RangeSet.eq(this.markers, prevMarkers, vp.from, vp.to) || (this.config.lineMarkerChange ? this.config.lineMarkerChange(update) : false);
+    }
+    destroy() {
+      for (let elt of this.elements)
+        elt.destroy();
+    }
+  };
+  var GutterElement = class {
+    constructor(view, height, above, markers) {
+      this.height = -1;
+      this.above = 0;
+      this.markers = [];
+      this.dom = document.createElement("div");
+      this.dom.className = "cm-gutterElement";
+      this.update(view, height, above, markers);
+    }
+    update(view, height, above, markers) {
+      if (this.height != height) {
+        this.height = height;
+        this.dom.style.height = height + "px";
+      }
+      if (this.above != above)
+        this.dom.style.marginTop = (this.above = above) ? above + "px" : "";
+      if (!sameMarkers(this.markers, markers))
+        this.setMarkers(view, markers);
+    }
+    setMarkers(view, markers) {
+      let cls = "cm-gutterElement", domPos = this.dom.firstChild;
+      for (let iNew = 0, iOld = 0; ; ) {
+        let skipTo = iOld, marker = iNew < markers.length ? markers[iNew++] : null, matched = false;
+        if (marker) {
+          let c = marker.elementClass;
+          if (c)
+            cls += " " + c;
+          for (let i = iOld; i < this.markers.length; i++)
+            if (this.markers[i].compare(marker)) {
+              skipTo = i;
+              matched = true;
+              break;
+            }
+        } else {
+          skipTo = this.markers.length;
+        }
+        while (iOld < skipTo) {
+          let next = this.markers[iOld++];
+          if (next.toDOM) {
+            next.destroy(domPos);
+            let after = domPos.nextSibling;
+            domPos.remove();
+            domPos = after;
+          }
+        }
+        if (!marker)
+          break;
+        if (marker.toDOM) {
+          if (matched)
+            domPos = domPos.nextSibling;
+          else
+            this.dom.insertBefore(marker.toDOM(view), domPos);
+        }
+        if (matched)
+          iOld++;
+      }
+      this.dom.className = cls;
+      this.markers = markers;
+    }
+    destroy() {
+      this.setMarkers(null, []);
+    }
+  };
+  function sameMarkers(a, b) {
+    if (a.length != b.length)
+      return false;
+    for (let i = 0; i < a.length; i++)
+      if (!a[i].compare(b[i]))
+        return false;
+    return true;
+  }
 
   // node_modules/@lezer/common/dist/index.js
   var DefaultBufferLength = 1024;
@@ -12866,11 +13670,11 @@
       for (let type of this.types) {
         let newProps = null;
         for (let source of props) {
-          let add = source(type);
-          if (add) {
+          let add2 = source(type);
+          if (add2) {
             if (!newProps)
               newProps = Object.assign({}, type.props);
-            let value = add[1], prop = add[0];
+            let value = add2[1], prop = add2[0];
             if (prop.combine && prop.id in newProps)
               value = prop.combine(newProps[prop.id], value);
             newProps[prop.id] = value;
@@ -15638,11 +16442,11 @@
     let stack = ast.resolveStack(pos);
     let inner = ast.resolveInner(pos, -1).resolve(pos, 0).enterUnfinishedNodesBefore(pos);
     if (inner != stack.node) {
-      let add = [];
+      let add2 = [];
       for (let cur2 = inner; cur2 && !(cur2.from < stack.node.from || cur2.to > stack.node.to || cur2.from == stack.node.from && cur2.type == stack.node.type); cur2 = cur2.parent)
-        add.push(cur2);
-      for (let i = add.length - 1; i >= 0; i--)
-        stack = { node: add[i], next: stack };
+        add2.push(cur2);
+      for (let i = add2.length - 1; i >= 0; i--)
+        stack = { node: add2[i], next: stack };
     }
     return indentFor(stack, cx, pos);
   }
@@ -20722,11 +21526,11 @@
         /* BranchShift */
       ), maxChunk = chunk << 1, minChunk = chunk >> 1;
       let chunked = [], currentLines = 0, currentLen = -1, currentChunk = [];
-      function add(child) {
+      function add2(child) {
         let last;
         if (child.lines > maxChunk && child instanceof _TextNode) {
           for (let node of child.children)
-            add(node);
+            add2(node);
         } else if (child.lines > minChunk && (currentLines > minChunk || !currentLines)) {
           flush();
           chunked.push(child);
@@ -20750,7 +21554,7 @@
         currentLines = currentChunk.length = 0;
       }
       for (let child of children)
-        add(child);
+        add2(child);
       flush();
       return chunked.length == 1 ? chunked[0] : new _TextNode(chunked, length);
     }
@@ -22423,13 +23227,13 @@
     };
   }
   function resolveTransactionInner2(state, spec, docSize) {
-    let sel = spec.selection, annotations = asArray2(spec.annotations);
+    let sel = spec.selection, annotations = asArray3(spec.annotations);
     if (spec.userEvent)
       annotations = annotations.concat(Transaction2.userEvent.of(spec.userEvent));
     return {
       changes: spec.changes instanceof ChangeSet2 ? spec.changes : ChangeSet2.of(spec.changes || [], docSize, state.facet(lineSeparator2)),
       selection: sel && (sel instanceof EditorSelection2 ? sel : EditorSelection2.single(sel.anchor, sel.head)),
-      effects: asArray2(spec.effects),
+      effects: asArray3(spec.effects),
       annotations,
       scrollIntoView: !!spec.scrollIntoView
     };
@@ -22479,7 +23283,7 @@
       else if (Array.isArray(filtered) && filtered.length == 1 && filtered[0] instanceof Transaction2)
         tr = filtered[0];
       else
-        tr = resolveTransaction2(state, asArray2(filtered), false);
+        tr = resolveTransaction2(state, asArray3(filtered), false);
     }
     return tr;
   }
@@ -22493,7 +23297,7 @@
     return spec == tr ? tr : new Transaction2(state, tr.changes, tr.selection, spec.effects, spec.annotations, spec.scrollIntoView);
   }
   var none4 = [];
-  function asArray2(value) {
+  function asArray3(value) {
     return value == null ? none4 : Array.isArray(value) ? value : [value];
   }
   var CharCategory2 = /* @__PURE__ */ (function(CharCategory4) {
@@ -22593,7 +23397,7 @@
           base2 = effect.value;
         } else if (effect.is(StateEffect2.appendConfig)) {
           conf = null;
-          base2 = asArray2(base2).concat(effect.value);
+          base2 = asArray3(base2).concat(effect.value);
         }
       }
       let startValues;
@@ -22633,7 +23437,7 @@
       let sel = this.selection;
       let result1 = f(sel.ranges[0]);
       let changes = this.changes(result1.changes), ranges = [result1.range];
-      let effects = asArray2(result1.effects);
+      let effects = asArray3(result1.effects);
       for (let i = 1; i < sel.ranges.length; i++) {
         let result = f(sel.ranges[i]);
         let newChanges = this.changes(result.changes), newMapped = newChanges.map(changes);
@@ -22642,7 +23446,7 @@
         let mapBy = changes.mapDesc(newChanges, true);
         ranges.push(result.range.map(mapBy));
         changes = changes.compose(newMapped);
-        effects = StateEffect2.mapEffects(effects, newMapped).concat(StateEffect2.mapEffects(asArray2(result.effects), mapBy));
+        effects = StateEffect2.mapEffects(effects, newMapped).concat(StateEffect2.mapEffects(asArray3(result.effects), mapBy));
       }
       return {
         changes,
@@ -24321,13 +25125,13 @@
     };
   }
   function resolveTransactionInner3(state, spec, docSize) {
-    let sel = spec.selection, annotations = asArray3(spec.annotations);
+    let sel = spec.selection, annotations = asArray4(spec.annotations);
     if (spec.userEvent)
       annotations = annotations.concat(Transaction3.userEvent.of(spec.userEvent));
     return {
       changes: spec.changes instanceof ChangeSet3 ? spec.changes : ChangeSet3.of(spec.changes || [], docSize, state.facet(lineSeparator3)),
       selection: sel && (sel instanceof EditorSelection3 ? sel : EditorSelection3.single(sel.anchor, sel.head)),
-      effects: asArray3(spec.effects),
+      effects: asArray4(spec.effects),
       annotations,
       scrollIntoView: !!spec.scrollIntoView
     };
@@ -24377,7 +25181,7 @@
       else if (Array.isArray(filtered) && filtered.length == 1 && filtered[0] instanceof Transaction3)
         tr = filtered[0];
       else
-        tr = resolveTransaction3(state, asArray3(filtered), false);
+        tr = resolveTransaction3(state, asArray4(filtered), false);
     }
     return tr;
   }
@@ -24391,7 +25195,7 @@
     return spec == tr ? tr : new Transaction3(state, tr.changes, tr.selection, spec.effects, spec.annotations, spec.scrollIntoView);
   }
   var none5 = [];
-  function asArray3(value) {
+  function asArray4(value) {
     return value == null ? none5 : Array.isArray(value) ? value : [value];
   }
   var CharCategory3 = /* @__PURE__ */ (function(CharCategory4) {
@@ -24491,7 +25295,7 @@
           base2 = effect.value;
         } else if (effect.is(StateEffect3.appendConfig)) {
           conf = null;
-          base2 = asArray3(base2).concat(effect.value);
+          base2 = asArray4(base2).concat(effect.value);
         }
       }
       let startValues;
@@ -24531,7 +25335,7 @@
       let sel = this.selection;
       let result1 = f(sel.ranges[0]);
       let changes = this.changes(result1.changes), ranges = [result1.range];
-      let effects = asArray3(result1.effects);
+      let effects = asArray4(result1.effects);
       for (let i = 1; i < sel.ranges.length; i++) {
         let result = f(sel.ranges[i]);
         let newChanges = this.changes(result.changes), newMapped = newChanges.map(changes);
@@ -24540,7 +25344,7 @@
         let mapBy = changes.mapDesc(newChanges, true);
         ranges.push(result.range.map(mapBy));
         changes = changes.compose(newMapped);
-        effects = StateEffect3.mapEffects(effects, newMapped).concat(StateEffect3.mapEffects(asArray3(result.effects), mapBy));
+        effects = StateEffect3.mapEffects(effects, newMapped).concat(StateEffect3.mapEffects(asArray4(result.effects), mapBy));
       }
       return {
         changes,
@@ -24875,22 +25679,22 @@
     `Y`.)
     */
     update(updateSpec) {
-      let { add = [], sort = false, filterFrom = 0, filterTo = this.length } = updateSpec;
+      let { add: add2 = [], sort = false, filterFrom = 0, filterTo = this.length } = updateSpec;
       let filter = updateSpec.filter;
-      if (add.length == 0 && !filter)
+      if (add2.length == 0 && !filter)
         return this;
       if (sort)
-        add = add.slice().sort(cmpRange2);
+        add2 = add2.slice().sort(cmpRange2);
       if (this.isEmpty)
-        return add.length ? _RangeSet.of(add) : this;
+        return add2.length ? _RangeSet.of(add2) : this;
       let cur2 = new LayerCursor2(this, null, -1).goto(0), i = 0, spill = [];
       let builder = new RangeSetBuilder2();
-      while (cur2.value || i < add.length) {
-        if (i < add.length && (cur2.from - add[i].from || cur2.startSide - add[i].value.startSide) >= 0) {
-          let range = add[i++];
+      while (cur2.value || i < add2.length) {
+        if (i < add2.length && (cur2.from - add2[i].from || cur2.startSide - add2[i].value.startSide) >= 0) {
+          let range = add2[i++];
           if (!builder.addInner(range.from, range.to, range.value))
             spill.push(range);
-        } else if (cur2.rangeIndex == 1 && cur2.chunkIndex < this.chunk.length && (i == add.length || this.chunkEnd(cur2.chunkIndex) < add[i].from) && (!filter || filterFrom > this.chunkEnd(cur2.chunkIndex) || filterTo < this.chunkPos[cur2.chunkIndex]) && builder.addChunk(this.chunkPos[cur2.chunkIndex], this.chunk[cur2.chunkIndex])) {
+        } else if (cur2.rangeIndex == 1 && cur2.chunkIndex < this.chunk.length && (i == add2.length || this.chunkEnd(cur2.chunkIndex) < add2[i].from) && (!filter || filterFrom > this.chunkEnd(cur2.chunkIndex) || filterTo < this.chunkPos[cur2.chunkIndex]) && builder.addChunk(this.chunkPos[cur2.chunkIndex], this.chunk[cur2.chunkIndex])) {
           cur2.nextChunk();
         } else {
           if (!filter || filterFrom > cur2.to || filterTo < cur2.from || filter(cur2.from, cur2.to, cur2.value)) {
@@ -25800,7 +26604,7 @@
             track.written = true;
           if (child.dom.parentNode == parent) {
             while (next && next != child.dom)
-              next = rm(next);
+              next = rm2(next);
           } else {
             parent.insertBefore(child.dom, next);
           }
@@ -25810,7 +26614,7 @@
         if (next && track && track.node == parent)
           track.written = true;
         while (next)
-          next = rm(next);
+          next = rm2(next);
       } else if (this.dirty & 1) {
         for (let child of this.children)
           if (child.dirty) {
@@ -25967,7 +26771,7 @@
     }
   };
   ContentView2.prototype.breakAfter = 0;
-  function rm(dom) {
+  function rm2(dom) {
     let next = dom.nextSibling;
     dom.parentNode.removeChild(dom);
     return next;
@@ -33025,6 +33829,798 @@
     { tag: tags2.punctuation, class: "cmt-punctuation" }
   ]);
 
+  // node_modules/@codemirror/lint/dist/index.js
+  var SelectedDiagnostic = class {
+    constructor(from, to, diagnostic) {
+      this.from = from;
+      this.to = to;
+      this.diagnostic = diagnostic;
+    }
+  };
+  var LintState = class _LintState {
+    constructor(diagnostics, panel, selected) {
+      this.diagnostics = diagnostics;
+      this.panel = panel;
+      this.selected = selected;
+    }
+    static init(diagnostics, panel, state) {
+      let diagnosticFilter = state.facet(lintConfig).markerFilter;
+      if (diagnosticFilter)
+        diagnostics = diagnosticFilter(diagnostics, state);
+      let sorted = diagnostics.slice().sort((a, b) => a.from - b.from || a.to - b.to);
+      let deco = new RangeSetBuilder(), active = [], pos = 0;
+      let scan = state.doc.iter(), scanPos = 0, docLen = state.doc.length;
+      for (let i = 0; ; ) {
+        let next = i == sorted.length ? null : sorted[i];
+        if (!next && !active.length)
+          break;
+        let from, to;
+        if (active.length) {
+          from = pos;
+          to = active.reduce((p, d) => Math.min(p, d.to), next && next.from > from ? next.from : 1e8);
+        } else {
+          from = next.from;
+          if (from > docLen)
+            break;
+          to = next.to;
+          active.push(next);
+          i++;
+        }
+        while (i < sorted.length) {
+          let next2 = sorted[i];
+          if (next2.from == from && (next2.to > next2.from || next2.to == from)) {
+            active.push(next2);
+            i++;
+            to = Math.min(next2.to, to);
+          } else {
+            to = Math.min(next2.from, to);
+            break;
+          }
+        }
+        to = Math.min(to, docLen);
+        let widget = false;
+        if (active.some((d) => d.from == from && (d.to == to || to == docLen))) {
+          widget = from == to;
+          if (!widget && to - from < 10) {
+            let behind = from - (scanPos + scan.value.length);
+            if (behind > 0) {
+              scan.next(behind);
+              scanPos = from;
+            }
+            for (let check = from; ; ) {
+              if (check >= to) {
+                widget = true;
+                break;
+              }
+              if (!scan.lineBreak && scanPos + scan.value.length > check)
+                break;
+              check = scanPos + scan.value.length;
+              scanPos += scan.value.length;
+              scan.next();
+            }
+          }
+        }
+        let sev = maxSeverity(active);
+        if (widget) {
+          deco.add(from, from, Decoration.widget({
+            widget: new DiagnosticWidget(sev),
+            diagnostics: active.slice()
+          }));
+        } else {
+          let markClass = active.reduce((c, d) => d.markClass ? c + " " + d.markClass : c, "");
+          deco.add(from, to, Decoration.mark({
+            class: "cm-lintRange cm-lintRange-" + sev + markClass,
+            diagnostics: active.slice(),
+            inclusiveEnd: active.some((a) => a.to > to)
+          }));
+        }
+        pos = to;
+        if (pos == docLen)
+          break;
+        for (let i2 = 0; i2 < active.length; i2++)
+          if (active[i2].to <= pos)
+            active.splice(i2--, 1);
+      }
+      let set = deco.finish();
+      return new _LintState(set, panel, findDiagnostic(set));
+    }
+  };
+  function findDiagnostic(diagnostics, diagnostic = null, after = 0) {
+    let found = null;
+    diagnostics.between(after, 1e9, (from, to, { spec }) => {
+      if (diagnostic && spec.diagnostics.indexOf(diagnostic) < 0)
+        return;
+      if (!found)
+        found = new SelectedDiagnostic(from, to, diagnostic || spec.diagnostics[0]);
+      else if (spec.diagnostics.indexOf(found.diagnostic) < 0)
+        return false;
+      else
+        found = new SelectedDiagnostic(found.from, to, found.diagnostic);
+    });
+    return found;
+  }
+  function hideTooltip(tr, tooltip) {
+    let from = tooltip.pos, to = tooltip.end || from;
+    let result = tr.state.facet(lintConfig).hideOn(tr, from, to);
+    if (result != null)
+      return result;
+    let line = tr.startState.doc.lineAt(tooltip.pos);
+    return !!(tr.effects.some((e) => e.is(setDiagnosticsEffect)) || tr.changes.touchesRange(line.from, Math.max(line.to, to)));
+  }
+  function maybeEnableLint(state, effects) {
+    return state.field(lintState, false) ? effects : effects.concat(StateEffect.appendConfig.of(lintExtensions));
+  }
+  function setDiagnostics(state, diagnostics) {
+    return {
+      effects: maybeEnableLint(state, [setDiagnosticsEffect.of(diagnostics)])
+    };
+  }
+  var setDiagnosticsEffect = /* @__PURE__ */ StateEffect.define();
+  var togglePanel = /* @__PURE__ */ StateEffect.define();
+  var movePanelSelection = /* @__PURE__ */ StateEffect.define();
+  var lintState = /* @__PURE__ */ StateField.define({
+    create() {
+      return new LintState(Decoration.none, null, null);
+    },
+    update(value, tr) {
+      if (tr.docChanged && value.diagnostics.size) {
+        let mapped = value.diagnostics.map(tr.changes), selected = null, panel = value.panel;
+        if (value.selected) {
+          let selPos = tr.changes.mapPos(value.selected.from, 1);
+          selected = findDiagnostic(mapped, value.selected.diagnostic, selPos) || findDiagnostic(mapped, null, selPos);
+        }
+        if (!mapped.size && panel && tr.state.facet(lintConfig).autoPanel)
+          panel = null;
+        value = new LintState(mapped, panel, selected);
+      }
+      for (let effect of tr.effects) {
+        if (effect.is(setDiagnosticsEffect)) {
+          let panel = !tr.state.facet(lintConfig).autoPanel ? value.panel : effect.value.length ? LintPanel.open : null;
+          value = LintState.init(effect.value, panel, tr.state);
+        } else if (effect.is(togglePanel)) {
+          value = new LintState(value.diagnostics, effect.value ? LintPanel.open : null, value.selected);
+        } else if (effect.is(movePanelSelection)) {
+          value = new LintState(value.diagnostics, value.panel, effect.value);
+        }
+      }
+      return value;
+    },
+    provide: (f) => [
+      showPanel.from(f, (val) => val.panel),
+      EditorView.decorations.from(f, (s) => s.diagnostics)
+    ]
+  });
+  var activeMark = /* @__PURE__ */ Decoration.mark({ class: "cm-lintRange cm-lintRange-active" });
+  function lintTooltip(view, pos, side) {
+    let { diagnostics } = view.state.field(lintState);
+    let found, start = -1, end = -1;
+    diagnostics.between(pos - (side < 0 ? 1 : 0), pos + (side > 0 ? 1 : 0), (from, to, { spec }) => {
+      if (pos >= from && pos <= to && (from == to || (pos > from || side > 0) && (pos < to || side < 0))) {
+        found = spec.diagnostics;
+        start = from;
+        end = to;
+        return false;
+      }
+    });
+    let diagnosticFilter = view.state.facet(lintConfig).tooltipFilter;
+    if (found && diagnosticFilter)
+      found = diagnosticFilter(found, view.state);
+    if (!found)
+      return null;
+    return {
+      pos: start,
+      end,
+      above: view.state.doc.lineAt(start).to < end,
+      create() {
+        return { dom: diagnosticsTooltip(view, found) };
+      }
+    };
+  }
+  function diagnosticsTooltip(view, diagnostics) {
+    return crelt("ul", { class: "cm-tooltip-lint" }, diagnostics.map((d) => renderDiagnostic(view, d, false)));
+  }
+  var closeLintPanel = (view) => {
+    let field = view.state.field(lintState, false);
+    if (!field || !field.panel)
+      return false;
+    view.dispatch({ effects: togglePanel.of(false) });
+    return true;
+  };
+  var lintPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
+    constructor(view) {
+      this.view = view;
+      this.timeout = -1;
+      this.set = true;
+      let { delay } = view.state.facet(lintConfig);
+      this.lintTime = Date.now() + delay;
+      this.run = this.run.bind(this);
+      this.timeout = setTimeout(this.run, delay);
+    }
+    run() {
+      clearTimeout(this.timeout);
+      let now = Date.now();
+      if (now < this.lintTime - 10) {
+        this.timeout = setTimeout(this.run, this.lintTime - now);
+      } else {
+        this.set = false;
+        let { state } = this.view, { sources } = state.facet(lintConfig);
+        if (sources.length)
+          batchResults(sources.map((s) => Promise.resolve(s(this.view))), (annotations) => {
+            if (this.view.state.doc == state.doc)
+              this.view.dispatch(setDiagnostics(this.view.state, annotations.reduce((a, b) => a.concat(b))));
+          }, (error) => {
+            logException(this.view.state, error);
+          });
+      }
+    }
+    update(update) {
+      let config = update.state.facet(lintConfig);
+      if (update.docChanged || config != update.startState.facet(lintConfig) || config.needsRefresh && config.needsRefresh(update)) {
+        this.lintTime = Date.now() + config.delay;
+        if (!this.set) {
+          this.set = true;
+          this.timeout = setTimeout(this.run, config.delay);
+        }
+      }
+    }
+    force() {
+      if (this.set) {
+        this.lintTime = Date.now();
+        this.run();
+      }
+    }
+    destroy() {
+      clearTimeout(this.timeout);
+    }
+  });
+  function batchResults(promises, sink, error) {
+    let collected = [], timeout = -1;
+    for (let p of promises)
+      p.then((value) => {
+        collected.push(value);
+        clearTimeout(timeout);
+        if (collected.length == promises.length)
+          sink(collected);
+        else
+          timeout = setTimeout(() => sink(collected), 200);
+      }, error);
+  }
+  var lintConfig = /* @__PURE__ */ Facet.define({
+    combine(input) {
+      return {
+        sources: input.map((i) => i.source).filter((x) => x != null),
+        ...combineConfig(input.map((i) => i.config), {
+          delay: 750,
+          markerFilter: null,
+          tooltipFilter: null,
+          needsRefresh: null,
+          hideOn: () => null
+        }, {
+          delay: Math.max,
+          markerFilter: combineFilter,
+          tooltipFilter: combineFilter,
+          needsRefresh: (a, b) => !a ? b : !b ? a : (u) => a(u) || b(u),
+          hideOn: (a, b) => !a ? b : !b ? a : (t3, x, y) => a(t3, x, y) || b(t3, x, y),
+          autoPanel: (a, b) => a || b
+        })
+      };
+    }
+  });
+  function combineFilter(a, b) {
+    return !a ? b : !b ? a : (d, s) => b(a(d, s), s);
+  }
+  function linter(source, config = {}) {
+    return [
+      lintConfig.of({ source, config }),
+      lintPlugin,
+      lintExtensions
+    ];
+  }
+  function assignKeys(actions) {
+    let assigned = [];
+    if (actions)
+      actions: for (let { name: name3 } of actions) {
+        for (let i = 0; i < name3.length; i++) {
+          let ch = name3[i];
+          if (/[a-zA-Z]/.test(ch) && !assigned.some((c) => c.toLowerCase() == ch.toLowerCase())) {
+            assigned.push(ch);
+            continue actions;
+          }
+        }
+        assigned.push("");
+      }
+    return assigned;
+  }
+  function renderDiagnostic(view, diagnostic, inPanel) {
+    var _a3;
+    let keys = inPanel ? assignKeys(diagnostic.actions) : [];
+    return crelt("li", { class: "cm-diagnostic cm-diagnostic-" + diagnostic.severity }, crelt("span", { class: "cm-diagnosticText" }, diagnostic.renderMessage ? diagnostic.renderMessage(view) : diagnostic.message), (_a3 = diagnostic.actions) === null || _a3 === void 0 ? void 0 : _a3.map((action, i) => {
+      let fired = false, click = (e) => {
+        e.preventDefault();
+        if (fired)
+          return;
+        fired = true;
+        let found = findDiagnostic(view.state.field(lintState).diagnostics, diagnostic);
+        if (found)
+          action.apply(view, found.from, found.to);
+      };
+      let { name: name3 } = action, keyIndex = keys[i] ? name3.indexOf(keys[i]) : -1;
+      let nameElt = keyIndex < 0 ? name3 : [
+        name3.slice(0, keyIndex),
+        crelt("u", name3.slice(keyIndex, keyIndex + 1)),
+        name3.slice(keyIndex + 1)
+      ];
+      let markClass = action.markClass ? " " + action.markClass : "";
+      return crelt("button", {
+        type: "button",
+        class: "cm-diagnosticAction" + markClass,
+        onclick: click,
+        onmousedown: click,
+        "aria-label": ` Action: ${name3}${keyIndex < 0 ? "" : ` (access key "${keys[i]})"`}.`
+      }, nameElt);
+    }), diagnostic.source && crelt("div", { class: "cm-diagnosticSource" }, diagnostic.source));
+  }
+  var DiagnosticWidget = class extends WidgetType {
+    constructor(sev) {
+      super();
+      this.sev = sev;
+    }
+    eq(other) {
+      return other.sev == this.sev;
+    }
+    toDOM() {
+      return crelt("span", { class: "cm-lintPoint cm-lintPoint-" + this.sev });
+    }
+  };
+  var PanelItem = class {
+    constructor(view, diagnostic) {
+      this.diagnostic = diagnostic;
+      this.id = "item_" + Math.floor(Math.random() * 4294967295).toString(16);
+      this.dom = renderDiagnostic(view, diagnostic, true);
+      this.dom.id = this.id;
+      this.dom.setAttribute("role", "option");
+    }
+  };
+  var LintPanel = class _LintPanel {
+    constructor(view) {
+      this.view = view;
+      this.items = [];
+      let onkeydown = (event) => {
+        if (event.keyCode == 27) {
+          closeLintPanel(this.view);
+          this.view.focus();
+        } else if (event.keyCode == 38 || event.keyCode == 33) {
+          this.moveSelection((this.selectedIndex - 1 + this.items.length) % this.items.length);
+        } else if (event.keyCode == 40 || event.keyCode == 34) {
+          this.moveSelection((this.selectedIndex + 1) % this.items.length);
+        } else if (event.keyCode == 36) {
+          this.moveSelection(0);
+        } else if (event.keyCode == 35) {
+          this.moveSelection(this.items.length - 1);
+        } else if (event.keyCode == 13) {
+          this.view.focus();
+        } else if (event.keyCode >= 65 && event.keyCode <= 90 && this.selectedIndex >= 0) {
+          let { diagnostic } = this.items[this.selectedIndex], keys = assignKeys(diagnostic.actions);
+          for (let i = 0; i < keys.length; i++)
+            if (keys[i].toUpperCase().charCodeAt(0) == event.keyCode) {
+              let found = findDiagnostic(this.view.state.field(lintState).diagnostics, diagnostic);
+              if (found)
+                diagnostic.actions[i].apply(view, found.from, found.to);
+            }
+        } else {
+          return;
+        }
+        event.preventDefault();
+      };
+      let onclick = (event) => {
+        for (let i = 0; i < this.items.length; i++) {
+          if (this.items[i].dom.contains(event.target))
+            this.moveSelection(i);
+        }
+      };
+      this.list = crelt("ul", {
+        tabIndex: 0,
+        role: "listbox",
+        "aria-label": this.view.state.phrase("Diagnostics"),
+        onkeydown,
+        onclick
+      });
+      this.dom = crelt("div", { class: "cm-panel-lint" }, this.list, crelt("button", {
+        type: "button",
+        name: "close",
+        "aria-label": this.view.state.phrase("close"),
+        onclick: () => closeLintPanel(this.view)
+      }, "\xD7"));
+      this.update();
+    }
+    get selectedIndex() {
+      let selected = this.view.state.field(lintState).selected;
+      if (!selected)
+        return -1;
+      for (let i = 0; i < this.items.length; i++)
+        if (this.items[i].diagnostic == selected.diagnostic)
+          return i;
+      return -1;
+    }
+    update() {
+      let { diagnostics, selected } = this.view.state.field(lintState);
+      let i = 0, needsSync = false, newSelectedItem = null;
+      let seen = /* @__PURE__ */ new Set();
+      diagnostics.between(0, this.view.state.doc.length, (_start, _end, { spec }) => {
+        for (let diagnostic of spec.diagnostics) {
+          if (seen.has(diagnostic))
+            continue;
+          seen.add(diagnostic);
+          let found = -1, item;
+          for (let j = i; j < this.items.length; j++)
+            if (this.items[j].diagnostic == diagnostic) {
+              found = j;
+              break;
+            }
+          if (found < 0) {
+            item = new PanelItem(this.view, diagnostic);
+            this.items.splice(i, 0, item);
+            needsSync = true;
+          } else {
+            item = this.items[found];
+            if (found > i) {
+              this.items.splice(i, found - i);
+              needsSync = true;
+            }
+          }
+          if (selected && item.diagnostic == selected.diagnostic) {
+            if (!item.dom.hasAttribute("aria-selected")) {
+              item.dom.setAttribute("aria-selected", "true");
+              newSelectedItem = item;
+            }
+          } else if (item.dom.hasAttribute("aria-selected")) {
+            item.dom.removeAttribute("aria-selected");
+          }
+          i++;
+        }
+      });
+      while (i < this.items.length && !(this.items.length == 1 && this.items[0].diagnostic.from < 0)) {
+        needsSync = true;
+        this.items.pop();
+      }
+      if (this.items.length == 0) {
+        this.items.push(new PanelItem(this.view, {
+          from: -1,
+          to: -1,
+          severity: "info",
+          message: this.view.state.phrase("No diagnostics")
+        }));
+        needsSync = true;
+      }
+      if (newSelectedItem) {
+        this.list.setAttribute("aria-activedescendant", newSelectedItem.id);
+        this.view.requestMeasure({
+          key: this,
+          read: () => ({ sel: newSelectedItem.dom.getBoundingClientRect(), panel: this.list.getBoundingClientRect() }),
+          write: ({ sel, panel }) => {
+            let scaleY = panel.height / this.list.offsetHeight;
+            if (sel.top < panel.top)
+              this.list.scrollTop -= (panel.top - sel.top) / scaleY;
+            else if (sel.bottom > panel.bottom)
+              this.list.scrollTop += (sel.bottom - panel.bottom) / scaleY;
+          }
+        });
+      } else if (this.selectedIndex < 0) {
+        this.list.removeAttribute("aria-activedescendant");
+      }
+      if (needsSync)
+        this.sync();
+    }
+    sync() {
+      let domPos = this.list.firstChild;
+      function rm3() {
+        let prev = domPos;
+        domPos = prev.nextSibling;
+        prev.remove();
+      }
+      for (let item of this.items) {
+        if (item.dom.parentNode == this.list) {
+          while (domPos != item.dom)
+            rm3();
+          domPos = item.dom.nextSibling;
+        } else {
+          this.list.insertBefore(item.dom, domPos);
+        }
+      }
+      while (domPos)
+        rm3();
+    }
+    moveSelection(selectedIndex) {
+      if (this.selectedIndex < 0)
+        return;
+      let field = this.view.state.field(lintState);
+      let selection = findDiagnostic(field.diagnostics, this.items[selectedIndex].diagnostic);
+      if (!selection)
+        return;
+      this.view.dispatch({
+        selection: { anchor: selection.from, head: selection.to },
+        scrollIntoView: true,
+        effects: movePanelSelection.of(selection)
+      });
+    }
+    static open(view) {
+      return new _LintPanel(view);
+    }
+  };
+  function svg(content3, attrs = `viewBox="0 0 40 40"`) {
+    return `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" ${attrs}>${encodeURIComponent(content3)}</svg>')`;
+  }
+  function underline(color) {
+    return svg(`<path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="${color}" fill="none" stroke-width=".7"/>`, `width="6" height="3"`);
+  }
+  var baseTheme4 = /* @__PURE__ */ EditorView.baseTheme({
+    ".cm-diagnostic": {
+      padding: "3px 6px 3px 8px",
+      marginLeft: "-1px",
+      display: "block",
+      whiteSpace: "pre-wrap"
+    },
+    ".cm-diagnostic-error": { borderLeft: "5px solid #d11" },
+    ".cm-diagnostic-warning": { borderLeft: "5px solid orange" },
+    ".cm-diagnostic-info": { borderLeft: "5px solid #999" },
+    ".cm-diagnostic-hint": { borderLeft: "5px solid #66d" },
+    ".cm-diagnosticAction": {
+      font: "inherit",
+      border: "none",
+      padding: "2px 4px",
+      backgroundColor: "#444",
+      color: "white",
+      borderRadius: "3px",
+      marginLeft: "8px",
+      cursor: "pointer"
+    },
+    ".cm-diagnosticSource": {
+      fontSize: "70%",
+      opacity: 0.7
+    },
+    ".cm-lintRange": {
+      backgroundPosition: "left bottom",
+      backgroundRepeat: "repeat-x",
+      paddingBottom: "0.7px"
+    },
+    ".cm-lintRange-error": { backgroundImage: /* @__PURE__ */ underline("#d11") },
+    ".cm-lintRange-warning": { backgroundImage: /* @__PURE__ */ underline("orange") },
+    ".cm-lintRange-info": { backgroundImage: /* @__PURE__ */ underline("#999") },
+    ".cm-lintRange-hint": { backgroundImage: /* @__PURE__ */ underline("#66d") },
+    ".cm-lintRange-active": { backgroundColor: "#ffdd9980" },
+    ".cm-tooltip-lint": {
+      padding: 0,
+      margin: 0
+    },
+    ".cm-lintPoint": {
+      position: "relative",
+      "&:after": {
+        content: '""',
+        position: "absolute",
+        bottom: 0,
+        left: "-2px",
+        borderLeft: "3px solid transparent",
+        borderRight: "3px solid transparent",
+        borderBottom: "4px solid #d11"
+      }
+    },
+    ".cm-lintPoint-warning": {
+      "&:after": { borderBottomColor: "orange" }
+    },
+    ".cm-lintPoint-info": {
+      "&:after": { borderBottomColor: "#999" }
+    },
+    ".cm-lintPoint-hint": {
+      "&:after": { borderBottomColor: "#66d" }
+    },
+    ".cm-panel.cm-panel-lint": {
+      position: "relative",
+      "& ul": {
+        maxHeight: "100px",
+        overflowY: "auto",
+        "& [aria-selected]": {
+          backgroundColor: "#ddd",
+          "& u": { textDecoration: "underline" }
+        },
+        "&:focus [aria-selected]": {
+          background_fallback: "#bdf",
+          backgroundColor: "Highlight",
+          color_fallback: "white",
+          color: "HighlightText"
+        },
+        "& u": { textDecoration: "none" },
+        padding: 0,
+        margin: 0
+      },
+      "& [name=close]": {
+        position: "absolute",
+        top: "0",
+        right: "2px",
+        background: "inherit",
+        border: "none",
+        font: "inherit",
+        padding: 0,
+        margin: 0
+      }
+    }
+  });
+  function severityWeight(sev) {
+    return sev == "error" ? 4 : sev == "warning" ? 3 : sev == "info" ? 2 : 1;
+  }
+  function maxSeverity(diagnostics) {
+    let sev = "hint", weight = 1;
+    for (let d of diagnostics) {
+      let w = severityWeight(d.severity);
+      if (w > weight) {
+        weight = w;
+        sev = d.severity;
+      }
+    }
+    return sev;
+  }
+  var LintGutterMarker = class extends GutterMarker {
+    constructor(diagnostics) {
+      super();
+      this.diagnostics = diagnostics;
+      this.severity = maxSeverity(diagnostics);
+    }
+    toDOM(view) {
+      let elt = document.createElement("div");
+      elt.className = "cm-lint-marker cm-lint-marker-" + this.severity;
+      let diagnostics = this.diagnostics;
+      let diagnosticsFilter = view.state.facet(lintGutterConfig).tooltipFilter;
+      if (diagnosticsFilter)
+        diagnostics = diagnosticsFilter(diagnostics, view.state);
+      if (diagnostics.length)
+        elt.onmouseover = () => gutterMarkerMouseOver(view, elt, diagnostics);
+      return elt;
+    }
+  };
+  function trackHoverOn(view, marker) {
+    let mousemove = (event) => {
+      let rect = marker.getBoundingClientRect();
+      if (event.clientX > rect.left - 10 && event.clientX < rect.right + 10 && event.clientY > rect.top - 10 && event.clientY < rect.bottom + 10)
+        return;
+      for (let target = event.target; target; target = target.parentNode) {
+        if (target.nodeType == 1 && target.classList.contains("cm-tooltip-lint"))
+          return;
+      }
+      window.removeEventListener("mousemove", mousemove);
+      if (view.state.field(lintGutterTooltip))
+        view.dispatch({ effects: setLintGutterTooltip.of(null) });
+    };
+    window.addEventListener("mousemove", mousemove);
+  }
+  function gutterMarkerMouseOver(view, marker, diagnostics) {
+    function hovered() {
+      let line = view.elementAtHeight(marker.getBoundingClientRect().top + 5 - view.documentTop);
+      const linePos = view.coordsAtPos(line.from);
+      if (linePos) {
+        view.dispatch({ effects: setLintGutterTooltip.of({
+          pos: line.from,
+          above: false,
+          clip: false,
+          create() {
+            return {
+              dom: diagnosticsTooltip(view, diagnostics),
+              getCoords: () => marker.getBoundingClientRect()
+            };
+          }
+        }) });
+      }
+      marker.onmouseout = marker.onmousemove = null;
+      trackHoverOn(view, marker);
+    }
+    let { hoverTime } = view.state.facet(lintGutterConfig);
+    let hoverTimeout = setTimeout(hovered, hoverTime);
+    marker.onmouseout = () => {
+      clearTimeout(hoverTimeout);
+      marker.onmouseout = marker.onmousemove = null;
+    };
+    marker.onmousemove = () => {
+      clearTimeout(hoverTimeout);
+      hoverTimeout = setTimeout(hovered, hoverTime);
+    };
+  }
+  function markersForDiagnostics(doc3, diagnostics) {
+    let byLine = /* @__PURE__ */ Object.create(null);
+    for (let diagnostic of diagnostics) {
+      let line = doc3.lineAt(diagnostic.from);
+      (byLine[line.from] || (byLine[line.from] = [])).push(diagnostic);
+    }
+    let markers = [];
+    for (let line in byLine) {
+      markers.push(new LintGutterMarker(byLine[line]).range(+line));
+    }
+    return RangeSet.of(markers, true);
+  }
+  var lintGutterExtension = /* @__PURE__ */ gutter({
+    class: "cm-gutter-lint",
+    markers: (view) => view.state.field(lintGutterMarkers),
+    widgetMarker: (view, widget, block) => {
+      let diagnostics = [];
+      view.state.field(lintGutterMarkers).between(block.from, block.to, (from, to, value) => {
+        if (from > block.from && from < block.to)
+          diagnostics.push(...value.diagnostics);
+      });
+      return diagnostics.length ? new LintGutterMarker(diagnostics) : null;
+    }
+  });
+  var lintGutterMarkers = /* @__PURE__ */ StateField.define({
+    create() {
+      return RangeSet.empty;
+    },
+    update(markers, tr) {
+      markers = markers.map(tr.changes);
+      let diagnosticFilter = tr.state.facet(lintGutterConfig).markerFilter;
+      for (let effect of tr.effects) {
+        if (effect.is(setDiagnosticsEffect)) {
+          let diagnostics = effect.value;
+          if (diagnosticFilter)
+            diagnostics = diagnosticFilter(diagnostics || [], tr.state);
+          markers = markersForDiagnostics(tr.state.doc, diagnostics.slice(0));
+        }
+      }
+      return markers;
+    }
+  });
+  var setLintGutterTooltip = /* @__PURE__ */ StateEffect.define();
+  var lintGutterTooltip = /* @__PURE__ */ StateField.define({
+    create() {
+      return null;
+    },
+    update(tooltip, tr) {
+      if (tooltip && tr.docChanged)
+        tooltip = hideTooltip(tr, tooltip) ? null : { ...tooltip, pos: tr.changes.mapPos(tooltip.pos) };
+      return tr.effects.reduce((t3, e) => e.is(setLintGutterTooltip) ? e.value : t3, tooltip);
+    },
+    provide: (field) => showTooltip.from(field)
+  });
+  var lintGutterTheme = /* @__PURE__ */ EditorView.baseTheme({
+    ".cm-gutter-lint": {
+      width: "1.4em",
+      "& .cm-gutterElement": {
+        padding: ".2em"
+      }
+    },
+    ".cm-lint-marker": {
+      width: "1em",
+      height: "1em"
+    },
+    ".cm-lint-marker-info": {
+      content: /* @__PURE__ */ svg(`<path fill="#aaf" stroke="#77e" stroke-width="6" stroke-linejoin="round" d="M5 5L35 5L35 35L5 35Z"/>`)
+    },
+    ".cm-lint-marker-warning": {
+      content: /* @__PURE__ */ svg(`<path fill="#fe8" stroke="#fd7" stroke-width="6" stroke-linejoin="round" d="M20 6L37 35L3 35Z"/>`)
+    },
+    ".cm-lint-marker-error": {
+      content: /* @__PURE__ */ svg(`<circle cx="20" cy="20" r="15" fill="#f87" stroke="#f43" stroke-width="6"/>`)
+    }
+  });
+  var lintExtensions = [
+    lintState,
+    /* @__PURE__ */ EditorView.decorations.compute([lintState], (state) => {
+      let { selected, panel } = state.field(lintState);
+      return !selected || !panel || selected.from == selected.to ? Decoration.none : Decoration.set([
+        activeMark.range(selected.from, selected.to)
+      ]);
+    }),
+    /* @__PURE__ */ hoverTooltip(lintTooltip, { hideOn: hideTooltip }),
+    baseTheme4
+  ];
+  var lintGutterConfig = /* @__PURE__ */ Facet.define({
+    combine(configs) {
+      return combineConfig(configs, {
+        hoverTime: 300,
+        markerFilter: null,
+        tooltipFilter: null
+      });
+    }
+  });
+  function lintGutter(config = {}) {
+    return [lintGutterConfig.of(config), lintGutterMarkers, lintGutterExtension, lintGutterTheme, lintGutterTooltip];
+  }
+
   // assets/src/editor/scrollcrafter-editor.js
   console.log("ScrollCrafter Editor module loaded");
   var dslLanguage = StreamLanguage.define({
@@ -33408,6 +35004,59 @@
       }
     }));
   }
+  function posFromLineCol(state, line, column) {
+    const ln = state.doc.line(line);
+    return ln.from + Math.max(0, column - 1);
+  }
+  var dslLinter = linter(async (view) => {
+    const doc3 = view.state.doc.toString();
+    const result = await validateDsl(doc3, "auto");
+    const diagnostics = [];
+    if (!result) return diagnostics;
+    const firstLine = 1;
+    const lastLine = view.state.doc.lines;
+    const addDiagObject = (item, severity) => {
+      if (!item || typeof item.line !== "number") return;
+      const from = posFromLineCol(view.state, item.line, item.column || 1);
+      const to = typeof item.endColumn === "number" ? posFromLineCol(view.state, item.line, item.endColumn) : view.state.doc.line(item.line).to;
+      diagnostics.push({
+        from,
+        to,
+        severity,
+        message: item.message || "DSL validation issue"
+      });
+    };
+    const addDiagString = (msg, severity) => {
+      if (!msg) return;
+      const from = view.state.doc.line(firstLine).from;
+      const to = view.state.doc.line(lastLine).to;
+      diagnostics.push({
+        from,
+        to,
+        severity,
+        message: String(msg)
+      });
+    };
+    if (Array.isArray(result.errors)) {
+      result.errors.forEach((e) => {
+        if (typeof e === "string") {
+          addDiagString(e, "error");
+        } else {
+          addDiagObject(e, "error");
+        }
+      });
+    }
+    if (Array.isArray(result.warnings)) {
+      result.warnings.forEach((w) => {
+        if (typeof w === "string") {
+          addDiagString(w, "warning");
+        } else {
+          addDiagObject(w, "warning");
+        }
+      });
+    }
+    return diagnostics;
+  }, { delay: 500 });
   function getCurrentSection(context) {
     const { state, pos } = context;
     const line = state.doc.lineAt(pos);
@@ -33615,6 +35264,8 @@
           override: [dslCompletionSource],
           activateOnTyping: true
         }),
+        lintGutter(),
+        dslLinter,
         EditorView.lineWrapping
       ]
     });

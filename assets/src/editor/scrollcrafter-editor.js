@@ -6,6 +6,7 @@ import { autocompletion, completionStatus, CompletionContext, acceptCompletion} 
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags } from '@codemirror/highlight';
 import { StreamLanguage } from '@codemirror/language'; // Upewnij się, że zainstalowałeś @codemirror/language
+import { linter, lintGutter } from '@codemirror/lint';
 
 console.log('ScrollCrafter Editor module loaded');
 
@@ -433,6 +434,81 @@ function withSlashApply(options) {
   }));
 }
 
+// Helper: konwertuje (1-based) linia/kolumna na pozycję w dokumencie
+function posFromLineCol(state, line, column) {
+  const ln = state.doc.line(line); // 1-based
+  return ln.from + Math.max(0, column - 1);
+}
+
+// ---------- Linting ----------
+
+const dslLinter = linter(async (view) => {
+  const doc = view.state.doc.toString();
+
+  // ważne: 'auto', żeby nie łamać enum w WP
+  const result = await validateDsl(doc, 'auto');
+
+  const diagnostics = [];
+  if (!result) return diagnostics;
+
+  const firstLine = 1;
+  const lastLine = view.state.doc.lines;
+
+  const addDiagObject = (item, severity) => {
+    if (!item || typeof item.line !== 'number') return;
+
+    const from = posFromLineCol(view.state, item.line, item.column || 1);
+    const to = typeof item.endColumn === 'number'
+      ? posFromLineCol(view.state, item.line, item.endColumn)
+      : view.state.doc.line(item.line).to;
+
+    diagnostics.push({
+      from,
+      to,
+      severity,
+      message: item.message || 'DSL validation issue',
+    });
+  };
+
+  const addDiagString = (msg, severity) => {
+    if (!msg) return;
+    const from = view.state.doc.line(firstLine).from;
+    const to = view.state.doc.line(lastLine).to;
+    diagnostics.push({
+      from,
+      to,
+      severity,
+      message: String(msg),
+    });
+  };
+
+  if (Array.isArray(result.errors)) {
+    result.errors.forEach((e) => {
+      if (typeof e === 'string') {
+        addDiagString(e, 'error');
+      } else {
+        addDiagObject(e, 'error');
+      }
+    });
+  }
+
+  if (Array.isArray(result.warnings)) {
+    result.warnings.forEach((w) => {
+      if (typeof w === 'string') {
+        addDiagString(w, 'warning');
+      } else {
+        addDiagObject(w, 'warning');
+      }
+    });
+  }
+
+  return diagnostics;
+}, { delay: 500 });
+
+
+
+// ---------- Autocomplete Helpers ----------
+
 // Helper: znajdź aktualną sekcję na podstawie linii powyżej kursora
 function getCurrentSection(context) {
   const { state, pos } = context;
@@ -707,6 +783,8 @@ function createEditor(parentNode, initialDoc) {
         override: [dslCompletionSource],
         activateOnTyping: true,
       }),
+      lintGutter(),
+      dslLinter,
       EditorView.lineWrapping,
     ],
   });
