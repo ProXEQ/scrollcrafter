@@ -1,8 +1,8 @@
 import { EditorState } from '@codemirror/state';
-import { EditorView, keymap, highlightSpecialChars, drawSelection } from '@codemirror/view';
+import { EditorView, keymap, highlightSpecialChars, drawSelection, lineNumbers } from '@codemirror/view';
 import { history, historyKeymap } from '@codemirror/commands';
 import { defaultKeymap } from '@codemirror/commands';
-import { autocompletion, completionStatus, CompletionContext, acceptCompletion} from '@codemirror/autocomplete';
+import { autocompletion, completionStatus, CompletionContext, acceptCompletion } from '@codemirror/autocomplete';
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags } from '@codemirror/highlight';
 import { StreamLanguage } from '@codemirror/language'; // Upewnij się, że zainstalowałeś @codemirror/language
@@ -442,68 +442,68 @@ function posFromLineCol(state, line, column) {
 
 // ---------- Linting ----------
 
-const dslLinter = linter(async (view) => {
-  const doc = view.state.doc.toString();
+// ---------- Linting ----------
 
-  // ważne: 'auto', żeby nie łamać enum w WP
-  const result = await validateDsl(doc, 'auto');
+const dslLinter = linter(
+  async (view) => {
+    const doc = view.state.doc.toString();
+    const result = await validateDsl(doc, 'auto');
 
-  const diagnostics = [];
-  if (!result) return diagnostics;
+    if (!result) return [];
 
-  const firstLine = 1;
-  const lastLine = view.state.doc.lines;
+    const diagnostics = [];
+    console.log('validateDsl result.errors', result.errors);
+    console.log('validateDsl result.warnings', result.warnings);
 
-  const addDiagObject = (item, severity) => {
-    if (!item || typeof item.line !== 'number') return;
+    const addDiag = (item, severity) => {
+      if (!item) return;
+      const msg = item.message || 'DSL validation issue';
 
-    const from = posFromLineCol(view.state, item.line, item.column || 1);
-    const to = typeof item.endColumn === 'number'
-      ? posFromLineCol(view.state, item.line, item.endColumn)
-      : view.state.doc.line(item.line).to;
+      // Preferuj pozycje z backendu
+      const line = typeof item.line === 'number' ? item.line : 1;
+      const column = typeof item.column === 'number' ? item.column : 1;
+      const endColumn =
+        typeof item.endColumn === 'number' ? item.endColumn : column + 1;
 
-    diagnostics.push({
-      from,
-      to,
-      severity,
-      message: item.message || 'DSL validation issue',
-    });
-  };
+      const from = posFromLineCol(view.state, line, column);
+      const to = posFromLineCol(view.state, line, endColumn);
 
-  const addDiagString = (msg, severity) => {
-    if (!msg) return;
-    const from = view.state.doc.line(firstLine).from;
-    const to = view.state.doc.line(lastLine).to;
-    diagnostics.push({
-      from,
-      to,
-      severity,
-      message: String(msg),
-    });
-  };
+      diagnostics.push({
+        from,
+        to,
+        severity,
+        message: msg,
+      });
+    };
 
-  if (Array.isArray(result.errors)) {
-    result.errors.forEach((e) => {
-      if (typeof e === 'string') {
-        addDiagString(e, 'error');
-      } else {
-        addDiagObject(e, 'error');
-      }
-    });
+    if (Array.isArray(result.errors)) {
+      result.errors.forEach((e) => {
+        if (typeof e === 'string') {
+          // brak pozycji z backendu → zaznacz tylko znak na linii 1
+          addDiag({ message: e, line: 1, column: 1, endColumn: 2 }, 'error');
+        } else {
+          addDiag(e, 'error');
+        }
+      });
+    }
+
+    if (Array.isArray(result.warnings)) {
+      result.warnings.forEach((w) => {
+        if (typeof w === 'string') {
+          addDiag({ message: w, line: 1, column: 1, endColumn: 2 }, 'warning');
+        } else {
+          addDiag(w, 'warning');
+        }
+      });
+    }
+
+    return diagnostics;
+  },
+  {
+    // CM6 odpala linter dopiero po tej przerwie w pisaniu
+    delay: 1000, // 1s bezczynności → jedno wywołanie /validate [web:188][web:525]
   }
-
-  if (Array.isArray(result.warnings)) {
-    result.warnings.forEach((w) => {
-      if (typeof w === 'string') {
-        addDiagString(w, 'warning');
-      } else {
-        addDiagObject(w, 'warning');
-      }
-    });
-  }
-
-  return diagnostics;
-}, { delay: 500 });
+);
 
 
 
@@ -763,17 +763,17 @@ function createEditor(parentNode, initialDoc) {
     extensions: [
       history(),
       keymap.of([
-  ...defaultKeymap,
-  ...historyKeymap,
-  {
-    key: 'Tab',
-    run(view) {
-      const status = completionStatus(view.state);
-      if (status === 'active') return acceptCompletion(view);
-      return false;
-    },
-  },
-]),
+        ...defaultKeymap,
+        ...historyKeymap,
+        {
+          key: 'Tab',
+          run(view) {
+            const status = completionStatus(view.state);
+            if (status === 'active') return acceptCompletion(view);
+            return false;
+          },
+        },
+      ]),
       highlightSpecialChars(),
       drawSelection(),
       dslTheme,
@@ -783,6 +783,7 @@ function createEditor(parentNode, initialDoc) {
         override: [dslCompletionSource],
         activateOnTyping: true,
       }),
+      lineNumbers(),
       lintGutter(),
       dslLinter,
       EditorView.lineWrapping,
@@ -929,7 +930,7 @@ async function validateDsl(script, mode = 'auto') {
       statusText.textContent = 'Applied (preview on front-end refresh)';
       modal.classList.remove('sc-dsl-editor__status--error');
       modal.classList.add('sc-dsl-editor__status--ok');
-      
+
       close();
     };
     // Apply & Preview Button
@@ -947,14 +948,22 @@ async function validateDsl(script, mode = 'auto') {
 
       if (!result.ok) {
         // Błąd krytyczny
-        statusText.textContent = `Error: ${result.errors.join(' | ') || 'Unknown error'}`;
+        const errorMessages = (result.errors || [])
+          .map(e => typeof e === 'string' ? e : e.message)
+          .filter(Boolean)
+          .join(' | ');
+        statusText.textContent = `Error: ${errorMessages || 'Unknown error'}`;
         modal.classList.add('sc-dsl-editor__status--error');
         return;
       }
 
       if (result.warnings && result.warnings.length) {
         // Ostrzeżenia – nie zamykamy modala, użytkownik może poprawić DSL
-        statusText.textContent = `Warnings: ${result.warnings.join(' | ')}`;
+        const warningMessages = (result.warnings || [])
+          .map(w => typeof w === 'string' ? w : w.message)
+          .filter(Boolean)
+          .join(' | ');
+        statusText.textContent = `Warning: ${warningMessages || 'Check your DSL'}`;
         modal.classList.add('sc-dsl-editor__status--warning');
         return;
       }

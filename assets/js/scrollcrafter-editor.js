@@ -13479,6 +13479,80 @@
         return false;
     return true;
   }
+  var lineNumberMarkers = /* @__PURE__ */ Facet.define();
+  var lineNumberWidgetMarker = /* @__PURE__ */ Facet.define();
+  var lineNumberConfig = /* @__PURE__ */ Facet.define({
+    combine(values) {
+      return combineConfig(values, { formatNumber: String, domEventHandlers: {} }, {
+        domEventHandlers(a, b) {
+          let result = Object.assign({}, a);
+          for (let event in b) {
+            let exists = result[event], add2 = b[event];
+            result[event] = exists ? (view, line, event2) => exists(view, line, event2) || add2(view, line, event2) : add2;
+          }
+          return result;
+        }
+      });
+    }
+  });
+  var NumberMarker = class extends GutterMarker {
+    constructor(number3) {
+      super();
+      this.number = number3;
+    }
+    eq(other) {
+      return this.number == other.number;
+    }
+    toDOM() {
+      return document.createTextNode(this.number);
+    }
+  };
+  function formatNumber(view, number3) {
+    return view.state.facet(lineNumberConfig).formatNumber(number3, view.state);
+  }
+  var lineNumberGutter = /* @__PURE__ */ activeGutters.compute([lineNumberConfig], (state) => ({
+    class: "cm-lineNumbers",
+    renderEmptyElements: false,
+    markers(view) {
+      return view.state.facet(lineNumberMarkers);
+    },
+    lineMarker(view, line, others) {
+      if (others.some((m) => m.toDOM))
+        return null;
+      return new NumberMarker(formatNumber(view, view.state.doc.lineAt(line.from).number));
+    },
+    widgetMarker: (view, widget, block) => {
+      for (let m of view.state.facet(lineNumberWidgetMarker)) {
+        let result = m(view, widget, block);
+        if (result)
+          return result;
+      }
+      return null;
+    },
+    lineMarkerChange: (update) => update.startState.facet(lineNumberConfig) != update.state.facet(lineNumberConfig),
+    initialSpacer(view) {
+      return new NumberMarker(formatNumber(view, maxLineNumber(view.state.doc.lines)));
+    },
+    updateSpacer(spacer, update) {
+      let max = formatNumber(update.view, maxLineNumber(update.view.state.doc.lines));
+      return max == spacer.number ? spacer : new NumberMarker(max);
+    },
+    domEventHandlers: state.facet(lineNumberConfig).domEventHandlers,
+    side: "before"
+  }));
+  function lineNumbers(config = {}) {
+    return [
+      lineNumberConfig.of(config),
+      gutters(),
+      lineNumberGutter
+    ];
+  }
+  function maxLineNumber(lines) {
+    let last = 9;
+    while (last < lines)
+      last = last * 10 + 9;
+    return last;
+  }
 
   // node_modules/@lezer/common/dist/index.js
   var DefaultBufferLength = 1024;
@@ -35008,55 +35082,55 @@
     const ln = state.doc.line(line);
     return ln.from + Math.max(0, column - 1);
   }
-  var dslLinter = linter(async (view) => {
-    const doc3 = view.state.doc.toString();
-    const result = await validateDsl(doc3, "auto");
-    const diagnostics = [];
-    if (!result) return diagnostics;
-    const firstLine = 1;
-    const lastLine = view.state.doc.lines;
-    const addDiagObject = (item, severity) => {
-      if (!item || typeof item.line !== "number") return;
-      const from = posFromLineCol(view.state, item.line, item.column || 1);
-      const to = typeof item.endColumn === "number" ? posFromLineCol(view.state, item.line, item.endColumn) : view.state.doc.line(item.line).to;
-      diagnostics.push({
-        from,
-        to,
-        severity,
-        message: item.message || "DSL validation issue"
-      });
-    };
-    const addDiagString = (msg, severity) => {
-      if (!msg) return;
-      const from = view.state.doc.line(firstLine).from;
-      const to = view.state.doc.line(lastLine).to;
-      diagnostics.push({
-        from,
-        to,
-        severity,
-        message: String(msg)
-      });
-    };
-    if (Array.isArray(result.errors)) {
-      result.errors.forEach((e) => {
-        if (typeof e === "string") {
-          addDiagString(e, "error");
-        } else {
-          addDiagObject(e, "error");
-        }
-      });
+  var dslLinter = linter(
+    async (view) => {
+      const doc3 = view.state.doc.toString();
+      const result = await validateDsl(doc3, "auto");
+      if (!result) return [];
+      const diagnostics = [];
+      console.log("validateDsl result.errors", result.errors);
+      console.log("validateDsl result.warnings", result.warnings);
+      const addDiag = (item, severity) => {
+        if (!item) return;
+        const msg = item.message || "DSL validation issue";
+        const line = typeof item.line === "number" ? item.line : 1;
+        const column = typeof item.column === "number" ? item.column : 1;
+        const endColumn = typeof item.endColumn === "number" ? item.endColumn : column + 1;
+        const from = posFromLineCol(view.state, line, column);
+        const to = posFromLineCol(view.state, line, endColumn);
+        diagnostics.push({
+          from,
+          to,
+          severity,
+          message: msg
+        });
+      };
+      if (Array.isArray(result.errors)) {
+        result.errors.forEach((e) => {
+          if (typeof e === "string") {
+            addDiag({ message: e, line: 1, column: 1, endColumn: 2 }, "error");
+          } else {
+            addDiag(e, "error");
+          }
+        });
+      }
+      if (Array.isArray(result.warnings)) {
+        result.warnings.forEach((w) => {
+          if (typeof w === "string") {
+            addDiag({ message: w, line: 1, column: 1, endColumn: 2 }, "warning");
+          } else {
+            addDiag(w, "warning");
+          }
+        });
+      }
+      return diagnostics;
+    },
+    {
+      // CM6 odpala linter dopiero po tej przerwie w pisaniu
+      delay: 1e3
+      // 1s bezczynności → jedno wywołanie /validate [web:188][web:525]
     }
-    if (Array.isArray(result.warnings)) {
-      result.warnings.forEach((w) => {
-        if (typeof w === "string") {
-          addDiagString(w, "warning");
-        } else {
-          addDiagObject(w, "warning");
-        }
-      });
-    }
-    return diagnostics;
-  }, { delay: 500 });
+  );
   function getCurrentSection(context) {
     const { state, pos } = context;
     const line = state.doc.lineAt(pos);
@@ -35264,6 +35338,7 @@
           override: [dslCompletionSource],
           activateOnTyping: true
         }),
+        lineNumbers(),
         lintGutter(),
         dslLinter,
         EditorView.lineWrapping
@@ -35387,12 +35462,14 @@
         modal.classList.remove("sc-dsl-editor__status--warning");
         const result = await validateDsl(newScript, "auto");
         if (!result.ok) {
-          statusText.textContent = `Error: ${result.errors.join(" | ") || "Unknown error"}`;
+          const errorMessages = (result.errors || []).map((e) => typeof e === "string" ? e : e.message).filter(Boolean).join(" | ");
+          statusText.textContent = `Error: ${errorMessages || "Unknown error"}`;
           modal.classList.add("sc-dsl-editor__status--error");
           return;
         }
         if (result.warnings && result.warnings.length) {
-          statusText.textContent = `Warnings: ${result.warnings.join(" | ")}`;
+          const warningMessages = (result.warnings || []).map((w) => typeof w === "string" ? w : w.message).filter(Boolean).join(" | ");
+          statusText.textContent = `Warning: ${warningMessages || "Check your DSL"}`;
           modal.classList.add("sc-dsl-editor__status--warning");
           return;
         }

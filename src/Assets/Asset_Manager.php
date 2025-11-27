@@ -5,44 +5,52 @@ namespace ScrollCrafter\Assets;
 use ScrollCrafter\Support\Config;
 use ScrollCrafter\Support\Logger;
 
-
 class Asset_Manager
 {
+	// Wersja bibliotek GSAP używana w pluginie (do łatwej aktualizacji).
+	private const GSAP_VERSION = '3.13.0';
+
     public function hooks(): void
     {
         add_action( 'wp_enqueue_scripts', [ $this, 'register_frontend_assets' ], 5 );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_frontend_assets' ], 20 );
+		
+		// Używamy 'elementor/editor/before_enqueue_scripts', aby GSAP był dostępny jak najwcześniej
+		add_action( 'elementor/editor/before_enqueue_scripts', [ $this, 'register_frontend_assets' ], 5 );
 		add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
+		
 		Logger::log( 'Asset_Manager hooks registered', 'assets' );
 	}
 
     public function register_frontend_assets(): void
     {
-        $config = Config::instance();
+		// Zapobiegaj podwójnej rejestracji
+		if ( wp_script_is( 'scrollcrafter-gsap', 'registered' ) ) {
+			return;
+		}
 
-        $mode = $config->get_gsap_mode(); // 'local' | 'cdn_custom' | 'cdn_gsap_docs'
+		Logger::log( 'Registering ScrollCrafter frontend assets', 'assets' );
+
+        $config = Config::instance();
+        $mode   = $config->get_gsap_mode(); // 'local' | 'cdn_custom' | 'cdn_gsap_docs'
 
         if ( 'cdn_gsap_docs' === $mode ) {
-            // Tryb „jak w docs GSAP” – jsDelivr, nazwy zbliżone do przykładu.
             wp_register_script(
                 'scrollcrafter-gsap',
-                'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js',
+                'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/gsap.min.js',
                 [],
                 null,
                 true
             );
-			Logger::log( 'Registered GSAP from jsDelivr CDN', 'assets' );
 
             wp_register_script(
                 'scrollcrafter-gsap-scrolltrigger',
-                'https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js',
+                'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/ScrollTrigger.min.js',
                 [ 'scrollcrafter-gsap' ],
                 null,
                 true
             );
-			Logger::log( 'Registered ScrollTrigger from jsDelivr CDN', 'assets' );
         } elseif ( 'cdn_custom' === $mode ) {
-            // Niestandardowy CDN z ustawień pluginu.
             wp_register_script(
                 'scrollcrafter-gsap',
                 $config->get_gsap_cdn_url(),
@@ -58,7 +66,6 @@ class Asset_Manager
                 SCROLLCRAFTER_VERSION,
                 true
             );
-			Logger::log( 'Registered GSAP and ScrollTrigger from custom CDN', 'assets' );
         } else {
             // Tryb domyślny: lokalnie.
             wp_register_script(
@@ -76,7 +83,6 @@ class Asset_Manager
                 SCROLLCRAFTER_VERSION,
                 true
             );
-			Logger::log( 'Registered local GSAP and ScrollTrigger', 'assets' );
         }
 
         // Frontend bundle – zawsze zależny od GSAP + ScrollTrigger.
@@ -87,7 +93,6 @@ class Asset_Manager
             SCROLLCRAFTER_VERSION,
             true
         );
-		Logger::log( 'Registered ScrollCrafter frontend bundle', 'assets' );
 
         wp_localize_script(
             'scrollcrafter-frontend',
@@ -96,43 +101,44 @@ class Asset_Manager
                 'debug' => $config->is_debug(),
             ]
         );
-		Logger::log( 'Localized ScrollCrafterConfig for frontend', 'assets' );
     }
 
     public function enqueue_frontend_assets(): void
     {
         if ( is_admin() ) {
-			Logger::log( 'Not enqueueing frontend assets in admin area', 'assets' );
             return;
         }
 
-        // TODO: w następnej iteracji uzależnić to od obecności widżetów na stronie.
+        // TODO: w przyszłości dodać 'Asset Deduction' (sprawdzanie czy widgety są na stronie)
         wp_enqueue_script( 'scrollcrafter-gsap' );
         wp_enqueue_script( 'scrollcrafter-gsap-scrolltrigger' );
         wp_enqueue_script( 'scrollcrafter-frontend' );
+		
 		Logger::log( 'Enqueued ScrollCrafter frontend assets', 'assets' );
     }
+
 	public function enqueue_editor_assets(): void
-{
-    // GSAP + runtime (ten sam co na froncie):
-    // $this->enqueue_frontend_assets();
+	{
+		wp_enqueue_script( 'scrollcrafter-gsap' );
+		wp_enqueue_script( 'scrollcrafter-gsap-scrolltrigger' );
+		wp_enqueue_script( 'scrollcrafter-frontend' );
 
-    wp_enqueue_script(
-        'scrollcrafter-editor',
-        plugins_url( '/assets/js/scrollcrafter-editor.js', SCROLLCRAFTER_FILE ),
-        [ 'jquery', 'elementor-editor' ],
-        SCROLLCRAFTER_VERSION,
-        true
-    );
-	Logger::log( 'Enqueued ScrollCrafter editor script', 'assets' );
+		// Skrypty i style samego edytora (CodeMirror/Modal)
+		wp_enqueue_script(
+			'scrollcrafter-editor',
+			SCROLLCRAFTER_URL . 'assets/js/scrollcrafter-editor.js',
+			[ 'jquery', 'elementor-editor' ], // Zależności edytora
+			SCROLLCRAFTER_VERSION,
+			true
+		);
 
-    wp_enqueue_style(
-        'scrollcrafter-editor',
-        plugins_url( '/assets/src/editor/scrollcrafter-editor.css', SCROLLCRAFTER_FILE ),
-        [],
-        SCROLLCRAFTER_VERSION
-    );
-	Logger::log( 'Enqueued ScrollCrafter editor styles', 'assets' );
-}
-
+		wp_enqueue_style(
+			'scrollcrafter-editor',
+			SCROLLCRAFTER_URL . 'assets/src/editor/scrollcrafter-editor.css', // TODO: Przenieść do assets/css po buildzie
+			[],
+			SCROLLCRAFTER_VERSION
+		);
+		
+		Logger::log( 'Enqueued ScrollCrafter editor assets', 'assets' );
+	}
 }

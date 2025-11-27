@@ -152,6 +152,29 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Style dla Linta w CM6 */
+
+/* Minimalne style dla linta CM6 */
+.cm-lintRange.cm-lintRange-error {
+  background-color: rgba(255, 0, 0, 0.15);
+}
+
+.cm-lintRange.cm-lintRange-warning {
+  background-color: rgba(255, 165, 0, 0.15);
+}
+
+.cm-lintPoint.cm-lintPoint-error {
+  border-bottom: 2px solid #ff4d4f;
+}
+
+.cm-lintPoint.cm-lintPoint-warning {
+  border-bottom: 2px solid #faad14;
+}
+
+.cm-tooltip-lint {
+  font-size: 11px;
+}
+
 
 /* Responsywność */
 @media (max-width: 1200px) {

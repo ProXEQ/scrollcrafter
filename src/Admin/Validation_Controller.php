@@ -70,10 +70,20 @@ class Validation_Controller
         if ( '' === trim( $script ) ) {
             Logger::log( 'Validation failed: empty script', 'validation' );
 
+            $errors = [
+                $this->normalize_message( 
+                    [
+                        'message' => 'The script is empty.',
+                        'line'    => 1,
+                        'column'  => 1,
+                        'code'    => 'empty_script',
+                    ] 
+                ),
+            ];
             return new WP_REST_Response(
                 [
                     'ok'       => false,
-                    'errors'   => [ 'Empty script.' ],
+                    'errors'   => $errors,
                     'warnings' => [],
                     'config'   => null,
                 ],
@@ -87,10 +97,20 @@ class Validation_Controller
         } catch ( \Throwable $e ) {
             Logger::log_exception( $e, 'validation' );
 
+            $errors = [
+                $this->normalize_message( 
+                    [
+                        'message' => $e->getMessage(),
+                        'code'    => 'PARSER_EXCEPTION',
+                    ],
+                    'error'
+                ),
+            ];
+
             return new WP_REST_Response(
                 [
                     'ok'       => false,
-                    'errors'   => [ $e->getMessage() ],
+                    'errors'   => $errors,
                     'warnings' => [],
                     'config'   => null,
                 ],
@@ -98,7 +118,17 @@ class Validation_Controller
             );
         }
 
-        $warnings = (array) ( $parsed['_warnings'] ?? [] );
+                $rawWarnings = (array) ( $parsed['_warnings'] ?? [] );
+        $warnings    = [];
+        foreach ( $rawWarnings as $w ) {
+            $warnings[] = $this->normalize_message( $w, 'warning' );
+        }
+
+        $rawErrors = (array) ( $parsed['_errors'] ?? [] ); // możesz dodać taką tablicę w parserze
+        $errors    = [];
+        foreach ( $rawErrors as $e ) {
+            $errors[] = $this->normalize_message( $e, 'error' );
+        }
         $scroll   = $parsed['scroll'] ?? [];
 
         // "Element" tylko dla potrzeb builderów – ID nie ma znaczenia.
@@ -144,6 +174,7 @@ class Validation_Controller
         Logger::log(
             [
                 'warnings' => $warnings,
+                'errors'   => $errors,
                 'config'   => $config,
             ],
             'validation_result'
@@ -151,12 +182,14 @@ class Validation_Controller
 
         Logger::log( 'Validation completed successfully', 'validation' );
 
+        $ok = empty( $errors );
+
         return new WP_REST_Response(
             [
-                'ok'       => true,
-                'errors'   => [],
+                'ok'       => $ok,
+                'errors'   => $errors,
                 'warnings' => $warnings,
-                'config'   => $config,
+                'config'   => $ok ? $config : null,
             ],
             200
         );
@@ -207,5 +240,46 @@ class Validation_Controller
         Logger::log( 'Built scrollTrigger config for validation', 'validation' );
 
         return $scrollTrigger;
+    }
+
+/**
+* @param string|array<string,mixed> $item
+*/
+    private function normalize_message( $item, string $severity = 'error' ): array {
+        // String -> prosty komunikat bez pozycji
+        if ( is_string( $item ) ) {
+            return [
+                'message'  => $item,
+                'severity' => $severity,
+            ];
+        }
+
+        if ( ! is_array( $item ) ) {
+            return [
+                'message'  => 'Unknown validation issue.',
+                'severity' => $severity,
+            ];
+        }
+
+        $message = (string) ( $item['message'] ?? 'Unknown validation issue.' );
+
+    // Jeśli nie ma 'line', spróbuj wyciągnąć go z message ("at line 14")
+    if ( ! isset( $item['line'] ) ) {
+        if ( preg_match( '/line\s+(\d+)/i', $message, $m ) ) {
+            $item['line'] = (int) $m[1];
+        }
+    }
+
+        return [
+            'message'   => (string) ( $item['message'] ?? 'Unknown validation issue.' ),
+            'severity'  => $severity,
+            'line'      => isset( $item['line'] ) ? (int) $item['line'] : null,
+            'column'    => isset( $item['column'] ) ? (int) $item['column'] : null,
+            'endLine'   => isset( $item['endLine'] ) ? (int) $item['endLine'] : null,
+            'endColumn' => isset( $item['endColumn'] ) ? (int) $item['endColumn'] : null,
+            'code'      => isset( $item['code'] ) ? (string) $item['code'] : null,
+            'section'   => isset( $item['section'] ) ? (string) $item['section'] : null,
+            'field'     => isset( $item['field'] ) ? (string) $item['field'] : null,
+        ];
     }
 }
