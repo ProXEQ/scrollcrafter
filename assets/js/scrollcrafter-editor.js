@@ -12292,6 +12292,49 @@
       return false;
     }
   };
+  var Placeholder = class extends WidgetType {
+    constructor(content3) {
+      super();
+      this.content = content3;
+    }
+    toDOM(view) {
+      let wrap = document.createElement("span");
+      wrap.className = "cm-placeholder";
+      wrap.style.pointerEvents = "none";
+      wrap.appendChild(typeof this.content == "string" ? document.createTextNode(this.content) : typeof this.content == "function" ? this.content(view) : this.content.cloneNode(true));
+      wrap.setAttribute("aria-hidden", "true");
+      return wrap;
+    }
+    coordsAt(dom) {
+      let rects = dom.firstChild ? clientRectsFor(dom.firstChild) : [];
+      if (!rects.length)
+        return null;
+      let style = window.getComputedStyle(dom.parentNode);
+      let rect = flattenRect(rects[0], style.direction != "rtl");
+      let lineHeight = parseInt(style.lineHeight);
+      if (rect.bottom - rect.top > lineHeight * 1.5)
+        return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.top + lineHeight };
+      return rect;
+    }
+    ignoreEvent() {
+      return false;
+    }
+  };
+  function placeholder(content3) {
+    let plugin = ViewPlugin.fromClass(class {
+      constructor(view) {
+        this.view = view;
+        this.placeholder = content3 ? Decoration.set([Decoration.widget({ widget: new Placeholder(content3), side: 1 }).range(0)]) : Decoration.none;
+      }
+      get decorations() {
+        return this.view.state.doc.length ? Decoration.none : this.placeholder;
+      }
+    }, { decorations: (v) => v.decorations });
+    return typeof content3 == "string" ? [
+      plugin,
+      EditorView.contentAttributes.of({ "aria-placeholder": content3 })
+    ] : plugin;
+  }
   var Outside = "-10000px";
   var TooltipViewManager = class {
     constructor(view, facet, createTooltipView, removeTooltipView) {
@@ -19883,13 +19926,6 @@
     { key: "Enter", run: acceptCompletion }
   ];
   var completionKeymapExt = /* @__PURE__ */ Prec.highest(/* @__PURE__ */ keymap.computeN([completionConfig], (state) => state.facet(completionConfig).defaultKeymap ? [completionKeymap] : []));
-  function completionStatus(state) {
-    let cState = state.field(completionState, false);
-    return cState && cState.active.some((a) => a.isPending) ? "pending" : cState && cState.active.some(
-      (a) => a.state != 0
-      /* State.Inactive */
-    ) ? "active" : null;
-  }
 
   // node_modules/@codemirror/highlight/node_modules/@lezer/common/dist/index.js
   var DefaultBufferLength2 = 1024;
@@ -34695,13 +34731,116 @@
     return [lintGutterConfig.of(config), lintGutterMarkers, lintGutterExtension, lintGutterTheme, lintGutterTooltip];
   }
 
+  // assets/src/editor/field-defs.js
+  var FIELD_DEFS = {
+    animation: {
+      type: {
+        label: "type:",
+        detail: "tween type",
+        values: [{ label: "from" }, { label: "to" }, { label: "fromTo" }]
+      },
+      from: { label: "from:", detail: "vars (y=50, opacity=0)" },
+      to: { label: "to:", detail: "vars (y=0, opacity=1)" },
+      duration: {
+        label: "duration:",
+        detail: "seconds",
+        values: [{ label: "0.5" }, { label: "1" }, { label: "2" }]
+      },
+      delay: { label: "delay:", detail: "seconds" },
+      ease: {
+        label: "ease:",
+        detail: "gsap ease",
+        values: [
+          { label: "power1.out" },
+          { label: "power2.out" },
+          { label: "back.out(1.7)" },
+          { label: "elastic.out(1, 0.3)" },
+          { label: "none" }
+        ]
+      },
+      stagger: { label: "stagger:", detail: "seconds" }
+    },
+    scroll: {
+      start: { label: "start:", detail: "position", values: [{ label: "top 80%" }, { label: "top center" }] },
+      end: { label: "end:", detail: "position", values: [{ label: "bottom 20%" }] },
+      scrub: { label: "scrub:", detail: "bool/num", values: [{ label: "true" }, { label: "1" }] },
+      once: { label: "once:", detail: "bool", values: [{ label: "true" }, { label: "false" }] },
+      markers: { label: "markers:", detail: "bool", values: [{ label: "true" }, { label: "false" }] },
+      toggleActions: {
+        label: "toggleActions:",
+        detail: "actions",
+        values: [{ label: "play none none reverse" }, { label: "play pause resume reset" }]
+      },
+      pin: { label: "pin:", detail: "bool", values: [{ label: "true" }] },
+      pinSpacing: { label: "pinSpacing:", detail: "bool", values: [{ label: "true" }] }
+    },
+    target: {
+      selector: { label: "selector:", detail: "css selector" }
+    },
+    timeline: {
+      "timeline.defaults.duration": { label: "timeline.defaults.duration:", detail: "seconds" },
+      "timeline.defaults.ease": { label: "timeline.defaults.ease:", detail: "ease" },
+      "timeline.defaults.stagger": { label: "timeline.defaults.stagger:", detail: "seconds" }
+    },
+    "step.*": {
+      type: { label: "type:", detail: "tween type", values: [{ label: "from" }, { label: "to" }, { label: "fromTo" }] },
+      selector: { label: "selector:", detail: "child selector", info: "Target specific children (e.g. h2)" },
+      from: { label: "from:", detail: "vars", values: [
+        { label: "x=calc_horizontal_scroll" },
+        { label: "x=calc_100vw" },
+        { label: "opacity=0" }
+      ] },
+      to: { label: "to:", detail: "vars", values: [
+        { label: "x=calc_horizontal_scroll" },
+        { label: "x=calc_100vw" },
+        { label: "opacity=1" }
+      ] },
+      duration: { label: "duration:", detail: "seconds" },
+      delay: { label: "delay:", detail: "seconds" },
+      ease: { label: "ease:", detail: "ease", values: [{ label: "power2.out" }] },
+      stagger: { label: "stagger:", detail: "seconds" },
+      startAt: { label: "startAt:", detail: "position", values: [{ label: "<" }, { label: "+=0.5" }] }
+    }
+  };
+  var SECTION_HEADERS = [
+    { label: "[animation]", type: "keyword" },
+    { label: "[scroll]", type: "keyword" },
+    { label: "[target]", type: "keyword" },
+    { label: "[timeline]", type: "keyword" },
+    { label: "[step.1]", type: "keyword" }
+  ];
+
   // assets/src/editor/scrollcrafter-editor.js
-  console.log("ScrollCrafter Editor module loaded");
+  var DEBUG = true;
+  var log = (...args) => DEBUG && console.log("[SC Editor]", ...args);
+  var lastValidationState = {
+    valid: true,
+    hasCriticalErrors: false,
+    diagnostics: []
+  };
+  async function fetchValidation(scriptContent) {
+    var _a3, _b;
+    const apiRoot = ((_a3 = window.wpApiSettings) == null ? void 0 : _a3.root) || "/wp-json/";
+    const nonce = ((_b = window.wpApiSettings) == null ? void 0 : _b.nonce) || "";
+    try {
+      const res = await fetch(`${apiRoot}scrollcrafter/v1/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-WP-Nonce": nonce },
+        body: JSON.stringify({ script: scriptContent, mode: "auto" })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      log("[SC Validation] Response received");
+      return await res.json();
+    } catch (e) {
+      console.error("[SC Validation] Error:", e);
+      return { ok: false, errors: [{ message: "Validation API unreachable", line: 1 }] };
+    }
+  }
   var dslLanguage = StreamLanguage.define({
     startState() {
       return {};
     },
-    token(stream, state) {
+    token(stream) {
       if (stream.eatSpace()) return null;
       if (stream.peek() === "#") {
         stream.skipToEnd();
@@ -34710,324 +34849,38 @@
       if (stream.peek() === "[") {
         stream.next();
         while (!stream.eol()) {
-          const ch2 = stream.next();
-          if (ch2 === "]") break;
+          const ch = stream.next();
+          if (ch === "]") break;
         }
         return "keyword";
       }
-      let ch = stream.peek();
-      if (/[a-zA-Z_]/.test(ch)) {
-        let word = "";
-        while ((ch = stream.peek()) && /[a-zA-Z0-9_.]/.test(ch)) {
-          word += ch;
-          stream.next();
-        }
-        if (stream.peek() === ":") {
-          stream.next();
-          return "propertyName";
-        }
+      if (stream.match(/^[a-zA-Z0-9_.]+(?=:)/)) return "propertyName";
+      if (stream.peek() === ":") {
+        stream.next();
         return null;
       }
-      if (/[0-9]/.test(stream.peek())) {
-        let hasDot = false;
-        while (!stream.eol()) {
-          const ch2 = stream.peek();
-          if (ch2 === "." && !hasDot) {
-            hasDot = true;
-            stream.next();
-          } else if (/[0-9]/.test(ch2)) {
-            stream.next();
-          } else {
-            break;
-          }
-        }
-        return "number";
-      }
+      if (stream.match(/^-?\d*\.?\d+/)) return "number";
       stream.next();
       return null;
     }
   });
   var dslHighlightStyle = HighlightStyle.define([
     { tag: tags2.propertyName, color: "#ffcc66" },
-    // type, from, start, end...
     { tag: tags2.keyword, color: "#7ab6ff", fontWeight: "bold" },
-    // [animation], [scroll]...
     { tag: tags2.comment, color: "#76839a", fontStyle: "italic" },
     { tag: tags2.number, color: "#89ddff" }
   ]);
   var dslTheme = EditorView.theme(
     {
-      "&": {
-        backgroundColor: "#14161d",
-        color: "#f5f5f5",
-        fontSize: "12px"
-      },
-      ".cm-content": {
-        fontFamily: 'Menlo, Monaco, Consolas, "Courier New", monospace',
-        padding: "6px 8px"
-      },
-      ".cm-scroller": {
-        overflow: "auto"
-      },
-      ".cm-line": {
-        padding: "0 2px"
-      }
+      "&": { backgroundColor: "#14161d", color: "#f5f5f5", fontSize: "12px" },
+      ".cm-content": { fontFamily: "Menlo, Monaco, Consolas, monospace", padding: "6px 8px" },
+      ".cm-scroller": { overflow: "auto" },
+      ".cm-line": { padding: "0 2px" },
+      ".cm-tooltip": { backgroundColor: "#21252b", border: "1px solid #181a1f", color: "#f5f5f5" },
+      ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "#2c313a", color: "#fff" }
     },
     { dark: true }
   );
-  var FIELD_DEFS = {
-    animation: {
-      type: {
-        label: "type:",
-        detail: "from | to | fromTo",
-        description: "Typ tweena w GSAP: from, to lub fromTo.",
-        gsap: "gsap.to / gsap.from / gsap.fromTo"
-      },
-      from: {
-        label: "from:",
-        detail: "np. y=50, opacity=0",
-        description: 'Pocz\u0105tkowe warto\u015Bci w\u0142a\u015Bciwo\u015Bci (mapowane na TweenVars "from").',
-        gsap: "TweenVars"
-      },
-      to: {
-        label: "to:",
-        detail: "np. y=0, opacity=1",
-        description: "Ko\u0144cowe warto\u015Bci w\u0142a\u015Bciwo\u015Bci (TweenVars).",
-        gsap: "TweenVars"
-      },
-      duration: {
-        label: "duration:",
-        detail: "seconds",
-        description: "Czas trwania tweena w sekundach.",
-        gsap: "TweenVars.duration",
-        values: [
-          { label: "0.5", detail: "0.5s" },
-          { label: "1", detail: "1s" },
-          { label: "2", detail: "2s" }
-        ]
-      },
-      delay: {
-        label: "delay:",
-        detail: "seconds",
-        description: "Op\xF3\u017Anienie startu tweena w sekundach.",
-        gsap: "TweenVars.delay"
-      },
-      ease: {
-        label: "ease:",
-        detail: "GSAP ease",
-        description: "Krzywa \u0142agodzenia animacji (np. power1.out, back.inOut).",
-        gsap: "TweenVars.ease",
-        values: [
-          { label: "power1.out", detail: "\u0141agodny ease" },
-          { label: "power2.out", detail: "\u015Arednio \u0142agodny ease" },
-          { label: "power3.out", detail: "Mocniejszy ease" },
-          { label: "power4.out", detail: "Najmocniejszy ease" },
-          { label: "back.out", detail: "Najmocniejszy ease" },
-          { label: "bounce.out", detail: "Najmocniejszy ease" },
-          { label: "circ.out", detail: "Najmocniejszy ease" },
-          { label: "elastic.out", detail: "Najmocniejszy ease" },
-          { label: "expo.out", detail: "Najmocniejszy ease" },
-          { label: "shine.out", detail: "Najmocniejszy ease" },
-          { label: "steps(2)", detail: "Stepowy" }
-        ]
-      },
-      stagger: {
-        label: "stagger:",
-        detail: "seconds",
-        description: "Op\xF3\u017Anienie mi\u0119dzy kolejnymi elementami (stagger each).",
-        gsap: "StaggerVars.each"
-      }
-    },
-    scroll: {
-      start: {
-        label: "start:",
-        detail: "np. top 80%",
-        description: 'Pozycja startu triggera wzgl\u0119dem viewportu (np. "top 80%").',
-        gsap: "ScrollTrigger.vars.start",
-        values: [
-          { label: "top 80%", detail: "Gdy g\xF3ra targetu osi\u0105ga 80% wysoko\u015Bci okna" },
-          { label: "top center", detail: "Gdy g\xF3ra targetu jest w \u015Brodku okna" },
-          { label: "top bottom", detail: "Gdy g\xF3ra targetu dotyka do\u0142u okna" }
-        ]
-      },
-      end: {
-        label: "end:",
-        detail: "np. bottom 20%",
-        description: 'Pozycja zako\u0144czenia triggera (np. "bottom 20%").',
-        gsap: "ScrollTrigger.vars.end"
-      },
-      scrub: {
-        label: "scrub:",
-        detail: "true | false | number",
-        description: "Synchronizuje progres animacji z pozycj\u0105 scrolla (true lub liczba).",
-        gsap: "ScrollTrigger.vars.scrub",
-        values: [
-          { label: "true", detail: "P\u0142ynnie zsynchronizowane z domy\u015Blnym smoothingiem" },
-          { label: "0.5", detail: "0.5s smoothingu scrolla" },
-          { label: "1", detail: "1s smoothingu scrolla" }
-        ]
-      },
-      once: {
-        label: "once:",
-        detail: "true | false",
-        description: "Czy animacja ma odpali\u0107 si\u0119 tylko raz.",
-        gsap: "ScrollTrigger.vars.once",
-        values: [
-          { label: "true", detail: "Uruchom tylko raz" },
-          { label: "false", detail: "Mo\u017Ce uruchamia\u0107 si\u0119 wielokrotnie" }
-        ]
-      },
-      toggleActions: {
-        label: "toggleActions:",
-        detail: "np. play none none reverse",
-        description: 'Akcje przy enter/leave/back (np. "play none none reverse").',
-        gsap: "ScrollTrigger.vars.toggleActions",
-        values: [
-          { label: "play none none reverse", detail: "Standardowy play + reverse przy wyj\u015Bciu" },
-          { label: "play none none none", detail: "Odtw\xF3rz tylko przy wej\u015Bciu" },
-          { label: "restart none none none", detail: "Restart przy ka\u017Cdym wej\u015Bciu" }
-        ]
-      },
-      pin: {
-        label: "pin:",
-        detail: "true | false",
-        description: "Przypina target na czas trwania triggera.",
-        gsap: "ScrollTrigger.vars.pin",
-        values: [
-          { label: "true", detail: "Pin na czas triggera" },
-          { label: "false", detail: "Bez pina" }
-        ]
-      },
-      pinSpacing: {
-        label: "pinSpacing:",
-        detail: "true | false",
-        description: "Czy zachowa\u0107 przestrze\u0144 po przypi\u0119ciu.",
-        gsap: "ScrollTrigger.vars.pinSpacing",
-        values: [
-          { label: "true", detail: "Domy\u015Blne zachowanie (zostaw miejsce)" },
-          { label: "false", detail: "Bez dodatkowego spacingu" }
-        ]
-      },
-      anticipatePin: {
-        label: "anticipatePin:",
-        detail: "number",
-        description: "Przewiduje pin, aby unikn\u0105\u0107 skok\xF3w layoutu.",
-        gsap: "ScrollTrigger.vars.anticipatePin"
-      },
-      markers: {
-        label: "markers:",
-        detail: "true | false",
-        description: "Pokazuje debugowe markery start/end na osi scrolla.",
-        gsap: "ScrollTrigger.vars.markers",
-        values: [
-          { label: "true", detail: "Poka\u017C markery" },
-          { label: "false", detail: "Ukryj markery" }
-        ]
-      },
-      snap: {
-        label: "snap:",
-        detail: "true | number | string",
-        description: 'Przyci\u0105ganie scrolla do punkt\xF3w (np. 0.1, "labels").',
-        gsap: "ScrollTrigger.vars.snap",
-        values: [
-          { label: "true", detail: "Snap do najbli\u017Cszego punktu" },
-          { label: "0.1", detail: "Snap co 10% progresu" }
-        ]
-      }
-    },
-    target: {
-      selector: {
-        label: "selector:",
-        detail: ".my-selector",
-        description: 'CSS selector dla elementu animacji (np. ".my-box").',
-        gsap: "GSAP target (element / selector)"
-      }
-    },
-    timeline: {
-      "timeline.defaults.duration": {
-        label: "timeline.defaults.duration:",
-        detail: "seconds",
-        description: "Domy\u015Blne duration dla wszystkich tween\xF3w w timeline.",
-        gsap: "Timeline.vars.defaults.duration"
-      },
-      "timeline.defaults.delay": {
-        label: "timeline.defaults.delay:",
-        detail: "seconds",
-        description: "Domy\u015Blne delay dla tween\xF3w w timeline.",
-        gsap: "Timeline.vars.defaults.delay"
-      },
-      "timeline.defaults.stagger": {
-        label: "timeline.defaults.stagger:",
-        detail: "seconds",
-        description: "Domy\u015Blne stagger dla tween\xF3w w timeline.",
-        gsap: "Timeline.vars.defaults.stagger"
-      },
-      "timeline.defaults.ease": {
-        label: "timeline.defaults.ease:",
-        detail: "GSAP ease",
-        description: "Domy\u015Blny ease dla tween\xF3w w timeline.",
-        gsap: "Timeline.vars.defaults.ease"
-      }
-    },
-    // step.* traktujemy jako osobny typ sekcji, ale z tym samym zestawem co animation
-    "step.*": {
-      type: {
-        label: "type:",
-        detail: "from | to | fromTo",
-        description: "Typ tweena w kroku timeline.",
-        gsap: "gsap.to / from / fromTo"
-      },
-      from: {
-        label: "from:",
-        detail: "np. y=50, opacity=0",
-        description: "Pocz\u0105tkowe warto\u015Bci kroku timeline.",
-        gsap: "TweenVars"
-      },
-      to: {
-        label: "to:",
-        detail: "np. y=0, opacity=1",
-        description: "Ko\u0144cowe warto\u015Bci kroku timeline.",
-        gsap: "TweenVars"
-      },
-      duration: {
-        label: "duration:",
-        detail: "seconds",
-        description: "Czas trwania kroku timeline.",
-        gsap: "TweenVars.duration"
-      },
-      delay: {
-        label: "delay:",
-        detail: "seconds",
-        description: "Op\xF3\u017Anienie startu kroku timeline.",
-        gsap: "TweenVars.delay"
-      },
-      ease: {
-        label: "ease:",
-        detail: "GSAP ease",
-        description: "Ease kroku timeline.",
-        gsap: "TweenVars.ease"
-      },
-      stagger: {
-        label: "stagger:",
-        detail: "seconds",
-        description: "Stagger dla kroku timeline.",
-        gsap: "StaggerVars.each"
-      },
-      startAt: {
-        label: "startAt:",
-        detail: "timeline offset (number)",
-        description: "Przesuni\u0119cie startu wzgl\u0119dem czasu timeline.",
-        gsap: "Timeline.add(position)"
-      }
-    }
-  };
-  var sectionCompletions = [
-    { label: "[animation]", type: "keyword", detail: "GSAP tween section" },
-    { label: "[scroll]", type: "keyword", detail: "GSAP ScrollTrigger section" },
-    { label: "[target]", type: "keyword", detail: "Target selector section" },
-    { label: "[timeline]", type: "keyword", detail: "Timeline container" },
-    { label: "[step.1]", type: "keyword", detail: "Timeline step section" }
-  ];
   function getSectionFieldDefs(sectionName) {
     if (!sectionName) return null;
     if (FIELD_DEFS[sectionName]) return FIELD_DEFS[sectionName];
@@ -35037,353 +34890,177 @@
   function getFieldCompletionsForSection(sectionName) {
     const defs = getSectionFieldDefs(sectionName);
     if (!defs) return [];
-    return Object.keys(defs).map((key) => {
-      const def = defs[key];
-      return {
-        label: def.label,
-        type: "property",
-        detail: def.detail,
-        info: def.description + (def.gsap ? ` (${def.gsap})` : "")
-      };
-    });
-  }
-  function getValueCompletionsForField(sectionName, fieldKey) {
-    const defs = getSectionFieldDefs(sectionName);
-    if (!defs) return [];
-    const def = defs[fieldKey];
-    if (!def || !def.values) return [];
-    return def.values.map((v) => ({
-      label: v.label,
-      type: "enum",
-      detail: v.detail || def.detail,
-      info: def.description + (def.gsap ? ` (${def.gsap})` : "")
+    return Object.values(defs).map((def) => ({
+      label: def.label,
+      type: "property",
+      detail: def.detail,
+      info: def.info
     }));
   }
-  function withSlashApply(options) {
+  function withSlashApply(options, slashPos) {
     return options.map((opt) => ({
       ...opt,
-      apply(view, completion, from, to) {
-        const slashPos = from - 1;
-        if (slashPos >= 0) {
-          view.dispatch({
-            changes: { from: slashPos, to: from, insert: "" }
-          });
-          from = slashPos;
-          to = slashPos;
-        }
+      apply: (view, completion, from, to) => {
         view.dispatch({
-          changes: { from, to, insert: completion.label },
-          selection: { anchor: from + completion.label.length }
+          changes: { from: slashPos, to, insert: completion.label + " " },
+          selection: { anchor: slashPos + completion.label.length + 1 }
         });
+        setTimeout(() => {
+          startCompletion(view);
+        }, 20);
       }
     }));
   }
-  function posFromLineCol(state, line, column) {
-    const ln = state.doc.line(line);
-    return ln.from + Math.max(0, column - 1);
-  }
-  var dslLinter = linter(
-    async (view) => {
-      const doc3 = view.state.doc.toString();
-      const result = await validateDsl(doc3, "auto");
-      if (!result) return [];
-      const diagnostics = [];
-      console.log("validateDsl result.errors", result.errors);
-      console.log("validateDsl result.warnings", result.warnings);
-      const addDiag = (item, severity) => {
-        if (!item) return;
-        const msg = item.message || "DSL validation issue";
-        const line = typeof item.line === "number" ? item.line : 1;
-        const column = typeof item.column === "number" ? item.column : 1;
-        const endColumn = typeof item.endColumn === "number" ? item.endColumn : column + 1;
-        const from = posFromLineCol(view.state, line, column);
-        const to = posFromLineCol(view.state, line, endColumn);
-        diagnostics.push({
-          from,
-          to,
-          severity,
-          message: msg
-        });
-      };
-      if (Array.isArray(result.errors)) {
-        result.errors.forEach((e) => {
-          if (typeof e === "string") {
-            addDiag({ message: e, line: 1, column: 1, endColumn: 2 }, "error");
-          } else {
-            addDiag(e, "error");
-          }
-        });
-      }
-      if (Array.isArray(result.warnings)) {
-        result.warnings.forEach((w) => {
-          if (typeof w === "string") {
-            addDiag({ message: w, line: 1, column: 1, endColumn: 2 }, "warning");
-          } else {
-            addDiag(w, "warning");
-          }
-        });
-      }
-      return diagnostics;
-    },
-    {
-      // CM6 odpala linter dopiero po tej przerwie w pisaniu
-      delay: 1e3
-      // 1s bezczynności → jedno wywołanie /validate [web:188][web:525]
-    }
-  );
-  function getCurrentSection(context) {
-    const { state, pos } = context;
+  function getCurrentSection(state, pos) {
     const line = state.doc.lineAt(pos);
-    const currentText = line.text.trim();
-    if (currentText.startsWith("[") && currentText.endsWith("]")) {
-      const name3 = currentText.slice(1, -1).trim().toLowerCase();
-      return { name: name3, inSection: false };
-    }
-    let lastSectionLine = null;
-    let lastSectionName = null;
-    let hasContentAfterSection = false;
-    for (let ln = line.number; ln >= 1; ln -= 1) {
-      const text = state.doc.line(ln).text;
-      const trimmed = text.trim();
-      if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-        lastSectionLine = ln;
-        lastSectionName = trimmed.slice(1, -1).trim().toLowerCase();
-        break;
-      }
-      if (trimmed !== "") {
-        hasContentAfterSection = true;
+    for (let ln = line.number; ln >= 1; ln--) {
+      const text = state.doc.line(ln).text.trim();
+      if (text.startsWith("[") && text.endsWith("]")) {
+        let name3 = text.slice(1, -1).trim().toLowerCase();
+        if (name3.startsWith("step.")) return { name: "step.*", inSection: true };
+        return { name: name3, inSection: true };
       }
     }
-    if (!lastSectionName) {
-      return { name: null, inSection: false };
-    }
-    if (currentText === "") {
-      return {
-        name: hasContentAfterSection ? lastSectionName : null,
-        inSection: hasContentAfterSection
-      };
-    }
-    return {
-      name: lastSectionName,
-      inSection: true
-    };
+    return { name: null, inSection: false };
   }
-  function filterMissingKeys(sectionName, context) {
-    const { state, pos } = context;
+  function filterMissingKeys(sectionName, state, pos) {
     const line = state.doc.lineAt(pos);
     const used = /* @__PURE__ */ new Set();
-    for (let ln = line.number - 1; ln >= 1; ln -= 1) {
+    for (let ln = line.number - 1; ln >= 1; ln--) {
       const text = state.doc.line(ln).text.trim();
-      if (text === "") continue;
-      if (text.startsWith("[") && text.endsWith("]")) {
-        const name3 = text.slice(1, -1).trim().toLowerCase();
-        if (name3 === sectionName) break;
-        return [];
-      }
+      if (text.startsWith("[") && text.endsWith("]")) break;
       const colonIndex = text.indexOf(":");
       if (colonIndex > 0) {
-        const key = text.slice(0, colonIndex + 1).trim();
-        used.add(key);
+        used.add(text.slice(0, colonIndex + 1).trim());
       }
     }
-    const all = getFieldCompletionsForSection(sectionName);
-    return all.filter((entry) => !used.has(entry.label));
-  }
-  function valueResult(from, options) {
-    return {
-      from,
-      options,
-      validFor: /^[a-z0-9._()"%-]*$/i
-    };
+    return getFieldCompletionsForSection(sectionName).filter((entry) => !used.has(entry.label));
   }
   function dslCompletionSource(context) {
     const { state, pos } = context;
     const line = state.doc.lineAt(pos);
-    const text = line.text;
-    const beforeCursor = text.slice(0, pos - line.from);
-    const sectionInfo = getCurrentSection(context);
-    const sectionName = (sectionInfo == null ? void 0 : sectionInfo.name) || null;
-    const inSection = !!(sectionInfo == null ? void 0 : sectionInfo.inSection);
-    if (sectionName && /ease:\s*([a-z0-9._()-]*)$/i.test(beforeCursor)) {
-      const m = /ease:\s*([a-z0-9._()-]*)$/i.exec(beforeCursor);
-      const prefix = m[1].toLowerCase();
-      let options2 = getValueCompletionsForField(sectionName === "timeline" ? "timeline" : "animation", "ease");
-      if (prefix) {
-        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
+    const lineText = line.text;
+    const textBefore = lineText.slice(0, pos - line.from);
+    if (textBefore.includes("#")) return null;
+    const { name: sectionName } = getCurrentSection(state, pos);
+    const word = context.matchBefore(/\/[a-zA-Z0-9_.]*/);
+    if (word) {
+      if (!sectionName) return null;
+      let options = filterMissingKeys(sectionName, state, pos);
+      if (sectionName === "timeline") options.push({ label: "[step.1]", type: "keyword", detail: "New step" });
+      if (!options.length) return null;
+      return { from: word.from + 1, options: withSlashApply(options, word.from) };
+    }
+    const matchValueContext = textBefore.match(/([a-zA-Z0-9_.]+):\s*([^:]*)$/);
+    if (matchValueContext) {
+      const rawKey = matchValueContext[1];
+      const filterText = matchValueContext[2] || "";
+      const defs = getSectionFieldDefs(sectionName);
+      if (defs && defs[rawKey] && defs[rawKey].values) {
+        return {
+          from: pos - filterText.length,
+          options: defs[rawKey].values.map((v) => ({ label: v.label, type: "enum", detail: v.detail, apply: v.label }))
+        };
       }
-      const from2 = pos - prefix.length;
-      if (options2.length) return valueResult(from2, options2);
+      return null;
     }
-    if (sectionName === "scroll" && /once:\s*([a-z]*)$/i.test(beforeCursor)) {
-      const m = /once:\s*([a-z]*)$/i.exec(beforeCursor);
-      const prefix = m[1].toLowerCase();
-      let options2 = getValueCompletionsForField("scroll", "once");
-      if (prefix) {
-        options2 = options2.filter((o) => o.label.startsWith(prefix));
-      }
-      const from2 = pos - prefix.length;
-      if (options2.length) return valueResult(from2, options2);
+    if (textBefore.trim() === "") {
+      const options = sectionName ? getFieldCompletionsForSection(sectionName) : [];
+      return { from: pos, options: [...options, ...SECTION_HEADERS] };
     }
-    if (sectionName === "scroll" && /scrub:\s*([a-z0-9.]*)$/i.test(beforeCursor)) {
-      const m = /scrub:\s*([a-z0-9.]*)$/i.exec(beforeCursor);
-      const prefix = m[1].toLowerCase();
-      let options2 = getValueCompletionsForField("scroll", "scrub");
-      if (prefix) {
-        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
-      }
-      const from2 = pos - prefix.length;
-      if (options2.length) return valueResult(from2, options2);
+    if (textBefore.trim().startsWith("[")) return { from: line.from + lineText.indexOf("["), options: SECTION_HEADERS };
+    if (sectionName) {
+      const w = context.matchBefore(/[a-zA-Z0-9_.]+/);
+      if (w) return { from: w.from, options: getFieldCompletionsForSection(sectionName) };
     }
-    if (sectionName === "scroll" && /toggleActions:\s*([a-z ]*)$/i.test(beforeCursor)) {
-      const m = /toggleActions:\s*([a-z ]*)$/i.exec(beforeCursor);
-      const prefix = m[1].toLowerCase();
-      let options2 = getValueCompletionsForField("scroll", "toggleActions");
-      if (prefix) {
-        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
-      }
-      const from2 = pos - prefix.length;
-      if (options2.length) return valueResult(from2, options2);
-    }
-    if (sectionName === "scroll" && /snap:\s*([a-z0-9."%]*)$/i.test(beforeCursor)) {
-      const m = /snap:\s*([a-z0-9."%]*)$/i.exec(beforeCursor);
-      const prefix = m[1].toLowerCase();
-      let options2 = getValueCompletionsForField("scroll", "snap");
-      if (prefix) {
-        options2 = options2.filter((o) => o.label.toLowerCase().startsWith(prefix));
-      }
-      const from2 = pos - prefix.length;
-      if (options2.length) return valueResult(from2, options2);
-    }
-    const bracketMatch = beforeCursor.match(/\[([a-z.]*)$/i);
-    if (bracketMatch) {
-      const prefix = bracketMatch[1].toLowerCase();
-      const opts = sectionCompletions.filter((opt) => {
-        const name3 = opt.label.slice(1, -1).toLowerCase();
-        return name3.startsWith(prefix);
-      });
-      return {
-        from: pos - prefix.length - 1,
-        options: opts.length ? opts : sectionCompletions
-      };
-    }
-    if (/\[target\]\s*$/.test(beforeCursor)) {
-      const options2 = getFieldCompletionsForSection("target");
-      return {
-        from: pos,
-        options: options2
-      };
-    }
-    const word = context.matchBefore(/[a-zA-Z0-9_./]+/);
-    let from = context.pos;
-    if (word) from = word.from;
-    if (word && word.text.startsWith("/")) {
-      if (!sectionName || !inSection) return null;
-      let options2 = filterMissingKeys(sectionName, context);
-      if (sectionName === "timeline") {
-        options2 = [
-          ...options2,
-          { label: "[step.1]", type: "keyword", detail: "Timeline step section" }
-        ];
-      }
-      if (!options2.length) return null;
-      return {
-        from: word.from + 1,
-        // zostaw "/", a apply go skasuje
-        options: withSlashApply(options2)
-      };
-    }
-    let options;
-    if (!sectionName) {
-      options = sectionCompletions;
-    } else if (inSection) {
-      options = filterMissingKeys(sectionName, context);
-    } else {
-      options = getFieldCompletionsForSection(sectionName) || sectionCompletions;
-    }
-    if (!options || !options.length) return null;
-    return {
-      from,
-      options
-    };
+    return null;
   }
+  var dslLinter = linter(async (view) => {
+    const doc3 = view.state.doc.toString();
+    const statusEl = document.querySelector(".sc-dsl-editor__status-text");
+    if (statusEl) {
+      statusEl.textContent = "Checking...";
+      statusEl.style.color = "#abb2bf";
+    }
+    const data = await fetchValidation(doc3);
+    const diagnostics = [];
+    let hasErrors = false;
+    const mapDiag = (list, severity) => {
+      (list || []).forEach((item) => {
+        const msg = item.message || String(item);
+        let lineNo = parseInt(item.line || 1, 10);
+        lineNo = Math.max(Math.min(lineNo, view.state.doc.lines), 1);
+        const ln = view.state.doc.line(lineNo);
+        diagnostics.push({
+          from: ln.from,
+          to: ln.to,
+          severity,
+          message: msg,
+          source: "ScrollCrafter"
+        });
+        if (severity === "error") hasErrors = true;
+      });
+    };
+    mapDiag(data.errors, "error");
+    mapDiag(data.warnings, "warning");
+    lastValidationState = {
+      valid: !hasErrors,
+      hasCriticalErrors: hasErrors,
+      diagnostics,
+      rawData: data
+    };
+    if (statusEl) {
+      if (hasErrors) {
+        const errCount = data.errors ? data.errors.length : 0;
+        statusEl.textContent = `Found ${errCount} error(s). Fix them before applying.`;
+        statusEl.parentElement.className = "sc-dsl-editor__status sc-dsl-editor__status--error";
+      } else if (data.warnings && data.warnings.length > 0) {
+        statusEl.textContent = `Valid (with ${data.warnings.length} warnings).`;
+        statusEl.parentElement.className = "sc-dsl-editor__status sc-dsl-editor__status--warning";
+      } else {
+        statusEl.textContent = "Script is valid.";
+        statusEl.parentElement.className = "sc-dsl-editor__status sc-dsl-editor__status--ok";
+      }
+    }
+    return diagnostics;
+  }, { delay: 500 });
   var cmView = null;
   function createEditor(parentNode, initialDoc) {
     if (cmView) {
       cmView.destroy();
       cmView = null;
     }
-    console.log("Creating new CodeMirror editor instance");
+    lastValidationState = { valid: true, hasCriticalErrors: false, diagnostics: [] };
     const state = EditorState.create({
       doc: initialDoc,
       extensions: [
         history(),
-        keymap.of([
-          ...defaultKeymap,
-          ...historyKeymap,
-          {
-            key: "Tab",
-            run(view) {
-              const status = completionStatus(view.state);
-              if (status === "active") return acceptCompletion(view);
-              return false;
-            }
-          }
-        ]),
+        keymap.of([...defaultKeymap, ...historyKeymap, { key: "Tab", run: acceptCompletion }]),
         highlightSpecialChars(),
         drawSelection(),
+        lineNumbers(),
+        placeholder("Start with [animation]..."),
         dslTheme,
         dslLanguage,
         syntaxHighlighting(dslHighlightStyle),
-        autocompletion({
-          override: [dslCompletionSource],
-          activateOnTyping: true
-        }),
-        lineNumbers(),
+        autocompletion({ override: [dslCompletionSource], activateOnTyping: true }),
         lintGutter(),
         dslLinter,
+        // Linter działa automatycznie w tle
         EditorView.lineWrapping
       ]
     });
-    cmView = new EditorView({
-      state,
-      parent: parentNode
-    });
+    cmView = new EditorView({ state, parent: parentNode });
     return cmView;
   }
   function getEditorDoc() {
     return cmView ? cmView.state.doc.toString() : "";
   }
-  var apiRoot = window.wpApiSettings && window.wpApiSettings.root || `${window.location.origin}/wp-json/`;
-  async function validateDsl(script, mode = "auto") {
-    var _a3;
-    try {
-      const response = await fetch(
-        `${apiRoot}scrollcrafter/v1/validate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-WP-Nonce": ((_a3 = window.wpApiSettings) == null ? void 0 : _a3.nonce) || ""
-          },
-          body: JSON.stringify({ script, mode })
-        }
-      );
-      if (!response.ok) {
-        return { ok: false, errors: ["HTTP error"], warnings: [], config: null };
-      }
-      return await response.json();
-    } catch (e) {
-      return { ok: false, errors: [String(e)], warnings: [], config: null };
-    }
-  }
   (function($) {
     const MODAL_ID = "scrollcrafter-dsl-editor";
-    console.log("ScrollCrafter Editor script loaded");
     const ensureModal = () => {
       let modal = document.getElementById(MODAL_ID);
-      if (modal) {
-        return modal;
-      }
+      if (modal) return modal;
       modal = document.createElement("div");
       modal.id = MODAL_ID;
       modal.className = "sc-dsl-editor";
@@ -35398,23 +35075,13 @@
           <button type="button" class="sc-dsl-editor__close">&times;</button>
         </div>
         <div class="sc-dsl-editor__body">
-          <div class="sc-dsl-editor__editor-container">
-            <div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div>
-          </div>
-          <div class="sc-dsl-editor__status">
-            <span class="sc-dsl-editor__status-text">Ready</span>
-          </div>
+          <div class="sc-dsl-editor__editor-container"><div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div></div>
+          <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
         </div>
         <div class="sc-dsl-editor__footer">
-          <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">
-            Cancel
-          </button>
-          <button type="button" class="elementor-button elementor-button-default sc-dsl-editor__btn sc-dsl-editor__apply">
-            Apply
-          </button>
-          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">
-            Apply &amp; Preview
-          </button>
+          <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">Cancel</button>
+          <button type="button" class="elementor-button elementor-button-default sc-dsl-editor__btn sc-dsl-editor__apply">Apply</button>
+          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply & Preview</button>
         </div>
       </div>
     `;
@@ -35427,76 +35094,53 @@
       if (!currentPageView || !currentPageView.model) return;
       const model = currentPageView.model;
       const settings = model.get("settings");
-      if (!settings) return;
+      const currentScript = settings.get("scrollcrafter_script") || "";
       const elementId = model.get("id");
       const elementType = model.get("widgetType") || model.get("elType") || "Element";
-      const currentScript = settings.get("scrollcrafter_script") || "";
       const modal = ensureModal();
       const statusText = modal.querySelector(".sc-dsl-editor__status-text");
-      const titleSub = modal.querySelector(".sc-dsl-editor__title-sub");
-      titleSub.textContent = `${elementType} (${elementId})`;
-      statusText.textContent = "Ready";
-      const editorParent = modal.querySelector("#sc-dsl-editor-cm");
-      createEditor(editorParent, currentScript);
-      console.log("Editor opened for element", elementId, elementType);
-      const close = () => {
-        modal.classList.remove("sc-dsl-editor--open");
+      modal.querySelector(".sc-dsl-editor__title-sub").textContent = `${elementType} (${elementId})`;
+      statusText.textContent = "Checking...";
+      modal.querySelector(".sc-dsl-editor__status").className = "sc-dsl-editor__status";
+      createEditor(modal.querySelector("#sc-dsl-editor-cm"), currentScript);
+      const close = () => modal.classList.remove("sc-dsl-editor--open");
+      const bindClose = (selector) => {
+        const el = modal.querySelector(selector);
+        el.onclick = close;
       };
-      modal.querySelector(".sc-dsl-editor__close").onclick = close;
-      modal.querySelector(".sc-dsl-editor__cancel").onclick = close;
-      modal.querySelector(".sc-dsl-editor__backdrop").onclick = close;
-      modal.querySelector(".sc-dsl-editor__apply").onclick = () => {
-        const newScript = getEditorDoc();
-        settings.set("scrollcrafter_script", newScript);
-        statusText.textContent = "Applied (preview on front-end refresh)";
-        modal.classList.remove("sc-dsl-editor__status--error");
-        modal.classList.add("sc-dsl-editor__status--ok");
-        close();
-      };
-      modal.querySelector(".sc-dsl-editor__apply-preview").onclick = async () => {
-        const newScript = getEditorDoc();
-        settings.set("scrollcrafter_script", newScript);
-        statusText.textContent = "Validating...";
-        modal.classList.remove("sc-dsl-editor__status--error");
-        modal.classList.remove("sc-dsl-editor__status--ok");
-        modal.classList.remove("sc-dsl-editor__status--warning");
-        const result = await validateDsl(newScript, "auto");
-        if (!result.ok) {
-          const errorMessages = (result.errors || []).map((e) => typeof e === "string" ? e : e.message).filter(Boolean).join(" | ");
-          statusText.textContent = `Error: ${errorMessages || "Unknown error"}`;
-          modal.classList.add("sc-dsl-editor__status--error");
+      bindClose(".sc-dsl-editor__close");
+      bindClose(".sc-dsl-editor__cancel");
+      bindClose(".sc-dsl-editor__backdrop");
+      modal.querySelector(".sc-dsl-editor__apply-preview").onclick = () => {
+        const currentCode = getEditorDoc();
+        if (lastValidationState.hasCriticalErrors) {
+          log("[SC Editor] Critical errors found, blocking apply.");
+          const firstErr = lastValidationState.diagnostics.find((d) => d.severity === "error");
+          if (firstErr && cmView) {
+            cmView.dispatch({
+              selection: { anchor: firstErr.from },
+              scrollIntoView: true
+            });
+            cmView.focus();
+          }
+          modal.classList.add("sc-shake");
+          setTimeout(() => modal.classList.remove("sc-shake"), 500);
           return;
         }
-        if (result.warnings && result.warnings.length) {
-          const warningMessages = (result.warnings || []).map((w) => typeof w === "string" ? w : w.message).filter(Boolean).join(" | ");
-          statusText.textContent = `Warning: ${warningMessages || "Check your DSL"}`;
-          modal.classList.add("sc-dsl-editor__status--warning");
-          return;
-        }
-        statusText.textContent = "OK \u2013 applying & previewing";
-        modal.classList.add("sc-dsl-editor__status--ok");
-        if (typeof model.trigger === "function") {
-          model.trigger("change", model);
-        }
-        if (typeof currentPageView.render === "function") {
-          currentPageView.render();
-        }
-        console.log("[ScrollCrafter][editor] Applied & previewed, marking model as changed", {
-          id: model.get("id")
-        });
-        close();
+        settings.set("scrollcrafter_script", currentCode);
+        if (model.trigger) model.trigger("change", model);
+        if (currentPageView.render) currentPageView.render();
+        log("[SC Editor] Script applied to element", elementId);
+        statusText.textContent = "Applied!";
+        setTimeout(close, 1500);
       };
+      modal.querySelector(".sc-dsl-editor__apply").onclick = modal.querySelector(".sc-dsl-editor__apply-preview").onclick;
       modal.classList.add("sc-dsl-editor--open");
     };
-    console.log("Setting up Elementor init listener for ScrollCrafter editor");
     $(window).on("elementor/init", () => {
-      console.log("Elementor initialized - setting up ScrollCrafter editor listener");
-      if (!window.elementor || !elementor.channels || !elementor.channels.editor) return;
-      console.log("ScrollCrafter: registering editor channel listener");
-      elementor.channels.editor.on("scrollcrafter:open_editor", () => {
-        console.log("ScrollCrafter: open_editor event received");
-        openEditorForCurrentElement();
-      });
+      if (elementor.channels && elementor.channels.editor) {
+        elementor.channels.editor.on("scrollcrafter:open_editor", openEditorForCurrentElement);
+      }
     });
   })(jQuery);
 })();

@@ -256,6 +256,9 @@ class Script_Parser
             case 'type':
                 $step['type'] = $value;
                 break;
+            case 'selector':
+                $step['selector'] = $value;
+                break;
             case 'from':
             case 'to':
                 $step[$key] = $this->parseVarsList($value);

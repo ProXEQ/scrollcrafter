@@ -152,28 +152,103 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Style dla Linta w CM6 */
+/* --- LINT --- */
 
-/* Minimalne style dla linta CM6 */
-.cm-lintRange.cm-lintRange-error {
-  background-color: rgba(255, 0, 0, 0.15);
+/* BŁĄD: Czerwone tło i wężyk */
+.cm-lintRange-error {
+    background-color: rgba(224, 108, 117, 0.15);
+    background-image: url('image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3"><path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="%23e06c75" fill="none" stroke-width="1.2"/></svg>');
+    background-position: bottom;
+    background-repeat: repeat-x;
+    padding-bottom: 2px;
 }
 
-.cm-lintRange.cm-lintRange-warning {
-  background-color: rgba(255, 165, 0, 0.15);
+/* OSTRZEŻENIE: Żółte tło i wężyk */
+.cm-lintRange-warning {
+    background-color: rgba(229, 192, 123, 0.15);
+    background-image: url('image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3"><path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="%23e5c07b" fill="none" stroke-width="1.2"/></svg>');
+    background-position: bottom;
+    background-repeat: repeat-x;
+    padding-bottom: 2px;
 }
 
-.cm-lintPoint.cm-lintPoint-error {
-  border-bottom: 2px solid #ff4d4f;
+/* --- 2. Gutter (Margines z kropkami) --- */
+
+.cm-lint-marker {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    position: relative;
+    top: 2px;
+    margin-left: 2px;
+    color: #1e2227;
+    font-weight: bold;
+    font-size: 10px;
+    text-align: center;
+    line-height: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.cm-lintPoint.cm-lintPoint-warning {
-  border-bottom: 2px solid #faad14;
+.cm-lint-marker-error {
+    background-color: #e06c75;
+    content: "!";
 }
+
+.cm-lint-marker-warning {
+    background-color: #e5c07b;
+    content: "?";
+}
+
+/* --- 3. Tooltip (Dymek po najechaniu) --- */
 
 .cm-tooltip-lint {
-  font-size: 11px;
+    background-color: #21252b !important;
+    border: 1px solid #181a1f !important;
+    border-radius: 6px;
+    padding: 8px 12px !important;
+    color: #abb2bf !important;
+    font-family: sans-serif;
+    font-size: 12px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    z-index: 10000;
 }
+
+.cm-tooltip-lint .cm-diagnostic {
+    padding-left: 10px;
+    border-left: 4px solid;
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.cm-tooltip-lint .cm-diagnostic:last-child {
+    margin-bottom: 0;
+}
+
+.cm-tooltip-lint .cm-diagnostic-error {
+    border-color: #e06c75;
+}
+
+.cm-tooltip-lint .cm-diagnostic-warning {
+    border-color: #e5c07b;
+}
+
+/* --- Status Bar States --- */
+.sc-dsl-editor__status--error span { color: #e06c75; font-weight: bold; }
+.sc-dsl-editor__status--ok span { color: #98c379; }
+.sc-dsl-editor__status--warning span { color: #e5c07b; }
+
+@keyframes sc-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}
+.sc-shake .sc-dsl-editor__panel {
+  animation: sc-shake 0.4s ease-in-out;
+}
+
 
 
 /* Responsywność */

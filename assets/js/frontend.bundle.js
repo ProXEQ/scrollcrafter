@@ -158,8 +158,29 @@
   });
 
   // assets/src/frontend/widgets/scroll-timeline.js
+  function parseMacros(vars) {
+    const newVars = { ...vars };
+    Object.keys(newVars).forEach((key) => {
+      const val = newVars[key];
+      if (typeof val === "string") {
+        if (val === "calc_horizontal_scroll") {
+          newVars[key] = (i, target) => {
+            if (target.scrollWidth <= window.innerWidth) return 0;
+            return -(target.scrollWidth - window.innerWidth);
+          };
+        }
+        if (val === "calc_100vh") {
+          newVars[key] = () => window.innerHeight;
+        }
+        if (val === "calc_100vw") {
+          newVars[key] = () => window.innerWidth;
+        }
+      }
+    });
+    return newVars;
+  }
   registerWidget("scroll_timeline", (node, config) => {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d;
     const debug = !!((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug);
     let gsap;
     let ScrollTrigger;
@@ -167,30 +188,26 @@
       gsap = getGsap();
       ScrollTrigger = getScrollTrigger();
     } catch (e) {
-      if (debug) {
-        console.error("[ScrollCrafter][scroll_timeline] GSAP/ScrollTrigger error", e);
-      }
+      if (debug) console.error("[ScrollCrafter] GSAP missing", e);
       return;
     }
-    const selector = (_b = config == null ? void 0 : config.target) == null ? void 0 : _b.selector;
-    const elements = selector ? node.ownerDocument.querySelectorAll(selector) : [node];
-    if (!elements.length) {
-      if (debug) {
-        console.warn("[ScrollCrafter][scroll_timeline] no target elements for selector", selector);
-      }
-      return;
-    }
+    const mainSelector = (_b = config == null ? void 0 : config.target) == null ? void 0 : _b.selector;
+    const mainElements = mainSelector ? node.ownerDocument.querySelectorAll(mainSelector) : [node];
+    if (!mainElements.length) return;
     const steps = ((_c = config == null ? void 0 : config.timeline) == null ? void 0 : _c.steps) || [];
     const defaults = ((_d = config == null ? void 0 : config.timeline) == null ? void 0 : _d.defaults) || {};
     const stRaw = (config == null ? void 0 : config.scrollTrigger) || {};
     const stConfig = {
-      trigger: elements[0],
+      trigger: mainElements[0],
       start: stRaw.start || "top 80%",
       end: stRaw.end || "bottom 20%",
       toggleActions: stRaw.toggleActions || "play none none reverse",
+      invalidateOnRefresh: true,
+      ...typeof stRaw.fastScrollEnd !== "undefined" ? { fastScrollEnd: !!stRaw.fastScrollEnd } : {},
+      ...typeof stRaw.preventOverlaps !== "undefined" ? { preventOverlaps: !!stRaw.preventOverlaps } : {},
       ...typeof stRaw.scrub !== "undefined" ? { scrub: stRaw.scrub } : {},
       ...typeof stRaw.once !== "undefined" ? { once: !!stRaw.once } : {},
-      ...typeof stRaw.markers !== "undefined" ? { markers: !!stRaw.markers } : { markers: !!((_e = window.ScrollCrafterConfig) == null ? void 0 : _e.debug) },
+      ...typeof stRaw.markers !== "undefined" ? { markers: !!stRaw.markers } : { markers: debug },
       ...typeof stRaw.pin !== "undefined" ? { pin: !!stRaw.pin } : {},
       ...typeof stRaw.pinSpacing !== "undefined" ? { pinSpacing: !!stRaw.pinSpacing } : {},
       ...typeof stRaw.anticipatePin !== "undefined" ? { anticipatePin: Number(stRaw.anticipatePin) } : {},
@@ -198,25 +215,34 @@
     };
     const tl = gsap.timeline({ defaults, scrollTrigger: stConfig });
     steps.forEach((step) => {
-      const type = (step == null ? void 0 : step.type) || "from";
-      const fromVars = (step == null ? void 0 : step.from) || {};
-      const toVars = (step == null ? void 0 : step.to) || {};
-      const duration = typeof (step == null ? void 0 : step.duration) === "number" ? step.duration : void 0;
-      const delay = typeof (step == null ? void 0 : step.delay) === "number" ? step.delay : void 0;
-      const ease = step == null ? void 0 : step.ease;
-      const stagger = typeof (step == null ? void 0 : step.stagger) === "number" ? step.stagger : void 0;
-      const position = typeof (step == null ? void 0 : step.startAt) === "number" ? step.startAt : void 0;
+      let type = (step == null ? void 0 : step.type) || "from";
+      const fromVars = parseMacros((step == null ? void 0 : step.from) || {});
+      const toVars = parseMacros((step == null ? void 0 : step.to) || {});
+      const hasFrom = Object.keys(fromVars).length > 0;
+      const hasTo = Object.keys(toVars).length > 0;
+      if (type === "to" && hasFrom) type = "fromTo";
+      if (type === "from" && hasTo) type = "fromTo";
       const base = {};
-      if (typeof duration === "number") base.duration = duration;
-      if (typeof delay === "number") base.delay = delay;
-      if (typeof ease === "string") base.ease = ease;
-      if (typeof stagger === "number") base.stagger = stagger;
+      if (typeof (step == null ? void 0 : step.duration) === "number") base.duration = step.duration;
+      if (typeof (step == null ? void 0 : step.delay) === "number") base.delay = step.delay;
+      if (typeof (step == null ? void 0 : step.ease) === "string") base.ease = step.ease;
+      if (typeof (step == null ? void 0 : step.stagger) === "number") base.stagger = step.stagger;
+      const position = typeof (step == null ? void 0 : step.startAt) === "number" ? step.startAt : void 0;
+      let targets = mainElements;
+      if (step.selector) {
+        const found = node.querySelectorAll(step.selector);
+        if (found.length > 0) {
+          targets = found;
+        } else if (debug) {
+          console.warn(`[ScrollCrafter] Step selector "${step.selector}" not found.`);
+        }
+      }
       if (type === "fromTo") {
-        tl.fromTo(elements, { ...fromVars }, { ...toVars, ...base }, position);
+        tl.fromTo(targets, { ...fromVars }, { ...toVars, ...base }, position);
       } else if (type === "to") {
-        tl.to(elements, { ...toVars, ...base }, position);
+        tl.to(targets, { ...toVars, ...base }, position);
       } else {
-        tl.from(elements, { ...fromVars, ...base }, position);
+        tl.from(targets, { ...fromVars, ...base }, position);
       }
     });
   });
@@ -230,8 +256,36 @@
   } else {
     init();
   }
-  document.addEventListener("elementor/popup/show", (event) => {
+  window.addEventListener("elementor/popup/show", (event) => {
     initWidgetsInScope(event.target);
   });
+  window.addEventListener("elementor/frontend/init", () => {
+    if (!window.elementorFrontend) return;
+    elementorFrontend.hooks.addAction("frontend/element_ready/global", ($scope) => {
+      const node = $scope[0];
+      if (elementorFrontend.isEditMode()) {
+        cleanupDetachedTriggers();
+      }
+      initWidgetsInScope(node);
+    });
+  });
+  function cleanupDetachedTriggers() {
+    try {
+      const ScrollTrigger = getScrollTrigger();
+      const triggers = ScrollTrigger.getAll();
+      triggers.forEach((st) => {
+        var _a;
+        const triggerElem = st.trigger;
+        const isDetached = triggerElem && !document.body.contains(triggerElem);
+        if (isDetached) {
+          st.kill(true);
+          if ((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug) {
+            console.log("[ScrollCrafter] Killed detached trigger", st);
+          }
+        }
+      });
+    } catch (e) {
+    }
+  }
 })();
 //# sourceMappingURL=frontend.bundle.js.map

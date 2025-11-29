@@ -1,4 +1,4 @@
-import { initWidgetsInScope, initSingleWidget } from './core/registry';
+import { initWidgetsInScope } from './core/registry';
 import { getScrollTrigger } from './core/gsap-loader';
 import './widgets/scroll-animation';
 import './widgets/scroll-timeline';
@@ -7,7 +7,6 @@ import './widgets/scroll-timeline';
  * Główna funkcja inicjalizująca.
  */
 function init() {
-  // Inicjalizacja globalna (dla frontendu)
   initWidgetsInScope(document);
 }
 
@@ -23,51 +22,47 @@ window.addEventListener('elementor/popup/show', (event) => {
   initWidgetsInScope(event.target);
 });
 
-// 3. Obsługa Edytora i Live Preview (KRYTYCZNE)
+// 3. Obsługa Edytora i Live Preview
 window.addEventListener('elementor/frontend/init', () => {
-  if (!elementorFrontend) return;
+  if (!window.elementorFrontend) return;
 
-  // Nasłuchuj na załadowanie dowolnego elementu (widgetu, sekcji, kontenera)
+  // Nasłuchuj na renderowanie dowolnego elementu
   elementorFrontend.hooks.addAction('frontend/element_ready/global', ($scope) => {
-    const node = $scope[0]; // jQuery object -> DOM Node
+    const node = $scope[0]; 
 
-    // Jeśli jesteśmy w edytorze, musimy posprzątać stare triggery dla tego elementu
-    // zanim dodamy nowe, aby uniknąć duplikatów.
     if (elementorFrontend.isEditMode()) {
-      cleanupTriggersInScope(node);
+      // KROK KLUCZOWY: Usuń martwe triggery przed inicjalizacją nowych
+      cleanupDetachedTriggers();
     }
 
-    // Próbujemy zainicjować ten konkretny element (jeśli ma config)
-    // Funkcja initWidgetsInScope przeszukuje też dzieci, więc zadziała dla kontenerów.
     initWidgetsInScope(node);
   });
 });
 
 /**
- * Helper do usuwania starych ScrollTriggerów powiązanych z elementem.
- * GSAP trzyma referencje globalnie, więc przy re-renderze w Elementorze
- * stare triggery mogą zostać osierocone i powodować błędy.
+ * Usuwa instancje ScrollTrigger podpięte do elementów, które nie istnieją już w DOM.
+ * Rozwiązuje problem duplikowania animacji przy edycji w Elementorze.
  */
-function cleanupTriggersInScope(scopeNode) {
+function cleanupDetachedTriggers() {
   try {
     const ScrollTrigger = getScrollTrigger();
     const triggers = ScrollTrigger.getAll();
     
     triggers.forEach((st) => {
-      // Sprawdzamy, czy trigger (lub jego animowany element) znajduje się wewnątrz odświeżanego zakresu
       const triggerElem = st.trigger;
-      const animElem = st.animation?.targets ? st.animation.targets()[0] : null;
-
-      if (scopeNode.contains(triggerElem) || (animElem && scopeNode.contains(animElem))) {
-        st.kill(true); // true = reset styles
-        
+      
+      // Sprawdź czy element triggera nadal znajduje się w dokumencie
+      const isDetached = triggerElem && !document.body.contains(triggerElem);
+      
+      if (isDetached) {
+        st.kill(true); // true = reset styles (ważne!)
         if (window.ScrollCrafterConfig?.debug) {
             // eslint-disable-next-line no-console
-            console.log('[ScrollCrafter] Killed trigger during re-render', st);
+            console.log('[ScrollCrafter] Killed detached trigger', st);
         }
       }
     });
   } catch (e) {
-    // Ignorujemy błędy czyszczenia (np. jeśli GSAP jeszcze nie jest załadowany)
+    // GSAP może nie być jeszcze załadowany
   }
 }
