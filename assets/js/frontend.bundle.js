@@ -272,18 +272,16 @@
   function cleanupDetachedTriggers() {
     try {
       const ScrollTrigger = getScrollTrigger();
+      if (!ScrollTrigger) return;
       const triggers = ScrollTrigger.getAll();
       triggers.forEach((st) => {
-        var _a;
         const triggerElem = st.trigger;
         const isDetached = triggerElem && !document.body.contains(triggerElem);
         if (isDetached) {
           st.kill(true);
-          if ((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug) {
-            console.log("[ScrollCrafter] Killed detached trigger", st);
-          }
         }
       });
+      ScrollTrigger.refresh();
     } catch (e) {
     }
   }

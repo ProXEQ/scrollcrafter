@@ -7,7 +7,6 @@ use WP_REST_Response;
 use ScrollCrafter\Animation\Script_Parser;
 use ScrollCrafter\Animation\Tween_Config_Builder;
 use ScrollCrafter\Animation\Timeline_Config_Builder;
-use ScrollCrafter\Support\Logger;
 
 class Validation_Controller
 {
@@ -15,7 +14,6 @@ class Validation_Controller
     private Tween_Config_Builder $tweenBuilder;
     private Timeline_Config_Builder $timelineBuilder;
 
-    // Dozwolone klucze dla walidacji (prosta schema)
     private const ALLOWED_KEYS = [
         'animation' => ['type', 'from', 'to', 'duration', 'delay', 'ease', 'stagger'],
         'scroll'    => ['start', 'end', 'scrub', 'once', 'markers', 'toggleactions', 'pin', 'pinspacing', 'snap', 'anticipatepin'],
@@ -64,18 +62,16 @@ class Validation_Controller
         }
 
         try {
-            // 1. Parsowanie składniowe (czy format [sekcja] klucz: wartosc jest ok)
             $parsed = $this->parser->parse( $script );
         } catch ( \Throwable $e ) {
-            return $this->response_with_error( $e->getMessage(), 'PARSER_EXCEPTION', $e->getLine() );
+            return $this->response_with_error( $e->getMessage(), 'PARSER_EXCEPTION', $e->getLine() > 0 ? $e->getLine() : 1 );
         }
 
-        // Pobierz błędy składniowe z parsera
         $errors   = array_map( fn($e) => $this->normalize_message($e, 'error'), $parsed['_errors'] ?? [] );
         $warnings = array_map( fn($w) => $this->normalize_message($w, 'warning'), $parsed['_warnings'] ?? [] );
 
-        // 2. Walidacja Logiczna (czy klucze mają sens)
-        $logicIssues = $this->validate_logic( $parsed );
+        $logicIssues = $this->validate_logic( $parsed, $script );
+        
         foreach ( $logicIssues as $issue ) {
             if ( $issue['severity'] === 'error' ) {
                 $errors[] = $issue;
@@ -84,14 +80,12 @@ class Validation_Controller
             }
         }
 
-        // Jeśli są błędy krytyczne, przerywamy przed budowaniem configu
         if ( ! empty( $errors ) ) {
             return new WP_REST_Response([
                 'ok' => false, 'errors' => $errors, 'warnings' => $warnings, 'config' => null
             ], 200);
         }
 
-        // 3. Budowanie Configu (Symulacja)
         try {
             $fakeElement = new class() { public function get_id(): string { return 'preview'; } };
             $targetSelector = $parsed['target']['selector'] ?? '.elementor-element-preview';
@@ -110,44 +104,46 @@ class Validation_Controller
 
         return new WP_REST_Response([
             'ok'       => true,
-            'errors'   => [], // Pusta tablica = sukces
+            'errors'   => [],
             'warnings' => $warnings,
             'config'   => $config,
         ], 200);
     }
 
     /**
-     * Sprawdza poprawność nazw kluczy i wartości.
+     * Sprawdza poprawność nazw kluczy w poszczególnych sekcjach.
      */
-    private function validate_logic( array $parsed ): array
+    private function validate_logic( array $parsed, string $script ): array
     {
         $issues = [];
 
-        // Sprawdź sekcję [animation]
-        if ( ! empty( $parsed['animation'] ) ) {
-            foreach ( $parsed['animation'] as $key => $val ) {
-                if ( ! in_array( $key, self::ALLOWED_KEYS['animation'], true ) ) {
-                    $issues[] = $this->create_issue( "Unknown key '{$key}' in [animation]. Did you mean '" . $this->suggest_key($key, 'animation') . "'?", 'warning' );
+        // Sections: animation, scroll
+        $check_keys = function( $data, $sectionName, $allowedKeys ) use ( &$issues, $script ) {
+            if ( empty( $data ) ) return;
+            foreach ( $data as $key => $val ) {
+                $normalizedKey = strtolower($key);
+                if ( ! in_array( $normalizedKey, $allowedKeys, true ) ) {
+                    $line = $this->find_line_number($script, $key . ':');
+                    $issues[] = $this->create_issue(
+                        "Unknown key '{$key}' in [{$sectionName}].", 'warning', $line
+                    );
                 }
             }
-        }
+        };
 
-        // Sprawdź sekcję [scroll]
-        if ( ! empty( $parsed['scroll'] ) ) {
-            foreach ( $parsed['scroll'] as $key => $val ) {
-                $normalizedKey = strtolower($key); // ScrollTrigger keys case-insensitive check here
-                if ( ! in_array( $normalizedKey, self::ALLOWED_KEYS['scroll'], true ) ) {
-                    $issues[] = $this->create_issue( "Unknown key '{$key}' in [scroll].", 'warning' );
-                }
-            }
-        }
+        $check_keys( $parsed['animation'] ?? [], 'animation', self::ALLOWED_KEYS['animation'] );
+        $check_keys( $parsed['scroll'] ?? [], 'scroll', self::ALLOWED_KEYS['scroll'] );
 
-        // Sprawdź kroki timeline
+        //  Timeline steps
         if ( ! empty( $parsed['timeline']['steps'] ) ) {
             foreach ( $parsed['timeline']['steps'] as $index => $step ) {
                 foreach ( $step as $key => $val ) {
-                     if ( ! in_array( $key, self::ALLOWED_KEYS['step'], true ) ) {
-                        $issues[] = $this->create_issue( "Unknown key '{$key}' in [step." . ($index + 1) . "].", 'warning' );
+                    $normalizedKey = strtolower($key);
+                    if ( ! in_array( $normalizedKey, self::ALLOWED_KEYS['step'], true ) ) {
+                        $line = $this->find_line_number($script, $key . ':');
+                        $issues[] = $this->create_issue( 
+                            "Unknown key '{$key}' in [step." . ($index + 1) . "].", 'warning', $line 
+                        );
                     }
                 }
             }
@@ -156,18 +152,13 @@ class Validation_Controller
         return $issues;
     }
 
-    private function suggest_key(string $badKey, string $section): string {
-        // Prosty mechanizm sugestii (można użyć levenshtein w przyszłości)
-        return self::ALLOWED_KEYS[$section][0] ?? '';
-    }
-
     private function create_issue( string $message, string $severity = 'warning', int $line = 1 ): array
     {
         return [
             'message'  => $message,
             'severity' => $severity,
             'line'     => $line,
-            'from'     => 0, // JS określi pozycję
+            'from'     => 0, 
             'to'       => 0
         ];
     }
@@ -183,31 +174,56 @@ class Validation_Controller
             'config'   => null
         ], 200);
     }
-
-    // ... (Metody build_scroll_trigger_config i normalize_message pozostają bez zmian, skopiuj je ze starego pliku) ...
-    // Skopiuj build_scroll_trigger_config z poprzedniej wersji.
-    // Skopiuj normalize_message z poprzedniej wersji.
     
-     private function build_scroll_trigger_config( array $scroll ): array
+    private function build_scroll_trigger_config( array $scroll ): array
     {
         $scrollTrigger = [
             'start'         => $scroll['start'] ?? 'top 80%',
             'end'           => $scroll['end'] ?? 'bottom 20%',
             'toggleActions' => $scroll['toggleActions'] ?? 'play none none reverse',
         ];
-        // ... (skrócona wersja dla czytelności, użyj pełnej z poprzednich kroków)
-         if ( array_key_exists( 'scrub', $scroll ) ) $scrollTrigger['scrub'] = $scroll['scrub'];
-         if ( array_key_exists( 'markers', $scroll ) ) $scrollTrigger['markers'] = (bool) $scroll['markers'];
+        if ( array_key_exists( 'scrub', $scroll ) ) $scrollTrigger['scrub'] = $scroll['scrub'];
+        if ( array_key_exists( 'markers', $scroll ) ) $scrollTrigger['markers'] = (bool) $scroll['markers'];
         
         return $scrollTrigger;
     }
-    
+
+    /**
+     * Normalizuje komunikaty błędów z parsera.
+     * Próbuje wyciągnąć numer linii z treści komunikatu, jeśli brakuje go w strukturze.
+     */
     private function normalize_message( $item, string $severity = 'error' ): array {
-        if ( is_string( $item ) ) return [ 'message' => $item, 'severity' => $severity, 'line' => 1 ];
+        $message = 'Unknown issue';
+        $line    = 1;
+
+        if ( is_string( $item ) ) {
+            $message = $item;
+        } 
+        elseif ( is_array( $item ) ) {
+            $message = (string) ( $item['message'] ?? 'Unknown issue' );
+            $line    = (int) ( $item['line'] ?? 1 );
+        }
+        if ( $line === 1 && preg_match( '/at line (\d+)/i', $message, $matches ) ) {
+            $line = (int) $matches[1];
+        }
+
         return [
-            'message'   => (string) ( $item['message'] ?? 'Unknown issue' ),
-            'severity'  => $severity,
-            'line'      => (int) ($item['line'] ?? 1),
+            'message'  => $message,
+            'severity' => $severity,
+            'line'     => $line,
         ];
+    }
+
+    /**
+     * Znajduje numer linii w tekście skryptu na podstawie szukanej frazy (klucza).
+     */
+    private function find_line_number(string $script, string $searchPhrase): int {
+        $lines = explode("\n", $script);
+        foreach ($lines as $index => $line) {
+            if (strpos($line, $searchPhrase) !== false && strpos(trim($line), '#') !== 0) {
+                return $index + 1;
+            }
+        }
+        return 1;
     }
 }

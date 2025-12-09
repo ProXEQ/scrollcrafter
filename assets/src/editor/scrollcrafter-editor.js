@@ -174,36 +174,91 @@ function dslCompletionSource(context) {
 }
 
 // ---------- LINTER ENGINE (CORE) ----------
+// ---------- LINTER ENGINE (FIXED LINE MAPPING) ----------
 const dslLinter = linter(async (view) => {
   const doc = view.state.doc.toString();
   
-  // Aktualizacja Status Bar - "Checking..."
+  // Update Status Bar
   const statusEl = document.querySelector('.sc-dsl-editor__status-text');
   if (statusEl) {
       statusEl.textContent = 'Checking...';
-      statusEl.style.color = '#abb2bf';
+      statusEl.style.color = '#8b949e';
   }
 
-  // Pobieramy dane z API
   const data = await fetchValidation(doc);
   
+  // Debug: Zobaczmy co zwraca API
+  if (DEBUG) console.log('[Linter API Response]', data);
+
   const diagnostics = [];
   let hasErrors = false;
 
   const mapDiag = (list, severity) => {
       (list || []).forEach(item => {
           const msg = item.message || String(item);
-          let lineNo = parseInt(item.line || 1, 10);
-          lineNo = Math.max(Math.min(lineNo, view.state.doc.lines), 1);
           
+          // 1. Pobierz numer linii z API
+          // PHP liczy od 1, CodeMirror API linii też (view.state.doc.line(N))
+          let lineNo = parseInt(item.line, 10);
+
+          // Fallback: Jeśli API nie zwróciło linii (lub zwróciło 0/null), szukamy w treści
+          if (!lineNo || isNaN(lineNo) || lineNo < 1) {
+              // Próba znalezienia tekstu błędu w dokumencie (prosty heurystyk)
+              // Np. jeśli błąd to "Unknown key 'foo'", szukamy 'foo'
+              const match = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
+              if (match) {
+                  // Szukamy w całym dokumencie
+                  const docString = view.state.doc.toString();
+                  const foundIdx = docString.indexOf(match[1]);
+                  if (foundIdx !== -1) {
+                      lineNo = view.state.doc.lineAt(foundIdx).number;
+                  } else {
+                      lineNo = 1; // Ostateczny fallback
+                  }
+              } else {
+                  lineNo = 1;
+              }
+          }
+
+          // Zabezpieczenie przed wyjściem poza zakres dokumentu
+          const totalLines = view.state.doc.lines;
+          if (lineNo > totalLines) lineNo = totalLines;
+
+          // Pobierz obiekt linii z CodeMirrora
           const ln = view.state.doc.line(lineNo);
+          const lineText = ln.text;
+
+          // 2. Precyzyjne zaznaczanie (From/To)
+          // Domyślnie zaznacz całą treść linii (bez białych znaków)
+          let from = ln.from + (lineText.length - lineText.trimStart().length);
+          let to = ln.to;
+
+          // Próba zawężenia do konkretnego słowa
+          const quotedWord = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
+          if (quotedWord) {
+              const word = quotedWord[1];
+              const idx = lineText.indexOf(word);
+              if (idx !== -1) {
+                  from = ln.from + idx;
+                  to = from + word.length;
+              }
+          } else if (msg.toLowerCase().includes('section')) {
+              // Jeśli błąd sekcji, zaznacz [nawiasy]
+              const bracketMatch = lineText.match(/\[.*?\]/);
+              if (bracketMatch) {
+                  from = ln.from + bracketMatch.index;
+                  to = from + bracketMatch[0].length;
+              }
+          }
+
           diagnostics.push({
-              from: ln.from,
-              to: ln.to,
+              from: from,
+              to: to,
               severity: severity,
               message: msg,
               source: 'ScrollCrafter'
           });
+          
           if (severity === 'error') hasErrors = true;
       });
   };
@@ -211,7 +266,7 @@ const dslLinter = linter(async (view) => {
   mapDiag(data.errors, 'error');
   mapDiag(data.warnings, 'warning');
 
-  // Aktualizacja globalnego stanu
+  // Update Global State
   lastValidationState = {
       valid: !hasErrors,
       hasCriticalErrors: hasErrors,
@@ -219,24 +274,24 @@ const dslLinter = linter(async (view) => {
       rawData: data
   };
 
-  // Aktualizacja Status Bar - Wynik
+  // Update UI Status
   if (statusEl) {
+      const parent = statusEl.parentElement;
       if (hasErrors) {
-          const errCount = data.errors ? data.errors.length : 0;
-          statusEl.textContent = `Found ${errCount} error(s). Fix them before applying.`;
-          statusEl.parentElement.className = 'sc-dsl-editor__status sc-dsl-editor__status--error';
+          statusEl.textContent = `Found ${data.errors.length} error(s).`;
+          parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--error';
       } else if (data.warnings && data.warnings.length > 0) {
-          statusEl.textContent = `Valid (with ${data.warnings.length} warnings).`;
-          statusEl.parentElement.className = 'sc-dsl-editor__status sc-dsl-editor__status--warning';
+          statusEl.textContent = `Valid (${data.warnings.length} warnings).`;
+          parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--warning';
       } else {
           statusEl.textContent = 'Script is valid.';
-          statusEl.parentElement.className = 'sc-dsl-editor__status sc-dsl-editor__status--ok';
+          parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--ok';
       }
   }
 
   return diagnostics;
 
-}, { delay: 500 }); // Szybki feedback (0.5s)
+}, { delay: 500 });
 
 
 // ---------- Editor Init ----------
@@ -305,8 +360,7 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
         </div>
         <div class="sc-dsl-editor__footer">
           <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">Cancel</button>
-          <button type="button" class="elementor-button elementor-button-default sc-dsl-editor__btn sc-dsl-editor__apply">Apply</button>
-          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply & Preview</button>
+          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply</button>
         </div>
       </div>
     `;
@@ -345,43 +399,93 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     bindClose('.sc-dsl-editor__cancel');
     bindClose('.sc-dsl-editor__backdrop');
 
-    // --- LOGIKA PRZYCISKU (NOWA) ---
-    // Nie robimy fetch(), ufamy Linterowi
-    modal.querySelector('.sc-dsl-editor__apply-preview').onclick = () => {
+        // Helper function to trigger Elementor UI update
+    const triggerElementorUpdate = (newCode) => {
+        // 1. Aktualizacja modelu (Backbone)
+        settings.set('scrollcrafter_script', newCode);
+        
+        // 2. Znalezienie fizycznego pola textarea w panelu
+        // Szukamy aktywnej kontrolki w panelu, która odpowiada naszemu ustawieniu
+        // Zazwyczaj ma atrybut data-setting="scrollcrafter_script"
+        const controlTextarea = document.querySelector('.elementor-control-scrollcrafter_script textarea, textarea[data-setting="scrollcrafter_script"]');
+        
+        if (controlTextarea) {
+            controlTextarea.value = newCode;
+            // Kluczowe: Symulacja wpisywania tekstu przez użytkownika
+            controlTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+            controlTextarea.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+            // Fallback: Jeśli kontrolka nie jest w DOM (np. inna zakładka),
+            // musimy wymusić flagę 'isDirty' w edytorze
+            if (window.elementor && elementor.saver) {
+                elementor.saver.setFlag('edit'); 
+            }
+        }
+    };
+
+    const handleApply = () => {
       const currentCode = getEditorDoc();
 
-      // Sprawdzamy ostatni znany stan walidacji
+      // 1. Krytyczne Błędy (Errors) - BLOKADA
       if (lastValidationState.hasCriticalErrors) {
-          // Zablokuj zapis, pokaż alert lub scrolluj do błędu
           log('[SC Editor] Critical errors found, blocking apply.');
+          
+          // Focus na pierwszy błąd
           const firstErr = lastValidationState.diagnostics.find(d => d.severity === 'error');
           if (firstErr && cmView) {
-              // Scroll do błędu
               cmView.dispatch({
                   selection: { anchor: firstErr.from },
                   scrollIntoView: true
               });
-              // Focus
               cmView.focus();
           }
-          // Animacja błędu
-          modal.classList.add('sc-shake');
-          setTimeout(() => modal.classList.remove('sc-shake'), 500);
+          
+          // Efekt trzęsienia i komunikat
+          const panel = modal.querySelector('.sc-dsl-editor__panel');
+          panel.classList.add('sc-shake');
+          setTimeout(() => panel.classList.remove('sc-shake'), 500);
+          
+          statusText.textContent = 'Fix errors before saving!';
+          statusText.style.color = '#e06c75'; // Czerwony
           return;
       }
 
-      // Jeśli OK lub tylko Warningi -> Zapisz
-      settings.set('scrollcrafter_script', currentCode);
+      // 2. Ostrzeżenia (Warnings) - POTWIERDZENIE
+      const warnings = lastValidationState.diagnostics.filter(d => d.severity === 'warning');
+      if (warnings.length > 0) {
+          // Prosty, natywny confirm jest najbardziej niezawodny
+          const proceed = confirm(`⚠️ Your code has ${warnings.length} warning(s).\n\nThis might cause unexpected behavior. Are you sure you want to save?`);
+          
+          if (!proceed) {
+              // Focus na pierwszy warning
+              if (cmView) {
+                  cmView.dispatch({
+                      selection: { anchor: warnings[0].from },
+                      scrollIntoView: true
+                  });
+              }
+              return; // Anuluj zapis
+          }
+      }
+
+      // 3. Sukces - Zapisz i powiadom Elementora
+      triggerElementorUpdate(currentCode);
+
+      // Wymuś odświeżenie podglądu
       if (model.trigger) model.trigger('change', model);
       if (currentPageView.render) currentPageView.render();
+      
       log('[SC Editor] Script applied to element', elementId);
 
       statusText.textContent = 'Applied!';
-      setTimeout(close, 1500);
+      statusText.style.color = '#98c379'; // Zielony
+      
+      setTimeout(close, 500);
     };
-    
-    // Apply Only (bez preview)
-    modal.querySelector('.sc-dsl-editor__apply').onclick = modal.querySelector('.sc-dsl-editor__apply-preview').onclick;
+
+
+    // Podpięcie handlerów
+    modal.querySelector('.sc-dsl-editor__apply-preview').onclick = handleApply;
 
     modal.classList.add('sc-dsl-editor--open');
   };
