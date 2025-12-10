@@ -102,6 +102,137 @@ function withSlashApply(options, slashPos) {
     }
   }));
 }
+
+function insertAtCursor(view, text) {
+    const state = view.state;
+    const range = state.selection.main;
+    view.dispatch({
+        changes: { from: range.from, to: range.to, insert: text },
+        selection: { anchor: range.from + text.length },
+        scrollIntoView: true
+    });
+    view.focus();
+}
+
+// --- Generator HTML Cheat Sheet ---
+function renderCheatSheet(container, view) {
+    if (!FIELD_DEFS) return;
+
+    let html = '';
+    const sections = [
+        { key: 'animation', label: '[animation]' },
+        { key: 'scroll', label: '[scroll]' },
+        { key: 'timeline', label: '[timeline]' },
+        { key: 'step.*', label: '[step]' } // Dla timeline
+    ];
+
+    sections.forEach(sec => {
+        const fields = FIELD_DEFS[sec.key];
+        if (!fields) return;
+
+        html += `<div class="sc-cs-section">`;
+        html += `<div class="sc-cs-title">${sec.label}</div>`;
+        
+        Object.entries(fields).forEach(([fieldName, def]) => {
+            html += `<div class="sc-cs-item" data-insert="${fieldName}: ">
+                        ${fieldName} <span>${def.detail || ''}</span>
+                     </div>`;
+        });
+
+        html += `</div>`;
+    });
+
+    html += `<div class="sc-cs-section">
+                <div class="sc-cs-title">Snippets</div>
+                <div class="sc-cs-item" data-insert="[animation]\ntype: from\nfrom: opacity=0, y=50\nduration: 1\n">Fade In Up</div>
+                <div class="sc-cs-item" data-insert="[scroll]\nstart: top 80%\nend: bottom 20%\nscrub: 1\nmarkers: true\n">Scroll Trigger</div>
+             </div>`;
+
+    container.innerHTML = html;
+    container.querySelectorAll('.sc-cs-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const textToInsert = el.dataset.insert;
+            insertAtCursor(view, textToInsert);
+        });
+    });
+}
+
+// --- Inteligentny Cheat Sheet: Wykrywanie użytych kluczy ---
+function updateCheatSheetState(view) {
+    const state = view.state;
+    const doc = state.doc;
+    const selection = state.selection.main;
+    
+    // 1. Znajdź sekcję, w której jest kursor
+    // (Używamy istniejącej logiki z getCurrentSection, ale uproszczonej)
+    let currentSectionName = null;
+    let usedKeys = new Set();
+    
+    // Szukamy nagłówka sekcji W GÓRĘ od kursora
+    const currentLineNo = doc.lineAt(selection.head).number;
+    
+    let sectionStartLine = -1;
+    let sectionEndLine = -1;
+
+    // A. Znajdź początek sekcji [nazwa]
+    for (let l = currentLineNo; l >= 1; l--) {
+        const lineText = doc.line(l).text.trim();
+        if (lineText.startsWith('[') && lineText.endsWith(']')) {
+            currentSectionName = lineText.slice(1, -1).trim().toLowerCase();
+            sectionStartLine = l;
+            break;
+        }
+    }
+
+    // B. Jeśli znaleźliśmy sekcję, przeskanujmy ją w dół aż do następnej sekcji lub końca
+    if (currentSectionName) {
+        // Normalizacja nazwy dla steps (step.1 -> step.*)
+        if (currentSectionName.startsWith('step.')) currentSectionName = 'step.*';
+
+        // Skanujemy od startu sekcji w dół
+        for (let l = sectionStartLine + 1; l <= doc.lines; l++) {
+            const lineText = doc.line(l).text.trim();
+            // Stop jeśli nowa sekcja
+            if (lineText.startsWith('[') && lineText.endsWith(']')) {
+                break;
+            }
+            // Wyciągnij klucz (słowo przed dwukropkiem)
+            const match = lineText.match(/^([a-zA-Z0-9_.]+):/);
+            if (match) {
+                usedKeys.add(match[1]); // np. "duration"
+            }
+        }
+    }
+
+    // 2. Aktualizuj UI w panelu bocznym
+    const sidebar = document.getElementById('sc-cs-content');
+    if (!sidebar) return;
+
+    // Reset: usuń klasę is-used ze wszystkich
+    sidebar.querySelectorAll('.sc-cs-item').forEach(el => el.classList.remove('is-used'));
+
+    // Jeśli nie jesteśmy w żadnej sekcji, nic nie wyszarzamy (lub wszystko - kwestia decyzji)
+    if (!currentSectionName) return;
+    const sectionHeaders = Array.from(sidebar.querySelectorAll('.sc-cs-title'));
+    const activeSidebarHeader = sectionHeaders.find(h => h.textContent.includes(currentSectionName.replace('.*', '')));
+    
+    if (activeSidebarHeader) {
+        const parentSection = activeSidebarHeader.parentElement;
+        const items = parentSection.querySelectorAll('.sc-cs-item');
+        
+        items.forEach(item => {
+            // dataset.insert wygląda np. tak: "duration: "
+            const insertText = item.dataset.insert || '';
+            const keyName = insertText.split(':')[0].trim();
+            
+            if (usedKeys.has(keyName)) {
+                item.classList.add('is-used');
+            }
+        });
+    }
+}
+
+
 function getCurrentSection(state, pos) {
   const line = state.doc.lineAt(pos);
   for (let ln = line.number; ln >= 1; ln--) {
@@ -174,7 +305,6 @@ function dslCompletionSource(context) {
 }
 
 // ---------- LINTER ENGINE (CORE) ----------
-// ---------- LINTER ENGINE (FIXED LINE MAPPING) ----------
 const dslLinter = linter(async (view) => {
   const doc = view.state.doc.toString();
   
@@ -187,7 +317,6 @@ const dslLinter = linter(async (view) => {
 
   const data = await fetchValidation(doc);
   
-  // Debug: Zobaczmy co zwraca API
   if (DEBUG) console.log('[Linter API Response]', data);
 
   const diagnostics = [];
@@ -196,44 +325,31 @@ const dslLinter = linter(async (view) => {
   const mapDiag = (list, severity) => {
       (list || []).forEach(item => {
           const msg = item.message || String(item);
-          
-          // 1. Pobierz numer linii z API
-          // PHP liczy od 1, CodeMirror API linii też (view.state.doc.line(N))
           let lineNo = parseInt(item.line, 10);
-
-          // Fallback: Jeśli API nie zwróciło linii (lub zwróciło 0/null), szukamy w treści
           if (!lineNo || isNaN(lineNo) || lineNo < 1) {
-              // Próba znalezienia tekstu błędu w dokumencie (prosty heurystyk)
-              // Np. jeśli błąd to "Unknown key 'foo'", szukamy 'foo'
               const match = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
               if (match) {
-                  // Szukamy w całym dokumencie
                   const docString = view.state.doc.toString();
                   const foundIdx = docString.indexOf(match[1]);
                   if (foundIdx !== -1) {
                       lineNo = view.state.doc.lineAt(foundIdx).number;
                   } else {
-                      lineNo = 1; // Ostateczny fallback
+                      lineNo = 1;
                   }
               } else {
                   lineNo = 1;
               }
           }
 
-          // Zabezpieczenie przed wyjściem poza zakres dokumentu
           const totalLines = view.state.doc.lines;
           if (lineNo > totalLines) lineNo = totalLines;
 
-          // Pobierz obiekt linii z CodeMirrora
           const ln = view.state.doc.line(lineNo);
           const lineText = ln.text;
 
-          // 2. Precyzyjne zaznaczanie (From/To)
-          // Domyślnie zaznacz całą treść linii (bez białych znaków)
           let from = ln.from + (lineText.length - lineText.trimStart().length);
           let to = ln.to;
 
-          // Próba zawężenia do konkretnego słowa
           const quotedWord = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
           if (quotedWord) {
               const word = quotedWord[1];
@@ -243,7 +359,6 @@ const dslLinter = linter(async (view) => {
                   to = from + word.length;
               }
           } else if (msg.toLowerCase().includes('section')) {
-              // Jeśli błąd sekcji, zaznacz [nawiasy]
               const bracketMatch = lineText.match(/\[.*?\]/);
               if (bracketMatch) {
                   from = ln.from + bracketMatch.index;
@@ -316,7 +431,11 @@ function createEditor(parentNode, initialDoc) {
       dslLanguage,
       syntaxHighlighting(dslHighlightStyle),
       autocompletion({ override: [dslCompletionSource], activateOnTyping: true }),
-      
+      EditorView.updateListener.of((update) => {
+          if (update.docChanged || update.selectionSet) {
+              updateCheatSheetState(update.view);
+          }
+      }),
       lintGutter(),
       dslLinter, // Linter działa automatycznie w tle
       
@@ -349,18 +468,36 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       <div class="sc-dsl-editor__panel">
         <div class="sc-dsl-editor__header">
           <div class="sc-dsl-editor__title">
-            <span class="sc-dsl-editor__title-main">ScrollCrafter DSL Editor</span>
+            <span class="sc-dsl-editor__title-main">ScrollCrafter DSL</span>
             <span class="sc-dsl-editor__title-sub"></span>
           </div>
           <button type="button" class="sc-dsl-editor__close">&times;</button>
         </div>
+        
         <div class="sc-dsl-editor__body">
-          <div class="sc-dsl-editor__editor-container"><div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div></div>
-          <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
+            <!-- LEWA STRONA: EDYTOR -->
+            <div class="sc-dsl-editor__main-area">
+                <div class="sc-dsl-editor__editor-container">
+                    <div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div>
+                </div>
+                <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
+            </div>
+
+            <!-- PRAWA STRONA: CHEAT SHEET -->
+            <div class="sc-dsl-editor__sidebar">
+                <div class="sc-dsl-editor__sidebar-header">
+                    Cheat Sheet
+                    <!-- Opcjonalnie: ikona help -->
+                </div>
+                <div class="sc-dsl-editor__sidebar-content" id="sc-cs-content">
+                    <!-- Wygenerowane przez JS -->
+                </div>
+            </div>
         </div>
+
         <div class="sc-dsl-editor__footer">
           <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">Cancel</button>
-          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply</button>
+          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply & Preview</button>
         </div>
       </div>
     `;
@@ -387,7 +524,11 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     statusText.textContent = 'Checking...';
     modal.querySelector('.sc-dsl-editor__status').className = 'sc-dsl-editor__status';
 
-    createEditor(modal.querySelector('#sc-dsl-editor-cm'), currentScript);
+    const cmInstance = createEditor(modal.querySelector('#sc-dsl-editor-cm'), currentScript);
+
+    renderCheatSheet(modal.querySelector('#sc-cs-content'), cmInstance);
+
+    updateCheatSheetState(cmInstance);
 
     const close = () => modal.classList.remove('sc-dsl-editor--open');
     

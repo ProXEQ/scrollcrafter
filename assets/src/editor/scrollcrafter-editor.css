@@ -111,6 +111,20 @@
   padding: 8px;
 }
 
+.sc-cs-item.is-used {
+  opacity: 0.3; /* Mocne wyszarzenie */
+  pointer-events: none; /* Opcjonalnie: zablokuj klikanie, żeby nie dublować */
+  filter: grayscale(1);
+}
+
+/* Opcjonalnie: ikona "check" */
+.sc-cs-item.is-used::after {
+  content: '✓';
+  margin-left: auto;
+  font-weight: bold;
+  color: #56d364; /* Zielony */
+}
+
 /* --- Sekcje w Sidebarze --- */
 
 .sc-cs-section {

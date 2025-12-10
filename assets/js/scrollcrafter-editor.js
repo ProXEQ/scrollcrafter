@@ -34911,6 +34911,108 @@
       }
     }));
   }
+  function insertAtCursor(view, text) {
+    const state = view.state;
+    const range = state.selection.main;
+    view.dispatch({
+      changes: { from: range.from, to: range.to, insert: text },
+      selection: { anchor: range.from + text.length },
+      scrollIntoView: true
+    });
+    view.focus();
+  }
+  function renderCheatSheet(container, view) {
+    if (!FIELD_DEFS) return;
+    let html = "";
+    const sections = [
+      { key: "animation", label: "[animation]" },
+      { key: "scroll", label: "[scroll]" },
+      { key: "timeline", label: "[timeline]" },
+      { key: "step.*", label: "[step]" }
+      // Dla timeline
+    ];
+    sections.forEach((sec) => {
+      const fields = FIELD_DEFS[sec.key];
+      if (!fields) return;
+      html += `<div class="sc-cs-section">`;
+      html += `<div class="sc-cs-title">${sec.label}</div>`;
+      Object.entries(fields).forEach(([fieldName, def]) => {
+        html += `<div class="sc-cs-item" data-insert="${fieldName}: ">
+                        ${fieldName} <span>${def.detail || ""}</span>
+                     </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `<div class="sc-cs-section">
+                <div class="sc-cs-title">Snippets</div>
+                <div class="sc-cs-item" data-insert="[animation]
+type: from
+from: opacity=0, y=50
+duration: 1
+">Fade In Up</div>
+                <div class="sc-cs-item" data-insert="[scroll]
+start: top 80%
+end: bottom 20%
+scrub: 1
+markers: true
+">Scroll Trigger</div>
+             </div>`;
+    container.innerHTML = html;
+    container.querySelectorAll(".sc-cs-item").forEach((el) => {
+      el.addEventListener("click", () => {
+        const textToInsert = el.dataset.insert;
+        insertAtCursor(view, textToInsert);
+      });
+    });
+  }
+  function updateCheatSheetState(view) {
+    const state = view.state;
+    const doc3 = state.doc;
+    const selection = state.selection.main;
+    let currentSectionName = null;
+    let usedKeys = /* @__PURE__ */ new Set();
+    const currentLineNo = doc3.lineAt(selection.head).number;
+    let sectionStartLine = -1;
+    let sectionEndLine = -1;
+    for (let l = currentLineNo; l >= 1; l--) {
+      const lineText = doc3.line(l).text.trim();
+      if (lineText.startsWith("[") && lineText.endsWith("]")) {
+        currentSectionName = lineText.slice(1, -1).trim().toLowerCase();
+        sectionStartLine = l;
+        break;
+      }
+    }
+    if (currentSectionName) {
+      if (currentSectionName.startsWith("step.")) currentSectionName = "step.*";
+      for (let l = sectionStartLine + 1; l <= doc3.lines; l++) {
+        const lineText = doc3.line(l).text.trim();
+        if (lineText.startsWith("[") && lineText.endsWith("]")) {
+          break;
+        }
+        const match = lineText.match(/^([a-zA-Z0-9_.]+):/);
+        if (match) {
+          usedKeys.add(match[1]);
+        }
+      }
+    }
+    const sidebar = document.getElementById("sc-cs-content");
+    if (!sidebar) return;
+    sidebar.querySelectorAll(".sc-cs-item").forEach((el) => el.classList.remove("is-used"));
+    if (!currentSectionName) return;
+    const sectionHeaders = Array.from(sidebar.querySelectorAll(".sc-cs-title"));
+    const activeSidebarHeader = sectionHeaders.find((h) => h.textContent.includes(currentSectionName.replace(".*", "")));
+    if (activeSidebarHeader) {
+      const parentSection = activeSidebarHeader.parentElement;
+      const items = parentSection.querySelectorAll(".sc-cs-item");
+      items.forEach((item) => {
+        const insertText = item.dataset.insert || "";
+        const keyName2 = insertText.split(":")[0].trim();
+        if (usedKeys.has(keyName2)) {
+          item.classList.add("is-used");
+        }
+      });
+    }
+  }
   function getCurrentSection(state, pos) {
     const line = state.doc.lineAt(pos);
     for (let ln = line.number; ln >= 1; ln--) {
@@ -35078,6 +35180,11 @@
         dslLanguage,
         syntaxHighlighting(dslHighlightStyle),
         autocompletion({ override: [dslCompletionSource], activateOnTyping: true }),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged || update.selectionSet) {
+            updateCheatSheetState(update.view);
+          }
+        }),
         lintGutter(),
         dslLinter,
         // Linter działa automatycznie w tle
@@ -35103,18 +35210,36 @@
       <div class="sc-dsl-editor__panel">
         <div class="sc-dsl-editor__header">
           <div class="sc-dsl-editor__title">
-            <span class="sc-dsl-editor__title-main">ScrollCrafter DSL Editor</span>
+            <span class="sc-dsl-editor__title-main">ScrollCrafter DSL</span>
             <span class="sc-dsl-editor__title-sub"></span>
           </div>
           <button type="button" class="sc-dsl-editor__close">&times;</button>
         </div>
+        
         <div class="sc-dsl-editor__body">
-          <div class="sc-dsl-editor__editor-container"><div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div></div>
-          <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
+            <!-- LEWA STRONA: EDYTOR -->
+            <div class="sc-dsl-editor__main-area">
+                <div class="sc-dsl-editor__editor-container">
+                    <div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div>
+                </div>
+                <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
+            </div>
+
+            <!-- PRAWA STRONA: CHEAT SHEET -->
+            <div class="sc-dsl-editor__sidebar">
+                <div class="sc-dsl-editor__sidebar-header">
+                    Cheat Sheet
+                    <!-- Opcjonalnie: ikona help -->
+                </div>
+                <div class="sc-dsl-editor__sidebar-content" id="sc-cs-content">
+                    <!-- Wygenerowane przez JS -->
+                </div>
+            </div>
         </div>
+
         <div class="sc-dsl-editor__footer">
           <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">Cancel</button>
-          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply</button>
+          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply & Preview</button>
         </div>
       </div>
     `;
@@ -35135,7 +35260,9 @@
       modal.querySelector(".sc-dsl-editor__title-sub").textContent = `${elementType} (${elementId})`;
       statusText.textContent = "Checking...";
       modal.querySelector(".sc-dsl-editor__status").className = "sc-dsl-editor__status";
-      createEditor(modal.querySelector("#sc-dsl-editor-cm"), currentScript);
+      const cmInstance = createEditor(modal.querySelector("#sc-dsl-editor-cm"), currentScript);
+      renderCheatSheet(modal.querySelector("#sc-cs-content"), cmInstance);
+      updateCheatSheetState(cmInstance);
       const close = () => modal.classList.remove("sc-dsl-editor--open");
       const bindClose = (selector) => {
         const el = modal.querySelector(selector);
