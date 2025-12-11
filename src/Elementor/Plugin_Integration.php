@@ -3,47 +3,89 @@
 namespace ScrollCrafter\Elementor;
 
 use Elementor\Widgets_Manager;
+use Elementor\Widget_Base;
+use ScrollCrafter\Support\Config;
 use ScrollCrafter\Support\Logger;
 
 /**
- * Odpowiada za rejestrację niestandardowych widgetów ScrollCrafter w Elementorze.
- * Obecnie plugin działa głównie w oparciu o Animation_Injector (rozszerzanie istniejących widgetów),
- * ale ta klasa pozostaje jako fundament pod przyszłe dedykowane moduły.
+ * Integracja z Elementorem: rejestracja dedykowanych widgetów ScrollCrafter.
  */
 class Plugin_Integration
 {
-	public function hooks(): void
-	{
-		// Rejestracja widgetów (jeśli jakieś zostaną dodane w przyszłości).
-		add_action( 'elementor/widgets/register', [ $this, 'register_widgets' ] );
-		
-		// Assety specyficzne dla widgetów Elementora.
-		add_action( 'elementor/frontend/after_enqueue_scripts', [ $this, 'enqueue_elementor_assets' ] );
-	}
+    public function hooks(): void
+    {
+        // Rejestracja widgetów.
+        add_action( 'elementor/widgets/register', [ $this, 'register_widgets' ] );
+        
+        // Assety dla dedykowanych widgetów (frontend + editor).
+        add_action( 'elementor/frontend/after_enqueue_scripts', [ $this, 'enqueue_widget_assets' ] );
+        add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'enqueue_widget_assets' ] );
+    }
 
-	public function register_widgets( Widgets_Manager $widgets_manager ): void
-	{
-		// Lista klas widgetów do zarejestrowania.
-		// W przyszłości tutaj dodamy np. new Widgets\Three_Canvas().
-		$widgets = apply_filters( 'scrollcrafter/widgets', [] );
+    /**
+     * Rejestruje niestandardowe widgety ScrollCrafter.
+     *
+     * @param Widgets_Manager $widgets_manager
+     */
+    public function register_widgets( Widgets_Manager $widgets_manager ): void
+    {
+        /**
+         * Filtr pozwalający dodawać własne widgety do ScrollCraftera.
+         * 
+         * @param array $widgets Lista FQCN klas widgetów (string[]).
+         */
+        $widget_classes = apply_filters( 'scrollcrafter/widgets', [] );
 
-		if ( empty( $widgets ) ) {
-			return;
-		}
+        if ( empty( $widget_classes ) || ! is_array( $widget_classes ) ) {
+            return;
+        }
 
-		Logger::log( 'Registering custom Elementor widgets...', 'elementor' );
+        $registered = [];
+        $failed     = [];
 
-		foreach ( $widgets as $widget_class ) {
-			if ( class_exists( $widget_class ) ) {
-				$widgets_manager->register( new $widget_class() );
-				Logger::log( "Registered widget: {$widget_class}", 'elementor' );
-			}
-		}
-	}
+        foreach ( $widget_classes as $widget_class ) {
+            try {
+                // Walidacja: czy klasa istnieje i dziedziczy po Widget_Base
+                if ( ! class_exists( $widget_class ) ) {
+                    $failed[] = $widget_class . ' (class not found)';
+                    continue;
+                }
 
-	public function enqueue_elementor_assets(): void
-	{
-		// Miejsce na ładowanie skryptów, które są potrzebne TYLKO jeśli nasze dedykowane widgety są na stronie.
-		// Obecnie logika assetów jest obsługiwana globalnie przez Asset_Manager.
-	}
+                if ( ! is_subclass_of( $widget_class, Widget_Base::class ) ) {
+                    $failed[] = $widget_class . ' (not a valid Elementor widget)';
+                    continue;
+                }
+
+                // Instancjonowanie i rejestracja
+                $widget_instance = new $widget_class();
+                $widgets_manager->register( $widget_instance );
+                $registered[] = $widget_class;
+
+            } catch ( \Throwable $e ) {
+                $failed[] = $widget_class . ' (exception: ' . $e->getMessage() . ')';
+                
+                // Logujemy wyjątek, jeśli debug jest włączony
+                if ( Config::instance()->is_debug() ) {
+                    Logger::log_exception( $e, 'widget_registration' );
+                }
+            }
+        }
+
+        // Jeden zbiorczy log zamiast wielu
+        if ( ! empty( $registered ) && Config::instance()->is_debug() ) {
+            Logger::log( 'Registered widgets: ' . implode( ', ', $registered ), 'elementor' );
+        }
+
+        if ( ! empty( $failed ) && Config::instance()->is_debug() ) {
+            Logger::log( 'Failed to register widgets: ' . implode( ', ', $failed ), 'elementor' );
+        }
+    }
+
+    /**
+     * Ładuje assety specyficzne dla dedykowanych widgetów ScrollCrafter.
+     * Obecnie puste - miejsce na przyszłe rozszerzenia.
+     */
+    public function enqueue_widget_assets(): void
+    {
+    }
 }

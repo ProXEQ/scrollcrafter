@@ -1,0 +1,55 @@
+# --- System & IDE ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.log
+
+# --- Node / NPM ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+# package-lock.json zazwyczaj WARTO wersjonować w projektach, ale w pluginach WP różnie bywa.
+# Rekomendacja: USUŃ linię package-lock.json z gitignore, wersjonuj go dla stabilności builda.
+
+# --- Environment ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# --- Build Outputs ---
+# Decyzja: Czy wersjonujemy zbudowane pliki JS/CSS?
+# Wtyczki WP na GitHubie często MAJĄ zbudowane pliki, aby można było je zainstalować bez npm install.
+# Jeśli planujesz release'y przez GitHub Releases (zip), możesz to odkomentować.
+# assets/js/*.js
+# assets/js/*.map
+# assets/css/*.css
+# assets/css/*.map
+
+# Wyjątki: ignorujemy mapy źródłowe na produkcji, ale w repo mogą być zbędne
+assets/js/*.map
+assets/css/*.map
+
+# --- WordPress specific ---
+# Jeśli pracujesz wewnątrz instalacji WP i chcesz ignorować wszystko poza pluginem
+# (zakładając, że to repozytorium to TYLKO katalog pluginu scrollcrafter)
+vendor/
+# Ale vendor/autoload.php chcemy, jeśli generujemy go lokalnie.
+# Zazwyczaj vendor/ jest ignorowane, a user musi zrobić `composer install`.
+# W WP często dostarcza się vendor w paczce.
+# Rekomendacja dla repozytorium źródłowego:
+vendor/
+
+# --- Composer ---
+composer.lock
+# Podobnie jak package-lock, composer.lock WARTO wersjonować.
+
+# --- Temporary ---
+*.swp
+*.swo

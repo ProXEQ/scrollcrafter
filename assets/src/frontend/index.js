@@ -10,29 +10,30 @@ function init() {
   initWidgetsInScope(document);
 }
 
-// 1. Standardowy start na froncie
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {
   init();
 }
 
-// 2. Obsługa Popupów Elementora
 window.addEventListener('elementor/popup/show', (event) => {
   initWidgetsInScope(event.target);
+  
+  const ScrollTrigger = getScrollTrigger();
+  if (ScrollTrigger) ScrollTrigger.refresh();
 });
 
-// 3. Obsługa Edytora i Live Preview (Elementor)
 window.addEventListener('elementor/frontend/init', () => {
   if (!window.elementorFrontend) return;
 
-  // Nasłuchuj na renderowanie dowolnego elementu (przy zmianie ustawień)
   elementorFrontend.hooks.addAction('frontend/element_ready/global', ($scope) => {
     const node = $scope[0]; 
 
-    // Jeśli jesteśmy w trybie edycji, czyścimy stare instancje przed stworzeniem nowych
     if (elementorFrontend.isEditMode()) {
-      cleanupDetachedTriggers();
+      const widgetId = node.getAttribute('data-id');
+      if (widgetId) {
+        killTriggerByWidgetId(widgetId);
+      }
     }
 
     initWidgetsInScope(node);
@@ -40,33 +41,24 @@ window.addEventListener('elementor/frontend/init', () => {
 });
 
 /**
- * Usuwa instancje ScrollTrigger podpięte do elementów, które nie istnieją już w DOM.
- * Rozwiązuje problem duplikowania animacji i "walki" triggerów po odświeżeniu widgetu.
+ * Usuwa ScrollTrigger powiązany z danym widgetem (jeśli istnieje).
  */
-function cleanupDetachedTriggers() {
+function killTriggerByWidgetId(widgetId) {
   try {
     const ScrollTrigger = getScrollTrigger();
     if (!ScrollTrigger) return;
 
-    const triggers = ScrollTrigger.getAll();
-    
-    triggers.forEach((st) => {
-      const triggerElem = st.trigger;
-      
-      // Sprawdź czy element triggera nadal znajduje się w aktywnym dokumencie
-      const isDetached = triggerElem && !document.body.contains(triggerElem);
-      
-      if (isDetached) {
-        st.kill(true); // true = reset styles (przywraca CSS do stanu pierwotnego)
-        // Opcjonalne logowanie dla debugowania
-        // if (window.ScrollCrafterConfig?.debug) console.log('[ScrollCrafter] Killed detached trigger', st);
+    const triggerId = 'sc-' + widgetId;
+    const st = ScrollTrigger.getById(triggerId);
+
+    if (st) {
+      if (window.ScrollCrafterConfig?.debug) {
+        console.log(`[ScrollCrafter] Killing trigger: ${triggerId}`);
       }
-    });
-    
-    // Wymuś odświeżenie po czyszczeniu
-    ScrollTrigger.refresh();
+      st.kill(true);
+    }
     
   } catch (e) {
-    // GSAP może nie być jeszcze załadowany lub inna kolizja - ignorujemy bezpiecznie
+    console.warn('[ScrollCrafter] Error killing trigger:', e);
   }
 }

@@ -1,6 +1,7 @@
 (() => {
   // assets/src/frontend/core/registry.js
   var registry = {};
+  var initializedNodes = /* @__PURE__ */ new WeakSet();
   function registerWidget(type, initFn) {
     registry[type] = initFn;
   }
@@ -10,7 +11,10 @@
     }
     const nodes = root.querySelectorAll("[data-scrollcrafter-config]");
     nodes.forEach((node) => {
-      var _a, _b;
+      var _a;
+      if (initializedNodes.has(node)) {
+        return;
+      }
       const raw = node.getAttribute("data-scrollcrafter-config");
       if (!raw) return;
       let config;
@@ -18,7 +22,7 @@
         config = JSON.parse(raw);
       } catch (e) {
         if ((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug) {
-          console.warn("ScrollCrafter: invalid config JSON", e);
+          console.warn("[ScrollCrafter] Invalid config JSON:", e, node);
         }
         return;
       }
@@ -28,221 +32,215 @@
       }
       try {
         registry[type](node, config);
-        document.dispatchEvent(
-          new CustomEvent("scrollcrafter:widget_init", {
-            detail: { type, node, config }
+        initializedNodes.add(node);
+        node.dispatchEvent(
+          new CustomEvent("scrollcrafter:init", {
+            bubbles: true,
+            detail: { type, config }
           })
         );
       } catch (e) {
-        if ((_b = window.ScrollCrafterConfig) == null ? void 0 : _b.debug) {
-          console.error("ScrollCrafter: widget init error", type, e);
-        }
+        console.error(`[ScrollCrafter] Init error for "${type}":`, e);
       }
     });
   }
 
   // assets/src/frontend/core/gsap-loader.js
   function getGsap() {
-    if (typeof window === "undefined") {
-      throw new Error("GSAP not available: window is undefined");
-    }
+    if (typeof window === "undefined") return null;
     const { gsap } = window;
     if (!gsap) {
-      throw new Error("GSAP not found on window.gsap");
+      console.error("[ScrollCrafter] GSAP core not found! Make sure gsap.min.js is loaded.");
+      return null;
     }
-    if (gsap.core && typeof window.ScrollTrigger !== "undefined") {
-      if (!gsap.core.globals().ScrollTrigger) {
+    if (window.ScrollTrigger && gsap.registerPlugin) {
+      try {
         gsap.registerPlugin(window.ScrollTrigger);
+      } catch (e) {
       }
     }
     return gsap;
   }
   function getScrollTrigger() {
-    if (typeof window === "undefined") {
-      throw new Error("ScrollTrigger not available: window is undefined");
-    }
+    if (typeof window === "undefined") return null;
     if (!window.ScrollTrigger) {
-      throw new Error("ScrollTrigger not found on window.ScrollTrigger");
+      console.warn("[ScrollCrafter] ScrollTrigger not found! Animations may not work.");
+      return null;
     }
     return window.ScrollTrigger;
   }
 
   // assets/src/frontend/widgets/scroll-animation.js
   registerWidget("scroll_animation", (node, config) => {
-    var _a, _b;
+    var _a;
     const debug = !!((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug);
-    if (debug) {
-      console.log("[ScrollCrafter][scroll_animation] init", { node, config });
-    }
+    const logPrefix = `[ScrollCrafter][${config.id || "unknown"}]`;
     let gsap;
-    let ScrollTrigger;
     try {
       gsap = getGsap();
-      ScrollTrigger = getScrollTrigger();
+      getScrollTrigger();
     } catch (e) {
-      if (debug) {
-        console.error("[ScrollCrafter][scroll_animation] GSAP/ScrollTrigger error", e);
-      }
+      if (debug) console.error(`${logPrefix} GSAP missing`, e);
       return;
     }
-    const { target, animation, scrollTrigger } = config || {};
-    const selector = target == null ? void 0 : target.selector;
-    if (!selector) {
-      if (debug) {
-        console.warn("[ScrollCrafter][scroll_animation] missing target selector", config);
-      }
+    const targetConfig = config.target || {};
+    let elements = [];
+    if (targetConfig.type === "wrapper") {
+      elements = [node];
+    } else if (targetConfig.selector) {
+      elements = node.querySelectorAll(targetConfig.selector);
+    }
+    if (!elements.length) {
+      if (debug) console.warn(`${logPrefix} No elements found for selector:`, targetConfig.selector);
       return;
     }
-    const targetNodes = node.ownerDocument.querySelectorAll(selector);
-    if (!targetNodes.length) {
-      if (debug) {
-        console.warn("[ScrollCrafter][scroll_animation] no target nodes found", selector);
+    const animConfig = config.animation || {};
+    const method = animConfig.method || "from";
+    const vars = { ...animConfig.vars };
+    const vars2 = animConfig.vars2 ? { ...animConfig.vars2 } : null;
+    if (vars.scrollTrigger) {
+      vars.scrollTrigger.trigger = node;
+      if (config.id) {
+        vars.scrollTrigger.id = "sc-" + config.id;
       }
-      return;
     }
-    const elements = targetNodes;
-    const animType = (animation == null ? void 0 : animation.type) || "from";
-    const fromVars = (animation == null ? void 0 : animation.from) || {};
-    const toVars = (animation == null ? void 0 : animation.to) || {};
-    const duration = typeof (animation == null ? void 0 : animation.duration) === "number" ? animation.duration : 0.8;
-    const delay = typeof (animation == null ? void 0 : animation.delay) === "number" ? animation.delay : 0;
-    const ease = (animation == null ? void 0 : animation.ease) || "power2.out";
-    const stagger = typeof (animation == null ? void 0 : animation.stagger) === "number" ? animation.stagger : void 0;
-    const stRaw = scrollTrigger || {};
-    const stConfig = {
-      trigger: elements[0],
-      start: stRaw.start || "top 80%",
-      end: stRaw.end || "bottom 20%",
-      toggleActions: stRaw.toggleActions || "play none none reverse",
-      ...typeof stRaw.scrub !== "undefined" ? { scrub: stRaw.scrub } : {},
-      ...typeof stRaw.once !== "undefined" ? { once: !!stRaw.once } : {},
-      ...typeof stRaw.markers !== "undefined" ? { markers: !!stRaw.markers } : { markers: !!((_b = window.ScrollCrafterConfig) == null ? void 0 : _b.debug) },
-      ...typeof stRaw.pin !== "undefined" ? { pin: !!stRaw.pin } : {},
-      ...typeof stRaw.pinSpacing !== "undefined" ? { pinSpacing: !!stRaw.pinSpacing } : {},
-      ...typeof stRaw.anticipatePin !== "undefined" ? { anticipatePin: Number(stRaw.anticipatePin) } : {},
-      ...typeof stRaw.snap !== "undefined" ? { snap: stRaw.snap } : {}
-    };
-    const base = {
-      duration,
-      delay,
-      ease
-    };
-    if (typeof stagger === "number") {
-      base.stagger = stagger;
+    if (vars2 && vars2.scrollTrigger) {
+      vars2.scrollTrigger.trigger = node;
+      if (config.id) {
+        vars2.scrollTrigger.id = "sc-" + config.id;
+      }
     }
-    let tween;
-    if (animType === "fromTo") {
-      tween = gsap.fromTo(
-        elements,
-        { ...fromVars },
-        {
-          ...toVars,
-          ...base
-        }
-      );
-    } else if (animType === "to") {
-      tween = gsap.to(elements, {
-        ...toVars,
-        ...base
-      });
-    } else {
-      tween = gsap.from(elements, {
-        ...fromVars,
-        ...base
-      });
+    try {
+      if (method === "fromTo" && vars2) {
+        gsap.fromTo(elements, vars, vars2);
+      } else if (typeof gsap[method] === "function") {
+        gsap[method](elements, vars);
+      } else {
+        console.warn(`${logPrefix} Unknown GSAP method:`, method);
+      }
+    } catch (e) {
+      if (debug) console.error(`${logPrefix} Animation error`, e);
     }
-    ScrollTrigger.create({
-      ...stConfig,
-      animation: tween
-    });
   });
 
   // assets/src/frontend/widgets/scroll-timeline.js
-  function parseMacros(vars) {
-    const newVars = { ...vars };
-    Object.keys(newVars).forEach((key) => {
-      const val = newVars[key];
+  function parseMacros(vars, contextNode) {
+    if (!vars || typeof vars !== "object") return vars;
+    const out = { ...vars };
+    Object.keys(out).forEach((key) => {
+      const val = out[key];
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        out[key] = parseMacros(val, contextNode);
+        return;
+      }
       if (typeof val === "string") {
-        if (val === "calc_horizontal_scroll") {
-          newVars[key] = (i, target) => {
-            if (target.scrollWidth <= window.innerWidth) return 0;
-            return -(target.scrollWidth - window.innerWidth);
-          };
-        }
         if (val === "calc_100vh") {
-          newVars[key] = () => window.innerHeight;
-        }
-        if (val === "calc_100vw") {
-          newVars[key] = () => window.innerWidth;
+          out[key] = () => window.innerHeight;
+        } else if (val === "calc_100vw") {
+          out[key] = () => window.innerWidth;
+        } else if (val === "calc_scroll_width") {
+          out[key] = () => {
+            const el = contextNode;
+            return el.scrollWidth - el.clientWidth;
+          };
+        } else if (val === "calc_scroll_width_neg" || val === "calc_horizontal_scroll") {
+          out[key] = () => {
+            const el = contextNode;
+            if (el.scrollWidth <= el.clientWidth) return 0;
+            return -(el.scrollWidth - el.clientWidth);
+          };
         }
       }
     });
-    return newVars;
+    return out;
+  }
+  function getPinElement(node) {
+    return node;
   }
   registerWidget("scroll_timeline", (node, config) => {
-    var _a, _b, _c, _d;
+    var _a;
     const debug = !!((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug);
+    const logPrefix = `[ScrollCrafter][timeline:${config.id || "unknown"}]`;
     let gsap;
     let ScrollTrigger;
     try {
       gsap = getGsap();
       ScrollTrigger = getScrollTrigger();
     } catch (e) {
-      if (debug) console.error("[ScrollCrafter] GSAP missing", e);
+      if (debug) console.error(`${logPrefix} GSAP/ScrollTrigger missing`, e);
       return;
     }
-    const mainSelector = (_b = config == null ? void 0 : config.target) == null ? void 0 : _b.selector;
-    const mainElements = mainSelector ? node.ownerDocument.querySelectorAll(mainSelector) : [node];
-    if (!mainElements.length) return;
-    const steps = ((_c = config == null ? void 0 : config.timeline) == null ? void 0 : _c.steps) || [];
-    const defaults = ((_d = config == null ? void 0 : config.timeline) == null ? void 0 : _d.defaults) || {};
-    const stRaw = (config == null ? void 0 : config.scrollTrigger) || {};
-    const stConfig = {
-      trigger: mainElements[0],
-      start: stRaw.start || "top 80%",
-      end: stRaw.end || "bottom 20%",
-      toggleActions: stRaw.toggleActions || "play none none reverse",
-      invalidateOnRefresh: true,
-      ...typeof stRaw.fastScrollEnd !== "undefined" ? { fastScrollEnd: !!stRaw.fastScrollEnd } : {},
-      ...typeof stRaw.preventOverlaps !== "undefined" ? { preventOverlaps: !!stRaw.preventOverlaps } : {},
-      ...typeof stRaw.scrub !== "undefined" ? { scrub: stRaw.scrub } : {},
-      ...typeof stRaw.once !== "undefined" ? { once: !!stRaw.once } : {},
-      ...typeof stRaw.markers !== "undefined" ? { markers: !!stRaw.markers } : { markers: debug },
-      ...typeof stRaw.pin !== "undefined" ? { pin: !!stRaw.pin } : {},
-      ...typeof stRaw.pinSpacing !== "undefined" ? { pinSpacing: !!stRaw.pinSpacing } : {},
-      ...typeof stRaw.anticipatePin !== "undefined" ? { anticipatePin: Number(stRaw.anticipatePin) } : {},
-      ...typeof stRaw.snap !== "undefined" ? { snap: stRaw.snap } : {}
-    };
-    const tl = gsap.timeline({ defaults, scrollTrigger: stConfig });
-    steps.forEach((step) => {
-      let type = (step == null ? void 0 : step.type) || "from";
-      const fromVars = parseMacros((step == null ? void 0 : step.from) || {});
-      const toVars = parseMacros((step == null ? void 0 : step.to) || {});
-      const hasFrom = Object.keys(fromVars).length > 0;
-      const hasTo = Object.keys(toVars).length > 0;
-      if (type === "to" && hasFrom) type = "fromTo";
-      if (type === "from" && hasTo) type = "fromTo";
-      const base = {};
-      if (typeof (step == null ? void 0 : step.duration) === "number") base.duration = step.duration;
-      if (typeof (step == null ? void 0 : step.delay) === "number") base.delay = step.delay;
-      if (typeof (step == null ? void 0 : step.ease) === "string") base.ease = step.ease;
-      if (typeof (step == null ? void 0 : step.stagger) === "number") base.stagger = step.stagger;
-      const position = typeof (step == null ? void 0 : step.startAt) === "number" ? step.startAt : void 0;
-      let targets = mainElements;
-      if (step.selector) {
-        const found = node.querySelectorAll(step.selector);
-        if (found.length > 0) {
-          targets = found;
-        } else if (debug) {
-          console.warn(`[ScrollCrafter] Step selector "${step.selector}" not found.`);
-        }
+    const pinElem = getPinElement(node);
+    const targetCfg = config.target || {};
+    let mainTargets = [pinElem];
+    if (targetCfg.selector && targetCfg.type !== "wrapper") {
+      const found = pinElem.querySelectorAll(targetCfg.selector);
+      if (found.length) {
+        mainTargets = Array.from(found);
       }
-      if (type === "fromTo") {
-        tl.fromTo(targets, { ...fromVars }, { ...toVars, ...base }, position);
-      } else if (type === "to") {
-        tl.to(targets, { ...toVars, ...base }, position);
-      } else {
-        tl.from(targets, { ...fromVars, ...base }, position);
+    }
+    const timelineVars = { ...config.timelineVars || {} };
+    if (timelineVars.defaults) {
+      timelineVars.defaults = parseMacros(timelineVars.defaults, pinElem);
+    }
+    if (!timelineVars.scrollTrigger) {
+      timelineVars.scrollTrigger = {};
+    }
+    const st = timelineVars.scrollTrigger;
+    if (!st.trigger) {
+      st.trigger = pinElem;
+    }
+    if (st.pin === true) {
+      st.pin = pinElem;
+    }
+    if (typeof st.invalidateOnRefresh === "undefined") {
+      st.invalidateOnRefresh = true;
+    }
+    if (typeof st.anticipatePin === "undefined") {
+      st.anticipatePin = 0.5;
+    }
+    if (config.id && !st.id) {
+      st.id = `sc-${config.id}`;
+    }
+    const tl = gsap.timeline(timelineVars);
+    const steps = config.steps || [];
+    steps.forEach((step, index) => {
+      const method = step.method || "to";
+      const position = step.position;
+      if (method === "addLabel") {
+        const label = step.vars;
+        if (typeof label === "string") tl.addLabel(label, position);
+        return;
+      }
+      if (method === "call") {
+        return;
+      }
+      let targets = mainTargets;
+      if (step.selector) {
+        const found = pinElem.querySelectorAll(step.selector);
+        if (!found.length) {
+          if (debug) {
+            console.warn(
+              `${logPrefix} Step ${index + 1}: selector "${step.selector}" not found in`,
+              pinElem
+            );
+          }
+          return;
+        }
+        targets = Array.from(found);
+      }
+      const vars = parseMacros(step.vars || {}, pinElem);
+      const vars2 = step.vars2 ? parseMacros(step.vars2, pinElem) : null;
+      try {
+        if (method === "fromTo" && vars2) {
+          tl.fromTo(targets, vars, vars2, position);
+        } else if (typeof tl[method] === "function") {
+          tl[method](targets, vars, position);
+        } else if (debug) {
+          console.warn(`${logPrefix} Unknown method "${method}"`);
+        }
+      } catch (e) {
+        if (debug) console.error(`${logPrefix} Error in step ${index + 1}`, e);
       }
     });
   });
@@ -258,31 +256,37 @@
   }
   window.addEventListener("elementor/popup/show", (event) => {
     initWidgetsInScope(event.target);
+    const ScrollTrigger = getScrollTrigger();
+    if (ScrollTrigger) ScrollTrigger.refresh();
   });
   window.addEventListener("elementor/frontend/init", () => {
     if (!window.elementorFrontend) return;
     elementorFrontend.hooks.addAction("frontend/element_ready/global", ($scope) => {
       const node = $scope[0];
       if (elementorFrontend.isEditMode()) {
-        cleanupDetachedTriggers();
+        const widgetId = node.getAttribute("data-id");
+        if (widgetId) {
+          killTriggerByWidgetId(widgetId);
+        }
       }
       initWidgetsInScope(node);
     });
   });
-  function cleanupDetachedTriggers() {
+  function killTriggerByWidgetId(widgetId) {
+    var _a;
     try {
       const ScrollTrigger = getScrollTrigger();
       if (!ScrollTrigger) return;
-      const triggers = ScrollTrigger.getAll();
-      triggers.forEach((st) => {
-        const triggerElem = st.trigger;
-        const isDetached = triggerElem && !document.body.contains(triggerElem);
-        if (isDetached) {
-          st.kill(true);
+      const triggerId = "sc-" + widgetId;
+      const st = ScrollTrigger.getById(triggerId);
+      if (st) {
+        if ((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug) {
+          console.log(`[ScrollCrafter] Killing trigger: ${triggerId}`);
         }
-      });
-      ScrollTrigger.refresh();
+        st.kill(true);
+      }
     } catch (e) {
+      console.warn("[ScrollCrafter] Error killing trigger:", e);
     }
   }
 })();

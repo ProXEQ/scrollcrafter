@@ -1,0 +1,54 @@
+# .gitattributes
+
+# Ustawienia końca linii (ważne dla pracy Windows/Mac)
+* text=auto eol=lf
+
+# Pliki binarne
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mov binary
+*.mp4 binary
+*.mp3 binary
+*.flv binary
+*.fla binary
+*.swf binary
+*.gz binary
+*.zip binary
+*.7z binary
+*.ttf binary
+*.eot binary
+*.woff binary
+*.woff2 binary
+*.pyc binary
+*.pdf binary
+
+# --- Export ignore ---
+# Te pliki NIE trafią do pliku .zip generowanego przez `git archive`
+# (czyli do paczki dla klienta/WordPress.org)
+
+.gitattributes export-ignore
+.gitignore export-ignore
+.env export-ignore
+.env.example export-ignore
+.editorconfig export-ignore
+.eslintrc.js export-ignore
+.stylelintrc export-ignore
+esbuild.config.mjs export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+README.md export-ignore
+node_modules export-ignore
+src export-ignore
+# Jeśli src zawiera źródła PHP, to NIE ignoruj src.
+# Ale u Ciebie src zawiera logikę pluginu, więc MUSI być w paczce.
+# assets/src zawiera źródła JS/CSS - to można zignorować, bo mamy build w assets/js.
+assets/src export-ignore
+
+# Tests
+tests export-ignore
+phpunit.xml export-ignore

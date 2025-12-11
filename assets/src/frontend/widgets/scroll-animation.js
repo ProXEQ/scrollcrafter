@@ -3,110 +3,70 @@ import { getGsap, getScrollTrigger } from '../core/gsap-loader';
 
 registerWidget('scroll_animation', (node, config) => {
   const debug = !!window.ScrollCrafterConfig?.debug;
-
-  if (debug) {
-    // eslint-disable-next-line no-console
-    console.log('[ScrollCrafter][scroll_animation] init', { node, config });
-  }
+  const logPrefix = `[ScrollCrafter][${config.id || 'unknown'}]`;
 
   let gsap;
-  let ScrollTrigger;
-
   try {
     gsap = getGsap();
-    ScrollTrigger = getScrollTrigger();
+    getScrollTrigger(); // Upewniamy się, że plugin jest zarejestrowany
   } catch (e) {
-    if (debug) {
-      // eslint-disable-next-line no-console
-      console.error('[ScrollCrafter][scroll_animation] GSAP/ScrollTrigger error', e);
-    }
+    if (debug) console.error(`${logPrefix} GSAP missing`, e);
     return;
   }
 
-  const { target, animation, scrollTrigger } = config || {};
+  // 1. Rozwiązywanie targetów (elementów do animacji)
+  const targetConfig = config.target || {};
+  let elements = [];
 
-  const selector = target?.selector;
-  if (!selector) {
-    if (debug) {
-      // eslint-disable-next-line no-console
-      console.warn('[ScrollCrafter][scroll_animation] missing target selector', config);
-    }
+  if (targetConfig.type === 'wrapper') {
+    elements = [node];
+  } else if (targetConfig.selector) {
+    elements = node.querySelectorAll(targetConfig.selector);
+  }
+
+  if (!elements.length) {
+    if (debug) console.warn(`${logPrefix} No elements found for selector:`, targetConfig.selector);
     return;
   }
 
-  const targetNodes = node.ownerDocument.querySelectorAll(selector);
-  if (!targetNodes.length) {
-    if (debug) {
-      // eslint-disable-next-line no-console
-      console.warn('[ScrollCrafter][scroll_animation] no target nodes found', selector);
+  // 2. Pobranie konfiguracji z nowego JSON (zoptymalizowanego w PHP)
+  const animConfig = config.animation || {};
+  const method = animConfig.method || 'from'; // 'to', 'from', 'fromTo', 'set'
+  
+  // Obiekt vars (zawiera CSS props, duration, ease ORAZ scrollTrigger w środku)
+  const vars = { ...animConfig.vars }; 
+  const vars2 = animConfig.vars2 ? { ...animConfig.vars2 } : null;
+
+  // 3. Naprawa ScrollTrigger Trigger Element
+  // W PHP wrzuciliśmy scrollTrigger do vars, ale nie ustawiliśmy właściwości 'trigger'.
+  // JS musi ustawić trigger na element widgetu (node), chyba że user ustawił inaczej.
+  
+  if (vars.scrollTrigger) {
+    vars.scrollTrigger.trigger = node; // Domyślnie triggerem jest kontener widgetu
+    
+    // Obsługa ID dla debugowania (sc-xyz)
+    if (config.id) {
+        vars.scrollTrigger.id = 'sc-' + config.id;
     }
-    return;
+  }
+  
+  if (vars2 && vars2.scrollTrigger) {
+    vars2.scrollTrigger.trigger = node;
+    if (config.id) {
+        vars2.scrollTrigger.id = 'sc-' + config.id;
+    }
   }
 
-  const elements = targetNodes;
-
-  const animType = animation?.type || 'from';
-  const fromVars = animation?.from || {};
-  const toVars = animation?.to || {};
-  const duration = typeof animation?.duration === 'number' ? animation.duration : 0.8;
-  const delay = typeof animation?.delay === 'number' ? animation.delay : 0;
-  const ease = animation?.ease || 'power2.out';
-  const stagger = typeof animation?.stagger === 'number' ? animation.stagger : undefined;
-
-  const stRaw = scrollTrigger || {};
-
-  const stConfig = {
-    trigger: elements[0],
-    start: stRaw.start || 'top 80%',
-    end: stRaw.end || 'bottom 20%',
-    toggleActions: stRaw.toggleActions || 'play none none reverse',
-    ...(typeof stRaw.scrub !== 'undefined' ? { scrub: stRaw.scrub } : {}),
-    ...(typeof stRaw.once !== 'undefined' ? { once: !!stRaw.once } : {}),
-    ...(typeof stRaw.markers !== 'undefined'
-      ? { markers: !!stRaw.markers }
-      : { markers: !!window.ScrollCrafterConfig?.debug }),
-    ...(typeof stRaw.pin !== 'undefined' ? { pin: !!stRaw.pin } : {}),
-    ...(typeof stRaw.pinSpacing !== 'undefined' ? { pinSpacing: !!stRaw.pinSpacing } : {}),
-    ...(typeof stRaw.anticipatePin !== 'undefined'
-      ? { anticipatePin: Number(stRaw.anticipatePin) }
-      : {}),
-    ...(typeof stRaw.snap !== 'undefined' ? { snap: stRaw.snap } : {}),
-  };
-
-  const base = {
-    duration,
-    delay,
-    ease,
-  };
-  if (typeof stagger === 'number') {
-    base.stagger = stagger;
+  // 4. Uruchomienie animacji
+  try {
+    if (method === 'fromTo' && vars2) {
+      gsap.fromTo(elements, vars, vars2);
+    } else if (typeof gsap[method] === 'function') {
+      gsap[method](elements, vars);
+    } else {
+      console.warn(`${logPrefix} Unknown GSAP method:`, method);
+    }
+  } catch (e) {
+    if (debug) console.error(`${logPrefix} Animation error`, e);
   }
-
-  let tween;
-
-  if (animType === 'fromTo') {
-    tween = gsap.fromTo(
-      elements,
-      { ...fromVars },
-      {
-        ...toVars,
-        ...base,
-      },
-    );
-  } else if (animType === 'to') {
-    tween = gsap.to(elements, {
-      ...toVars,
-      ...base,
-    });
-  } else {
-    tween = gsap.from(elements, {
-      ...fromVars,
-      ...base,
-    });
-  }
-
-  ScrollTrigger.create({
-    ...stConfig,
-    animation: tween,
-  });
 });

@@ -2,43 +2,57 @@ import { registerWidget } from '../core/registry';
 import { getGsap, getScrollTrigger } from '../core/gsap-loader';
 
 /**
- * Helper: Zamienia magiczne stringi na funkcje GSAP.
+ * Minimalny helper: makra na function-based values.
+ * Nie próbuje zgadywać layoutu – używa wyłącznie contextNode,
+ * który jest wrapperem widgetu (node).
  */
-function parseMacros(vars) {
-  const newVars = { ...vars };
+function parseMacros(vars, contextNode) {
+  if (!vars || typeof vars !== 'object') return vars;
 
-  Object.keys(newVars).forEach((key) => {
-    const val = newVars[key];
+  const out = { ...vars };
+
+  Object.keys(out).forEach((key) => {
+    const val = out[key];
+
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      out[key] = parseMacros(val, contextNode);
+      return;
+    }
 
     if (typeof val === 'string') {
-      // MACRO: calc_horizontal_scroll
-      // Oblicza przesunięcie potrzebne do przewinięcia całej zawartości horyzontalnie
-      if (val === 'calc_horizontal_scroll') {
-        newVars[key] = (i, target) => {
-           // Jeśli target jest węższy niż ekran, nie przesuwaj (lub 0)
-           if (target.scrollWidth <= window.innerWidth) return 0;
-           // Wzór: -(szerokość_całkowita - szerokość_okna)
-           return -(target.scrollWidth - window.innerWidth);
-        };
-      }
-      
-      // MACRO: calc_100vh (Pełna wysokość ekranu)
       if (val === 'calc_100vh') {
-          newVars[key] = () => window.innerHeight;
-      }
-
-      // MACRO: calc_100vw (Pełna szerokość ekranu)
-      if (val === 'calc_100vw') {
-          newVars[key] = () => window.innerWidth;
+        out[key] = () => window.innerHeight;
+      } else if (val === 'calc_100vw') {
+        out[key] = () => window.innerWidth;
+      } else if (val === 'calc_scroll_width') {
+        out[key] = () => {
+          const el = contextNode;
+          return el.scrollWidth - el.clientWidth;
+        };
+      } else if (val === 'calc_scroll_width_neg' || val === 'calc_horizontal_scroll') {
+        out[key] = () => {
+          const el = contextNode;
+          if (el.scrollWidth <= el.clientWidth) return 0;
+          return -(el.scrollWidth - el.clientWidth);
+        };
       }
     }
   });
 
-  return newVars;
+  return out;
+}
+
+/**
+ * Neutralny wybór elementu do pina:
+ * pinujemy dokładnie węzeł, który ma data-scrollcrafter-config.
+ */
+function getPinElement(node) {
+  return node;
 }
 
 registerWidget('scroll_timeline', (node, config) => {
   const debug = !!window.ScrollCrafterConfig?.debug;
+  const logPrefix = `[ScrollCrafter][timeline:${config.id || 'unknown'}]`;
 
   let gsap;
   let ScrollTrigger;
@@ -46,83 +60,106 @@ registerWidget('scroll_timeline', (node, config) => {
     gsap = getGsap();
     ScrollTrigger = getScrollTrigger();
   } catch (e) {
-    if (debug) console.error('[ScrollCrafter] GSAP missing', e);
+    if (debug) console.error(`${logPrefix} GSAP/ScrollTrigger missing`, e);
     return;
   }
 
-  // 1. Target resolution
-  const mainSelector = config?.target?.selector;
-  const mainElements = mainSelector
-    ? node.ownerDocument.querySelectorAll(mainSelector)
-    : [node];
+  const pinElem = getPinElement(node);
 
-  if (!mainElements.length) return;
+  // --- TARGETY ---
+  const targetCfg = config.target || {};
+  let mainTargets = [pinElem];
 
-  const steps = config?.timeline?.steps || [];
-  const defaults = config?.timeline?.defaults || {};
-  const stRaw = config?.scrollTrigger || {};
+  if (targetCfg.selector && targetCfg.type !== 'wrapper') {
+    const found = pinElem.querySelectorAll(targetCfg.selector);
+    if (found.length) {
+      mainTargets = Array.from(found);
+    }
+  }
 
-  // 2. Config ScrollTrigger
-  const stConfig = {
-    trigger: mainElements[0],
-    start: stRaw.start || 'top 80%',
-    end: stRaw.end || 'bottom 20%',
-    toggleActions: stRaw.toggleActions || 'play none none reverse',
-    invalidateOnRefresh: true, 
-    ...(typeof stRaw.fastScrollEnd !== 'undefined' ? { fastScrollEnd: !!stRaw.fastScrollEnd } : {}),
-    ...(typeof stRaw.preventOverlaps !== 'undefined' ? { preventOverlaps: !!stRaw.preventOverlaps } : {}),
-    ...(typeof stRaw.scrub !== 'undefined' ? { scrub: stRaw.scrub } : {}),
-    ...(typeof stRaw.once !== 'undefined' ? { once: !!stRaw.once } : {}),
-    ...(typeof stRaw.markers !== 'undefined'
-      ? { markers: !!stRaw.markers }
-      : { markers: debug }),
-    ...(typeof stRaw.pin !== 'undefined' ? { pin: !!stRaw.pin } : {}),
-    ...(typeof stRaw.pinSpacing !== 'undefined' ? { pinSpacing: !!stRaw.pinSpacing } : {}),
-    ...(typeof stRaw.anticipatePin !== 'undefined' ? { anticipatePin: Number(stRaw.anticipatePin) } : {}),
-    ...(typeof stRaw.snap !== 'undefined' ? { snap: stRaw.snap } : {}),
-  };
+  // --- TIMELINE VARS ---
+  const timelineVars = { ...(config.timelineVars || {}) };
 
-  const tl = gsap.timeline({ defaults, scrollTrigger: stConfig });
+  // Defaults (duration, ease, itp.)
+  if (timelineVars.defaults) {
+    timelineVars.defaults = parseMacros(timelineVars.defaults, pinElem);
+  }
 
-  // 3. Steps processing
-  steps.forEach((step) => {
-    let type = step?.type || 'from';
-    
-    // PRZETWARZANIE MAKR (Dla from i to)
-    const fromVars = parseMacros(step?.from || {});
-    const toVars = parseMacros(step?.to || {});
-    
-    // Auto-fix logic (from+to present)
-    const hasFrom = Object.keys(fromVars).length > 0;
-    const hasTo = Object.keys(toVars).length > 0;
+  // ScrollTrigger – bez zgadywania, używamy tego, co dał backend.
+  if (!timelineVars.scrollTrigger) {
+    timelineVars.scrollTrigger = {};
+  }
 
-    if (type === 'to' && hasFrom) type = 'fromTo';
-    if (type === 'from' && hasTo) type = 'fromTo';
+  const st = timelineVars.scrollTrigger;
 
-    const base = {};
-    if (typeof step?.duration === 'number') base.duration = step.duration;
-    if (typeof step?.delay === 'number') base.delay = step.delay;
-    if (typeof step?.ease === 'string') base.ease = step.ease;
-    if (typeof step?.stagger === 'number') base.stagger = step.stagger;
+  if (!st.trigger) {
+    st.trigger = pinElem;
+  }
+  if (st.pin === true) {
+    st.pin = pinElem;
+  }
 
-    const position = typeof step?.startAt === 'number' ? step.startAt : undefined;
+  // Minimalne anty-glitche, ale neutralne:
+  if (typeof st.invalidateOnRefresh === 'undefined') {
+    st.invalidateOnRefresh = true;
+  }
+  if (typeof st.anticipatePin === 'undefined') {
+    st.anticipatePin = 0.5;
+  }
 
-    let targets = mainElements;
-    if (step.selector) {
-      const found = node.querySelectorAll(step.selector);
-      if (found.length > 0) {
-        targets = found;
-      } else if (debug) {
-        console.warn(`[ScrollCrafter] Step selector "${step.selector}" not found.`);
-      }
+  if (config.id && !st.id) {
+    st.id = `sc-${config.id}`;
+  }
+
+  // ŻADNYCH auto-end, fastScrollEnd, scroller=window – użytkownik kontroluje to w DSL.
+
+  const tl = gsap.timeline(timelineVars);
+
+  const steps = config.steps || [];
+
+  steps.forEach((step, index) => {
+    const method = step.method || 'to';
+    const position = step.position;
+
+    if (method === 'addLabel') {
+      const label = step.vars;
+      if (typeof label === 'string') tl.addLabel(label, position);
+      return;
     }
 
-    if (type === 'fromTo') {
-      tl.fromTo(targets, { ...fromVars }, { ...toVars, ...base }, position);
-    } else if (type === 'to') {
-      tl.to(targets, { ...toVars, ...base }, position);
-    } else {
-      tl.from(targets, { ...fromVars, ...base }, position);
+    if (method === 'call') {
+      return;
+    }
+
+    let targets = mainTargets;
+
+    if (step.selector) {
+      const found = pinElem.querySelectorAll(step.selector);
+      if (!found.length) {
+        if (debug) {
+          console.warn(
+            `${logPrefix} Step ${index + 1}: selector "${step.selector}" not found in`,
+            pinElem
+          );
+        }
+        return;
+      }
+      targets = Array.from(found);
+    }
+
+    const vars = parseMacros(step.vars || {}, pinElem);
+    const vars2 = step.vars2 ? parseMacros(step.vars2, pinElem) : null;
+
+    try {
+      if (method === 'fromTo' && vars2) {
+        tl.fromTo(targets, vars, vars2, position);
+      } else if (typeof tl[method] === 'function') {
+        tl[method](targets, vars, position);
+      } else if (debug) {
+        console.warn(`${logPrefix} Unknown method "${method}"`);
+      }
+    } catch (e) {
+      if (debug) console.error(`${logPrefix} Error in step ${index + 1}`, e);
     }
   });
 });

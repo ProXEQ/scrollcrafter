@@ -2,21 +2,10 @@
 
 namespace ScrollCrafter\Animation;
 
-// use Elementor\Element_Base;
+
 
 class Tween_Config_Builder
 {
-    /**
-     * Buduje config dla widgetu 'scroll_animation' na podstawie wyniku Script_Parser.
-     *
-     * @param Element_Base $element
-     * @param array<string,mixed> $parsed
-     * @param array<string,mixed> $scrollTrigger
-     * @param string $targetSelector
-     * @param string $targetType
-     *
-     * @return array<string,mixed>
-     */
     public function build(
         $element,
         array $parsed,
@@ -25,32 +14,106 @@ class Tween_Config_Builder
         string $targetType
     ): array {
         $anim = $parsed['animation'] ?? [];
+        $type = strtolower($anim['type'] ?? 'from');
+        
+        if (!in_array($type, ['to', 'from', 'fromto', 'set'], true)) {
+            $type = 'from';
+        }
 
-        $type     = $anim['type'] ?? 'from';
-        $fromVars = $anim['from'] ?? [ 'y' => 50.0, 'opacity' => 0.0 ];
-        $toVars   = $anim['to']   ?? [ 'y' => 0.0,  'opacity' => 1.0 ];
-        $duration = isset( $anim['duration'] ) ? (float) $anim['duration'] : 0.8;
-        $delay    = isset( $anim['delay'] ) ? (float) $anim['delay'] : 0.0;
-        $ease     = $anim['ease'] ?? 'power2.out';
-        $stagger  = isset( $anim['stagger'] ) ? (float) $anim['stagger'] : 0.0;
+        $varsFrom = $anim['from'] ?? [];
+        $varsTo   = $anim['to'] ?? [];
+
+        $commonParams = [];
+
+        if (isset($anim['duration'])) {
+            $commonParams['duration'] = (float)$anim['duration'];
+        } else {
+            
+            if ($type !== 'set') {
+                $commonParams['duration'] = 0.8; 
+            }
+        }
+
+        if (isset($anim['delay'])) {
+            $commonParams['delay'] = (float)$anim['delay'];
+        }
+
+        if (isset($anim['ease'])) {
+            $commonParams['ease'] = $anim['ease'];
+        }
+
+        
+        if (isset($anim['stagger'])) {
+            $commonParams['stagger'] = $anim['stagger'];
+        }
+
+        
+        $finalConfig = [];
+
+        switch ($type) {
+            case 'fromto':
+                
+                $finalConfig = [
+                    'method' => 'fromTo',
+                    'vars'   => $varsFrom, 
+                    'vars2'  => array_merge($varsTo, $commonParams), 
+                ];
+                break;
+
+            case 'to':
+                
+                $finalConfig = [
+                    'method' => 'to',
+                    'vars'   => array_merge($varsTo, $commonParams),
+                ];
+                break;
+
+            case 'set':
+                
+                $finalConfig = [
+                    'method' => 'set',
+                    'vars'   => $varsTo,
+                ];
+                break;
+
+            case 'from':
+            default:
+                
+                
+                $vars = !empty($varsFrom) ? $varsFrom : $varsTo;
+                
+                
+                if (empty($vars)) {
+                    $vars = ['y' => 50, 'opacity' => 0];
+                }
+
+                $finalConfig = [
+                    'method' => 'from',
+                    'vars'   => array_merge($vars, $commonParams),
+                ];
+                break;
+        }
+
+        
+        
+        
+        if (!empty($scrollTrigger)) {
+            if ($type === 'fromto') {
+                $finalConfig['vars2']['scrollTrigger'] = $scrollTrigger;
+            } else {
+                $finalConfig['vars']['scrollTrigger'] = $scrollTrigger;
+            }
+        }
 
         return [
-            'widget'        => 'scroll_animation',
-            'id'            => $element->get_id(),
-            'target'        => [
+            'widget' => 'scroll_animation', 
+            'id'     => $element->get_id(),
+            'target' => [
                 'type'     => $targetType,
                 'selector' => $targetSelector,
             ],
-            'animation'     => [
-                'type'     => $type,
-                'from'     => $fromVars,
-                'to'       => $toVars,
-                'duration' => $duration,
-                'delay'    => $delay,
-                'ease'     => $ease,
-                'stagger'  => $stagger,
-            ],
-            'scrollTrigger' => $scrollTrigger,
+            
+            'animation' => $finalConfig,
         ];
     }
 }

@@ -1,17 +1,23 @@
 // gsap-loader.js
 export function getGsap() {
-  if (typeof window === 'undefined') {
-    throw new Error('GSAP not available: window is undefined');
-  }
+  if (typeof window === 'undefined') return null;
 
   const { gsap } = window;
+  
   if (!gsap) {
-    throw new Error('GSAP not found on window.gsap');
+    // Zamiast crashować aplikację, logujemy błąd i zwracamy null.
+    // Wywołujący musi sprawdzić if (!gsap) return;
+    console.error('[ScrollCrafter] GSAP core not found! Make sure gsap.min.js is loaded.');
+    return null;
   }
 
-  if (gsap.core && typeof window.ScrollTrigger !== 'undefined') {
-    if (!gsap.core.globals().ScrollTrigger) {
-      gsap.registerPlugin(window.ScrollTrigger);
+  // Auto-rejestracja ScrollTriggera, jeśli jest dostępny globalnie
+  if (window.ScrollTrigger && gsap.registerPlugin) {
+    // Sprawdź, czy już nie jest zarejestrowany, aby uniknąć ostrzeżeń GSAP
+    try {
+        gsap.registerPlugin(window.ScrollTrigger);
+    } catch (e) {
+        // Ignorujemy błędy rejestracji (np. wersje niekompatybilne)
     }
   }
 
@@ -19,12 +25,11 @@ export function getGsap() {
 }
 
 export function getScrollTrigger() {
-  if (typeof window === 'undefined') {
-    throw new Error('ScrollTrigger not available: window is undefined');
-  }
+  if (typeof window === 'undefined') return null;
 
   if (!window.ScrollTrigger) {
-    throw new Error('ScrollTrigger not found on window.ScrollTrigger');
+    console.warn('[ScrollCrafter] ScrollTrigger not found! Animations may not work.');
+    return null;
   }
 
   return window.ScrollTrigger;
