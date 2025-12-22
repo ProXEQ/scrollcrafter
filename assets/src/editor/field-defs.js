@@ -14,7 +14,10 @@ const COMMON_VARS = [
   { label: 'rotation=360', detail: 'spin' },
   { label: 'filter=blur(10px)', detail: 'blur effect' },
   { label: 'backgroundColor=#ff0000', detail: 'change color' },
-  { label: 'transformOrigin=center center', detail: 'pivot point' }
+  { label: 'transformOrigin=center center', detail: 'pivot point' },
+  { label: 'x=calc(sw * -1)', detail: 'full scroll left' },
+  { label: 'x=calc((sw * -1) + center)', detail: 'scroll & center' },
+  { label: 'x=calc(end)', detail: 'align right' },
 ];
 
 // Wspólne wartości dla Easingu

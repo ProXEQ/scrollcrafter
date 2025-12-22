@@ -15,10 +15,10 @@ class Validation_Controller
     private Timeline_Config_Builder $timelineBuilder;
 
     private const ALLOWED_KEYS = [
-        'animation' => ['type', 'from', 'to', 'duration', 'delay', 'ease', 'stagger'],
-        'scroll'    => ['start', 'end', 'scrub', 'once', 'markers', 'toggleactions', 'pin', 'pinspacing', 'snap', 'anticipatepin'],
-        'target'    => ['selector'],
-        'step'      => ['type', 'selector', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'startat'],
+        'animation' => ['type', 'method', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'strict', 'repeat', 'yoyo'],
+        'scroll'    => ['start', 'end', 'scrub', 'once', 'markers', 'toggleactions', 'pin', 'pinspacing', 'snap', 'anticipatepin', 'strict', 'id', 'trigger'],
+        'target'    => ['selector', 'type'],
+        'step'      => ['type', 'selector', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'startat', 'position', 'label'],
     ];
 
     public function __construct()
@@ -62,7 +62,9 @@ class Validation_Controller
         }
 
         try {
+            // Parser teraz zwraca klucz 'media'
             $parsed = $this->parser->parse( $script );
+            error_log('[SC Parser] Parsed: ' . print_r($parsed, true));
         } catch ( \Throwable $e ) {
             return $this->response_with_error( $e->getMessage(), 'PARSER_EXCEPTION', $e->getLine() > 0 ? $e->getLine() : 1 );
         }
@@ -70,9 +72,16 @@ class Validation_Controller
         $errors   = array_map( fn($e) => $this->normalize_message($e, 'error'), $parsed['_errors'] ?? [] );
         $warnings = array_map( fn($w) => $this->normalize_message($w, 'warning'), $parsed['_warnings'] ?? [] );
 
+        // Walidacja logiki (teraz rekursywna dla mediów)
         $logicIssues = $this->validate_logic( $parsed, $script );
         
-        foreach ( $logicIssues as $issue ) {
+        // 2. Walidacja Bezpieczeństwa (Calc Expressions) - NOWOŚĆ
+        $securityIssues = $this->validate_calc_expressions( $parsed, $script );
+
+        // Łączymy wyniki
+        $allIssues = array_merge($logicIssues, $securityIssues);
+        
+        foreach ( $allIssues as $issue ) {
             if ( $issue['severity'] === 'error' ) {
                 $errors[] = $issue;
             } else {
@@ -91,9 +100,18 @@ class Validation_Controller
             $targetSelector = $parsed['target']['selector'] ?? '.elementor-element-preview';
             $targetType     = isset( $parsed['target']['selector'] ) ? 'custom' : 'wrapper';
             $scrollTrigger  = $this->build_scroll_trigger_config( $parsed['scroll'] ?? [] );
-            $isTimeline     = ! empty( $parsed['timeline']['steps'] );
+            
+            // Detekcja trybu timeline musi uwzględniać kroki w media
+            $hasSteps = !empty($parsed['timeline']['steps']);
+            if (!$hasSteps && !empty($parsed['media'])) {
+                foreach ($parsed['media'] as $m) {
+                    if (!empty($m['timeline']['steps'])) {
+                        $hasSteps = true; break;
+                    }
+                }
+            }
 
-            if ( 'timeline' === $mode || ( 'auto' === $mode && $isTimeline ) ) {
+            if ( 'timeline' === $mode || ( 'auto' === $mode && $hasSteps ) ) {
                 $config = $this->timelineBuilder->build($fakeElement, $parsed, $scrollTrigger, $targetSelector, $targetType);
             } else {
                 $config = $this->tweenBuilder->build($fakeElement, $parsed, $scrollTrigger, $targetSelector, $targetType);
@@ -110,19 +128,17 @@ class Validation_Controller
         ], 200);
     }
 
-    /**
-     * Sprawdza poprawność nazw kluczy w poszczególnych sekcjach.
-     */
     private function validate_logic( array $parsed, string $script ): array
     {
         $issues = [];
 
-        // Sections: animation, scroll
+        // Helper do sprawdzania kluczy w danej sekcji
         $check_keys = function( $data, $sectionName, $allowedKeys ) use ( &$issues, $script ) {
             if ( empty( $data ) ) return;
             foreach ( $data as $key => $val ) {
                 $normalizedKey = strtolower($key);
                 if ( ! in_array( $normalizedKey, $allowedKeys, true ) ) {
+                    // Próbujemy znaleźć linię w kodzie
                     $line = $this->find_line_number($script, $key . ':');
                     $issues[] = $this->create_issue(
                         "Unknown key '{$key}' in [{$sectionName}].", 'warning', $line
@@ -131,21 +147,33 @@ class Validation_Controller
             }
         };
 
-        $check_keys( $parsed['animation'] ?? [], 'animation', self::ALLOWED_KEYS['animation'] );
-        $check_keys( $parsed['scroll'] ?? [], 'scroll', self::ALLOWED_KEYS['scroll'] );
-
-        //  Timeline steps
-        if ( ! empty( $parsed['timeline']['steps'] ) ) {
-            foreach ( $parsed['timeline']['steps'] as $index => $step ) {
+        // Helper do sprawdzania kroków
+        $check_steps = function( $steps, $contextPrefix = '' ) use ( &$issues, $script ) {
+            if ( empty( $steps ) ) return;
+            foreach ( $steps as $index => $step ) {
                 foreach ( $step as $key => $val ) {
                     $normalizedKey = strtolower($key);
                     if ( ! in_array( $normalizedKey, self::ALLOWED_KEYS['step'], true ) ) {
                         $line = $this->find_line_number($script, $key . ':');
                         $issues[] = $this->create_issue( 
-                            "Unknown key '{$key}' in [step." . ($index + 1) . "].", 'warning', $line 
+                            "Unknown key '{$key}' in [{$contextPrefix}step." . ($index + 1) . "].", 'warning', $line 
                         );
                     }
                 }
+            }
+        };
+
+        // 1. Walidacja Globalna
+        $check_keys( $parsed['animation'] ?? [], 'animation', self::ALLOWED_KEYS['animation'] );
+        $check_keys( $parsed['scroll'] ?? [], 'scroll', self::ALLOWED_KEYS['scroll'] );
+        $check_steps( $parsed['timeline']['steps'] ?? [] );
+
+        // 2. Walidacja Mediów (Responsive)
+        if ( ! empty( $parsed['media'] ) ) {
+            foreach ( $parsed['media'] as $mediaSlug => $mediaData ) {
+                $check_keys( $mediaData['animation'] ?? [], "animation @{$mediaSlug}", self::ALLOWED_KEYS['animation'] );
+                $check_keys( $mediaData['scroll'] ?? [], "scroll @{$mediaSlug}", self::ALLOWED_KEYS['scroll'] );
+                $check_steps( $mediaData['timeline']['steps'] ?? [], "@{$mediaSlug} " );
             }
         }
 
@@ -154,24 +182,13 @@ class Validation_Controller
 
     private function create_issue( string $message, string $severity = 'warning', int $line = 1 ): array
     {
-        return [
-            'message'  => $message,
-            'severity' => $severity,
-            'line'     => $line,
-            'from'     => 0, 
-            'to'       => 0
-        ];
+        return [ 'message' => $message, 'severity' => $severity, 'line' => $line ];
     }
 
     private function response_with_error( string $message, string $code, int $line = 1 ): WP_REST_Response
     {
         return new WP_REST_Response([
-            'ok'       => false,
-            'errors'   => [[
-                'message' => $message, 'code' => $code, 'severity' => 'error', 'line' => $line
-            ]],
-            'warnings' => [],
-            'config'   => null
+            'ok' => false, 'errors' => [[ 'message' => $message, 'code' => $code, 'severity' => 'error', 'line' => $line ]], 'config' => null
         ], 200);
     }
     
@@ -188,17 +205,10 @@ class Validation_Controller
         return $scrollTrigger;
     }
 
-    /**
-     * Normalizuje komunikaty błędów z parsera.
-     * Próbuje wyciągnąć numer linii z treści komunikatu, jeśli brakuje go w strukturze.
-     */
     private function normalize_message( $item, string $severity = 'error' ): array {
         $message = 'Unknown issue';
         $line    = 1;
-
-        if ( is_string( $item ) ) {
-            $message = $item;
-        } 
+        if ( is_string( $item ) ) { $message = $item; } 
         elseif ( is_array( $item ) ) {
             $message = (string) ( $item['message'] ?? 'Unknown issue' );
             $line    = (int) ( $item['line'] ?? 1 );
@@ -206,24 +216,67 @@ class Validation_Controller
         if ( $line === 1 && preg_match( '/at line (\d+)/i', $message, $matches ) ) {
             $line = (int) $matches[1];
         }
-
-        return [
-            'message'  => $message,
-            'severity' => $severity,
-            'line'     => $line,
-        ];
+        return [ 'message' => $message, 'severity' => $severity, 'line' => $line ];
     }
 
-    /**
-     * Znajduje numer linii w tekście skryptu na podstawie szukanej frazy (klucza).
-     */
     private function find_line_number(string $script, string $searchPhrase): int {
         $lines = explode("\n", $script);
         foreach ($lines as $index => $line) {
-            if (strpos($line, $searchPhrase) !== false && strpos(trim($line), '#') !== 0) {
-                return $index + 1;
+            $trimLine = trim($line);
+            // Ignorujemy linie będące w całości komentarzami (zaczynające się od //)
+            if (strpos($trimLine, '//') === 0) {
+                continue;
+            }
+            
+            if (strpos($line, $searchPhrase) !== false) {
+                 return $index + 1;
             }
         }
         return 1;
     }
+
+        /**
+     * Sprawdza bezpieczeństwo wyrażeń calc()
+     */
+    private function validate_calc_expressions( array $parsed, string $script ): array
+    {
+        $issues = [];
+        
+        $finder = function( $data, $path = '' ) use ( &$finder, &$issues, $script ) {
+            foreach ( $data as $key => $val ) {
+                if ( is_array( $val ) ) {
+                    $finder( $val, $path . '.' . $key );
+                } elseif ( is_string( $val ) && stripos( $val, 'calc(' ) !== false ) {
+                    if ( preg_match( '/calc\s*\((.*)\)/i', $val, $matches ) ) {
+                        $expression = $matches[1];
+                        $cleanExpr = $expression;
+                        
+                        $vars = ['sw', 'cw', 'ch', 'vw', 'vh', 'center', 'vcenter', 'end'];
+                        foreach($vars as $v) {
+                             $cleanExpr = preg_replace("/\\b{$v}\\b/i", '', $cleanExpr);
+                        }
+                        
+                        // Sprawdzamy czy zostały tylko bezpieczne znaki (cyfry, operatory)
+                        if ( ! preg_match( '/^[0-9\.\+\-\*\/\(\)\s]*$/', $cleanExpr ) ) {
+                             $lines = explode("\n", $script);
+                             $lineNum = 1;
+                             foreach ($lines as $idx => $line) {
+                                 if (strpos($line, $val) !== false) { $lineNum = $idx + 1; break; }
+                             }
+
+                             $issues[] = [ 
+                                'message' => "Unsafe characters in calc(): '{$expression}'. Only math and vars (sw, vw, center...) are allowed.",
+                                'severity' => 'error',
+                                'line' => $lineNum
+                             ];
+                        }
+                    }
+                }
+            }
+        };
+
+        $finder( $parsed );
+        return $issues;
+    }
+
 }

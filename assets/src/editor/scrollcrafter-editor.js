@@ -1,31 +1,51 @@
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, highlightSpecialChars, drawSelection, lineNumbers, placeholder } from '@codemirror/view';
-import { history, historyKeymap } from '@codemirror/commands';
-import { defaultKeymap } from '@codemirror/commands';
-import { autocompletion, completionStatus, acceptCompletion, startCompletion } from '@codemirror/autocomplete';
-import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
+import { history, historyKeymap, defaultKeymap } from '@codemirror/commands';
+import { autocompletion, acceptCompletion, startCompletion } from '@codemirror/autocomplete';
+import { syntaxHighlighting, HighlightStyle, StreamLanguage } from '@codemirror/language';
 import { tags } from '@codemirror/highlight';
-import { StreamLanguage } from '@codemirror/language';
-import { linter, lintGutter, forceLinting } from '@codemirror/lint'; // forceLinting przyda się przy otwarciu
+import { linter, lintGutter } from '@codemirror/lint';
 
 import { FIELD_DEFS, SECTION_HEADERS } from './field-defs';
 
 // ---------- CONFIG ----------
-const DEBUG = true;
+const DEBUG = !!window.ScrollCrafterConfig?.debug;
 const log = (...args) => DEBUG && console.log('[SC Editor]', ...args);
 
-// Stan globalny walidacji (dla przycisku Apply)
-let lastValidationState = {
-    valid: true,
-    hasCriticalErrors: false,
-    diagnostics: []
-};
+// Pobierz breakpointy
+const BREAKPOINTS = window.ScrollCrafterConfig?.breakpoints || {}; 
+const BREAKPOINT_SLUGS = Object.keys(BREAKPOINTS); // np. ['mobile', 'tablet']
 
-// ---------- API HELPER (Single Source of Truth) ----------
+// ---------- DYNAMIC HEADERS ----------
+function getDynamicHeaders() {
+    // Klonujemy bazowe
+    let headers = [...SECTION_HEADERS];
+
+    // Dodajemy warianty z @breakpoint
+    // Np. [animation @mobile]
+    const responsiveSections = ['animation', 'scroll', 'step.1']; // Dla których chcemy podpowiedzi
+
+    BREAKPOINT_SLUGS.forEach(slug => {
+        responsiveSections.forEach(secKey => {
+            headers.push({
+                label: `[${secKey} @${slug}]`,
+                type: 'keyword',
+                detail: `Responsive: ${slug}`,
+                boost: -1 // Niższy priorytet niż zwykłe
+            });
+        });
+    });
+
+    return headers;
+}
+
+// Stan globalny walidacji
+let lastValidationState = { valid: true, hasCriticalErrors: false, diagnostics: [] };
+
+// ---------- API HELPER ----------
 async function fetchValidation(scriptContent) {
     const apiRoot = window.wpApiSettings?.root || '/wp-json/';
     const nonce = window.wpApiSettings?.nonce || '';
-
     try {
         const res = await fetch(`${apiRoot}scrollcrafter/v1/validate`, {
             method: 'POST',
@@ -33,7 +53,6 @@ async function fetchValidation(scriptContent) {
             body: JSON.stringify({ script: scriptContent, mode: 'auto' })
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        log('[SC Validation] Response received');
         return await res.json();
     } catch (e) {
         console.error('[SC Validation] Error:', e);
@@ -46,13 +65,19 @@ const dslLanguage = StreamLanguage.define({
   startState() { return {}; },
   token(stream) {
     if (stream.eatSpace()) return null;
-    if (stream.peek() === '#') { stream.skipToEnd(); return 'comment'; }
+    if (stream.peek() === '//') { stream.skipToEnd(); return 'comment'; }
     if (stream.peek() === '[') {
       stream.next();
       while (!stream.eol()) { const ch = stream.next(); if (ch === ']') break; }
       return 'keyword';
     }
     if (stream.match(/^[a-zA-Z0-9_.]+(?=:)/)) return 'propertyName';
+    if (stream.match(/^#[a-fA-F0-9]{3,6}\b/)) { // Prosty HEX color
+        return 'atom'; // Kolorowanie na inny kolor (np. fioletowy/niebieski)
+    }
+    if (stream.match(/^#[a-zA-Z0-9_-]+/)) { // CSS ID selector
+        return 'string'; // Kolorowanie jak string
+    }
     if (stream.peek() === ':') { stream.next(); return null; }
     if (stream.match(/^-?\d*\.?\d+/)) return 'number';
     stream.next(); return null;
@@ -64,6 +89,8 @@ const dslHighlightStyle = HighlightStyle.define([
   { tag: tags.keyword, color: '#7ab6ff', fontWeight: 'bold' },
   { tag: tags.comment, color: '#76839a', fontStyle: 'italic' },
   { tag: tags.number, color: '#89ddff' },
+  { tag: tags.atom, color: '#c678dd' },
+  { tag: tags.string, color: '#98c379' },
 ]);
 
 const dslTheme = EditorView.theme({
@@ -79,10 +106,15 @@ const dslTheme = EditorView.theme({
 // ---------- Autocomplete Logic ----------
 function getSectionFieldDefs(sectionName) {
   if (!sectionName) return null;
-  if (FIELD_DEFS[sectionName]) return FIELD_DEFS[sectionName];
-  if (sectionName.startsWith('step.')) return FIELD_DEFS['step.*'];
+  
+  // Normalizacja: usuń część @mobile, żeby dopasować klucz w FIELD_DEFS
+  let baseName = sectionName.split('@')[0].trim(); // usuń @mobile
+  if (FIELD_DEFS[baseName]) return FIELD_DEFS[baseName];
+  if (baseName.startsWith('step.')) return FIELD_DEFS['step.*'];
+  
   return null;
 }
+
 function getFieldCompletionsForSection(sectionName) {
   const defs = getSectionFieldDefs(sectionName);
   if (!defs) return [];
@@ -90,6 +122,7 @@ function getFieldCompletionsForSection(sectionName) {
     label: def.label, type: 'property', detail: def.detail, info: def.info
   }));
 }
+
 function withSlashApply(options, slashPos) {
   return options.map((opt) => ({
     ...opt,
@@ -114,7 +147,7 @@ function insertAtCursor(view, text) {
     view.focus();
 }
 
-// --- Generator HTML Cheat Sheet ---
+// --- Generator HTML Cheat Sheet (Updated) ---
 function renderCheatSheet(container, view) {
     if (!FIELD_DEFS) return;
 
@@ -123,7 +156,7 @@ function renderCheatSheet(container, view) {
         { key: 'animation', label: '[animation]' },
         { key: 'scroll', label: '[scroll]' },
         { key: 'timeline', label: '[timeline]' },
-        { key: 'step.*', label: '[step]' } // Dla timeline
+        { key: 'step.*', label: '[step]' } 
     ];
 
     sections.forEach(sec => {
@@ -138,14 +171,23 @@ function renderCheatSheet(container, view) {
                         ${fieldName} <span>${def.detail || ''}</span>
                      </div>`;
         });
-
         html += `</div>`;
     });
+
+    // Sekcja Responsive
+    const bpList = BREAKPOINT_SLUGS.length ? BREAKPOINT_SLUGS.join(', ') : 'No breakpoints defined';
+    html += `<div class="sc-cs-section">
+                <div class="sc-cs-title">Responsive (@)</div>
+                <div class="sc-cs-info" style="font-size:10px; color:#aaa; margin-bottom:5px;">Available: ${bpList}</div>
+                <div class="sc-cs-item" data-insert="[animation @mobile]\n">Override Animation</div>
+                <div class="sc-cs-item" data-insert="[scroll @mobile]\n">Override Scroll</div>
+             </div>`;
 
     html += `<div class="sc-cs-section">
                 <div class="sc-cs-title">Snippets</div>
                 <div class="sc-cs-item" data-insert="[animation]\ntype: from\nfrom: opacity=0, y=50\nduration: 1\n">Fade In Up</div>
                 <div class="sc-cs-item" data-insert="[scroll]\nstart: top 80%\nend: bottom 20%\nscrub: 1\nmarkers: true\n">Scroll Trigger</div>
+                <div class="sc-cs-item" data-insert="[animation]\ntype: from\nfrom: opacity=0\n\n[animation @mobile]\nfrom: opacity=1\n">Responsive Fade</div>
              </div>`;
 
     container.innerHTML = html;
@@ -157,81 +199,64 @@ function renderCheatSheet(container, view) {
     });
 }
 
-// --- Inteligentny Cheat Sheet: Wykrywanie użytych kluczy ---
+// --- Inteligentny Cheat Sheet ---
 function updateCheatSheetState(view) {
     const state = view.state;
     const doc = state.doc;
     const selection = state.selection.main;
     
-    // 1. Znajdź sekcję, w której jest kursor
-    // (Używamy istniejącej logiki z getCurrentSection, ale uproszczonej)
     let currentSectionName = null;
     let usedKeys = new Set();
-    
-    // Szukamy nagłówka sekcji W GÓRĘ od kursora
     const currentLineNo = doc.lineAt(selection.head).number;
     
     let sectionStartLine = -1;
-    let sectionEndLine = -1;
 
-    // A. Znajdź początek sekcji [nazwa]
+    // A. Znajdź sekcję (w tym @mobile)
     for (let l = currentLineNo; l >= 1; l--) {
         const lineText = doc.line(l).text.trim();
         if (lineText.startsWith('[') && lineText.endsWith(']')) {
+            // [animation @mobile] -> animation @mobile
             currentSectionName = lineText.slice(1, -1).trim().toLowerCase();
             sectionStartLine = l;
             break;
         }
     }
 
-    // B. Jeśli znaleźliśmy sekcję, przeskanujmy ją w dół aż do następnej sekcji lub końca
     if (currentSectionName) {
-        // Normalizacja nazwy dla steps (step.1 -> step.*)
-        if (currentSectionName.startsWith('step.')) currentSectionName = 'step.*';
+        // Normalizacja do nazw w panelu (usuń @mobile)
+        let baseName = currentSectionName.split('@')[0].trim();
+        if (baseName.startsWith('step.')) baseName = 'step.*';
 
-        // Skanujemy od startu sekcji w dół
+        // Skanuj klucze
         for (let l = sectionStartLine + 1; l <= doc.lines; l++) {
             const lineText = doc.line(l).text.trim();
-            // Stop jeśli nowa sekcja
-            if (lineText.startsWith('[') && lineText.endsWith(']')) {
-                break;
-            }
-            // Wyciągnij klucz (słowo przed dwukropkiem)
+            if (lineText.startsWith('[') && lineText.endsWith(']')) break;
             const match = lineText.match(/^([a-zA-Z0-9_.]+):/);
-            if (match) {
-                usedKeys.add(match[1]); // np. "duration"
-            }
+            if (match) usedKeys.add(match[1]);
         }
+        // Używamy baseName do podświetlania w UI
+        currentSectionName = baseName;
     }
 
-    // 2. Aktualizuj UI w panelu bocznym
     const sidebar = document.getElementById('sc-cs-content');
     if (!sidebar) return;
 
-    // Reset: usuń klasę is-used ze wszystkich
     sidebar.querySelectorAll('.sc-cs-item').forEach(el => el.classList.remove('is-used'));
 
-    // Jeśli nie jesteśmy w żadnej sekcji, nic nie wyszarzamy (lub wszystko - kwestia decyzji)
     if (!currentSectionName) return;
     const sectionHeaders = Array.from(sidebar.querySelectorAll('.sc-cs-title'));
-    const activeSidebarHeader = sectionHeaders.find(h => h.textContent.includes(currentSectionName.replace('.*', '')));
+    const activeSidebarHeader = sectionHeaders.find(h => h.textContent.includes(currentSectionName));
     
     if (activeSidebarHeader) {
         const parentSection = activeSidebarHeader.parentElement;
         const items = parentSection.querySelectorAll('.sc-cs-item');
-        
         items.forEach(item => {
-            // dataset.insert wygląda np. tak: "duration: "
             const insertText = item.dataset.insert || '';
             const keyName = insertText.split(':')[0].trim();
-            
-            if (usedKeys.has(keyName)) {
-                item.classList.add('is-used');
-            }
+            if (usedKeys.has(keyName)) item.classList.add('is-used');
         });
     }
 }
-
 
 function getCurrentSection(state, pos) {
   const line = state.doc.lineAt(pos);
@@ -239,12 +264,13 @@ function getCurrentSection(state, pos) {
     const text = state.doc.line(ln).text.trim();
     if (text.startsWith('[') && text.endsWith(']')) {
       let name = text.slice(1, -1).trim().toLowerCase();
-      if (name.startsWith('step.')) return { name: 'step.*', inSection: true };
+      // Tu zwracamy pełną nazwę (np. "animation @mobile"), funkcja getSectionFieldDefs sobie ją utnie
       return { name, inSection: true };
     }
   }
   return { name: null, inSection: false };
 }
+
 function filterMissingKeys(sectionName, state, pos) {
   const line = state.doc.lineAt(pos);
   const used = new Set();
@@ -268,21 +294,26 @@ function dslCompletionSource(context) {
   if (textBefore.includes('#')) return null;
   const { name: sectionName } = getCurrentSection(state, pos);
 
-  // 1. Slash
+  // 1. Slash command (podpowiedzi kluczy)
   const word = context.matchBefore(/\/[a-zA-Z0-9_.]*/);
   if (word) {
       if (!sectionName) return null;
       let options = filterMissingKeys(sectionName, state, pos);
-      if (sectionName === 'timeline') options.push({ label: '[step.1]', type: 'keyword', detail: 'New step' });
+      // Jeśli jesteśmy w timeline, podpowiedz nowy krok
+      if (sectionName.startsWith('timeline')) {
+          options.push({ label: '[step.1]', type: 'keyword', detail: 'New step' });
+      }
       if (!options.length) return null;
       return { from: word.from + 1, options: withSlashApply(options, word.from) };
   }
-  // 2. Value
+
+  // 2. Value Autocomplete (wartości po dwukropku)
   const matchValueContext = textBefore.match(/([a-zA-Z0-9_.]+):\s*([^:]*)$/);
   if (matchValueContext) {
       const rawKey = matchValueContext[1];
       const filterText = matchValueContext[2] || '';
-      const defs = getSectionFieldDefs(sectionName);
+      const defs = getSectionFieldDefs(sectionName); // Tu defs dostaje np. "animation" nawet jak sectionName="animation @mobile"
+      
       if (defs && defs[rawKey] && defs[rawKey].values) {
           return {
               from: pos - filterText.length, 
@@ -291,12 +322,21 @@ function dslCompletionSource(context) {
       }
       return null;
   }
-  // 3. Keys
+
+  // 3. Section Headers & Keys
   if (textBefore.trim() === '') {
+       // Jeśli jesteśmy w sekcji -> podpowiadamy klucze. Jeśli nie -> podpowiadamy nagłówki sekcji
        const options = sectionName ? getFieldCompletionsForSection(sectionName) : [];
-       return { from: pos, options: [...options, ...SECTION_HEADERS] };
+       const headers = getDynamicHeaders(); // Dynamiczne nagłówki z breakpointami
+       return { from: pos, options: [...options, ...headers] };
   }
-  if (textBefore.trim().startsWith('[')) return { from: line.from + lineText.indexOf('['), options: SECTION_HEADERS };
+  
+  // Jeśli zaczynamy pisać [ -> podpowiedz nagłówki
+  if (textBefore.trim().startsWith('[')) {
+      return { from: line.from + lineText.indexOf('['), options: getDynamicHeaders() };
+  }
+  
+  // Podpowiadanie kluczy w trakcie pisania
   if (sectionName) {
       const w = context.matchBefore(/[a-zA-Z0-9_.]+/);
       if (w) return { from: w.from, options: getFieldCompletionsForSection(sectionName) };
@@ -304,19 +344,12 @@ function dslCompletionSource(context) {
   return null;
 }
 
-// ---------- LINTER ENGINE (CORE) ----------
 const dslLinter = linter(async (view) => {
   const doc = view.state.doc.toString();
-  
-  // Update Status Bar
   const statusEl = document.querySelector('.sc-dsl-editor__status-text');
-  if (statusEl) {
-      statusEl.textContent = 'Checking...';
-      statusEl.style.color = '#8b949e';
-  }
+  if (statusEl) { statusEl.textContent = 'Checking...'; statusEl.style.color = '#8b949e'; }
 
   const data = await fetchValidation(doc);
-  
   if (DEBUG) console.log('[Linter API Response]', data);
 
   const diagnostics = [];
@@ -341,12 +374,10 @@ const dslLinter = linter(async (view) => {
               }
           }
 
-          const totalLines = view.state.doc.lines;
-          if (lineNo > totalLines) lineNo = totalLines;
+          if (lineNo > view.state.doc.lines) lineNo = view.state.doc.lines;
 
           const ln = view.state.doc.line(lineNo);
           const lineText = ln.text;
-
           let from = ln.from + (lineText.length - lineText.trimStart().length);
           let to = ln.to;
 
@@ -366,14 +397,7 @@ const dslLinter = linter(async (view) => {
               }
           }
 
-          diagnostics.push({
-              from: from,
-              to: to,
-              severity: severity,
-              message: msg,
-              source: 'ScrollCrafter'
-          });
-          
+          diagnostics.push({ from, to, severity, message: msg, source: 'ScrollCrafter' });
           if (severity === 'error') hasErrors = true;
       });
   };
@@ -381,15 +405,8 @@ const dslLinter = linter(async (view) => {
   mapDiag(data.errors, 'error');
   mapDiag(data.warnings, 'warning');
 
-  // Update Global State
-  lastValidationState = {
-      valid: !hasErrors,
-      hasCriticalErrors: hasErrors,
-      diagnostics: diagnostics,
-      rawData: data
-  };
+  lastValidationState = { valid: !hasErrors, hasCriticalErrors: hasErrors, diagnostics, rawData: data };
 
-  // Update UI Status
   if (statusEl) {
       const parent = statusEl.parentElement;
       if (hasErrors) {
@@ -403,19 +420,12 @@ const dslLinter = linter(async (view) => {
           parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--ok';
       }
   }
-
   return diagnostics;
-
 }, { delay: 500 });
 
-
-// ---------- Editor Init ----------
 let cmView = null;
-
 function createEditor(parentNode, initialDoc) {
   if (cmView) { cmView.destroy(); cmView = null; }
-
-  // Reset stanu przy otwarciu
   lastValidationState = { valid: true, hasCriticalErrors: false, diagnostics: [] };
 
   const state = EditorState.create({
@@ -432,31 +442,20 @@ function createEditor(parentNode, initialDoc) {
       syntaxHighlighting(dslHighlightStyle),
       autocompletion({ override: [dslCompletionSource], activateOnTyping: true }),
       EditorView.updateListener.of((update) => {
-          if (update.docChanged || update.selectionSet) {
-              updateCheatSheetState(update.view);
-          }
+          if (update.docChanged || update.selectionSet) updateCheatSheetState(update.view);
       }),
       lintGutter(),
-      dslLinter, // Linter działa automatycznie w tle
-      
+      dslLinter,
       EditorView.lineWrapping
     ]
   });
-
   cmView = new EditorView({ state, parent: parentNode });
-  
-  // Wymuś pierwsze sprawdzenie zaraz po otwarciu (bez czekania na pisanie)
-  // forceLinting(cmView); 
-
   return cmView;
 }
-
 function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
 
-// ---------- Elementor UI Integration ----------
 (function ($) {
   const MODAL_ID = 'scrollcrafter-dsl-editor';
-
   const ensureModal = () => {
     let modal = document.getElementById(MODAL_ID);
     if (modal) return modal;
@@ -473,28 +472,18 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
           </div>
           <button type="button" class="sc-dsl-editor__close">&times;</button>
         </div>
-        
         <div class="sc-dsl-editor__body">
-            <!-- LEWA STRONA: EDYTOR -->
             <div class="sc-dsl-editor__main-area">
                 <div class="sc-dsl-editor__editor-container">
                     <div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div>
                 </div>
                 <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
             </div>
-
-            <!-- PRAWA STRONA: CHEAT SHEET -->
             <div class="sc-dsl-editor__sidebar">
-                <div class="sc-dsl-editor__sidebar-header">
-                    Cheat Sheet
-                    <!-- Opcjonalnie: ikona help -->
-                </div>
-                <div class="sc-dsl-editor__sidebar-content" id="sc-cs-content">
-                    <!-- Wygenerowane przez JS -->
-                </div>
+                <div class="sc-dsl-editor__sidebar-header">Cheat Sheet</div>
+                <div class="sc-dsl-editor__sidebar-content" id="sc-cs-content"></div>
             </div>
         </div>
-
         <div class="sc-dsl-editor__footer">
           <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">Cancel</button>
           <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply & Preview</button>
@@ -520,114 +509,62 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     const statusText = modal.querySelector('.sc-dsl-editor__status-text');
     modal.querySelector('.sc-dsl-editor__title-sub').textContent = `${elementType} (${elementId})`;
     
-    // Reset statusu UI
     statusText.textContent = 'Checking...';
     modal.querySelector('.sc-dsl-editor__status').className = 'sc-dsl-editor__status';
 
     const cmInstance = createEditor(modal.querySelector('#sc-dsl-editor-cm'), currentScript);
-
     renderCheatSheet(modal.querySelector('#sc-cs-content'), cmInstance);
-
     updateCheatSheetState(cmInstance);
 
     const close = () => modal.classList.remove('sc-dsl-editor--open');
-    
-    const bindClose = (selector) => {
-        const el = modal.querySelector(selector);
-        el.onclick = close;
-    };
+    const bindClose = (selector) => { modal.querySelector(selector).onclick = close; };
     bindClose('.sc-dsl-editor__close');
     bindClose('.sc-dsl-editor__cancel');
     bindClose('.sc-dsl-editor__backdrop');
 
-        // Helper function to trigger Elementor UI update
     const triggerElementorUpdate = (newCode) => {
-        // 1. Aktualizacja modelu (Backbone)
         settings.set('scrollcrafter_script', newCode);
-        
-        // 2. Znalezienie fizycznego pola textarea w panelu
-        // Szukamy aktywnej kontrolki w panelu, która odpowiada naszemu ustawieniu
-        // Zazwyczaj ma atrybut data-setting="scrollcrafter_script"
         const controlTextarea = document.querySelector('.elementor-control-scrollcrafter_script textarea, textarea[data-setting="scrollcrafter_script"]');
-        
         if (controlTextarea) {
             controlTextarea.value = newCode;
-            // Kluczowe: Symulacja wpisywania tekstu przez użytkownika
             controlTextarea.dispatchEvent(new Event('input', { bubbles: true }));
             controlTextarea.dispatchEvent(new Event('change', { bubbles: true }));
         } else {
-            // Fallback: Jeśli kontrolka nie jest w DOM (np. inna zakładka),
-            // musimy wymusić flagę 'isDirty' w edytorze
-            if (window.elementor && elementor.saver) {
-                elementor.saver.setFlag('edit'); 
-            }
+            if (window.elementor && elementor.saver) elementor.saver.setFlag('edit'); 
         }
     };
 
     const handleApply = () => {
       const currentCode = getEditorDoc();
-
-      // 1. Krytyczne Błędy (Errors) - BLOKADA
       if (lastValidationState.hasCriticalErrors) {
-          log('[SC Editor] Critical errors found, blocking apply.');
-          
-          // Focus na pierwszy błąd
           const firstErr = lastValidationState.diagnostics.find(d => d.severity === 'error');
           if (firstErr && cmView) {
-              cmView.dispatch({
-                  selection: { anchor: firstErr.from },
-                  scrollIntoView: true
-              });
+              cmView.dispatch({ selection: { anchor: firstErr.from }, scrollIntoView: true });
               cmView.focus();
           }
-          
-          // Efekt trzęsienia i komunikat
           const panel = modal.querySelector('.sc-dsl-editor__panel');
           panel.classList.add('sc-shake');
           setTimeout(() => panel.classList.remove('sc-shake'), 500);
-          
           statusText.textContent = 'Fix errors before saving!';
-          statusText.style.color = '#e06c75'; // Czerwony
+          statusText.style.color = '#e06c75';
           return;
       }
-
-      // 2. Ostrzeżenia (Warnings) - POTWIERDZENIE
       const warnings = lastValidationState.diagnostics.filter(d => d.severity === 'warning');
       if (warnings.length > 0) {
-          // Prosty, natywny confirm jest najbardziej niezawodny
           const proceed = confirm(`⚠️ Your code has ${warnings.length} warning(s).\n\nThis might cause unexpected behavior. Are you sure you want to save?`);
-          
-          if (!proceed) {
-              // Focus na pierwszy warning
-              if (cmView) {
-                  cmView.dispatch({
-                      selection: { anchor: warnings[0].from },
-                      scrollIntoView: true
-                  });
-              }
-              return; // Anuluj zapis
-          }
+          if (!proceed) return;
       }
 
-      // 3. Sukces - Zapisz i powiadom Elementora
       triggerElementorUpdate(currentCode);
-
-      // Wymuś odświeżenie podglądu
       if (model.trigger) model.trigger('change', model);
       if (currentPageView.render) currentPageView.render();
       
-      log('[SC Editor] Script applied to element', elementId);
-
       statusText.textContent = 'Applied!';
-      statusText.style.color = '#98c379'; // Zielony
-      
+      statusText.style.color = '#98c379';
       setTimeout(close, 500);
     };
 
-
-    // Podpięcie handlerów
     modal.querySelector('.sc-dsl-editor__apply-preview').onclick = handleApply;
-
     modal.classList.add('sc-dsl-editor--open');
   };
 
@@ -636,5 +573,4 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       elementor.channels.editor.on('scrollcrafter:open_editor', openEditorForCurrentElement);
     }
   });
-
 })(jQuery);

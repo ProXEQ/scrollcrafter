@@ -18,11 +18,11 @@ class Settings_Page
 	public function add_settings_page(): void
 	{
 		add_options_page(
-			'ScrollCrafter Settings', // Title tag
-			'ScrollCrafter',          // Menu title
-			'manage_options',         // Capability
-			'scrollcrafter',          // Menu slug
-			[ $this, 'render_page' ]  // Callback
+			'ScrollCrafter Settings',
+			'ScrollCrafter',
+			'manage_options',
+			'scrollcrafter',
+			[ $this, 'render_page' ]
 		);
 	}
 
@@ -45,7 +45,6 @@ class Settings_Page
 			'scrollcrafter'
 		);
 
-		// Pole: Tryb Debugowania
 		add_settings_field(
 			'debug_mode',
 			esc_html__( 'Debug Mode', 'scrollcrafter' ),
@@ -54,7 +53,23 @@ class Settings_Page
 			'scrollcrafter_main_section'
 		);
 
-		// Sekcja: Ładowanie GSAP
+        // Sekcja: Breakpointy (NOWA)
+        add_settings_section(
+			'scrollcrafter_breakpoints_section',
+			esc_html__( 'Breakpoints', 'scrollcrafter' ),
+			[ $this, 'render_breakpoints_section_desc' ],
+			'scrollcrafter'
+		);
+
+        add_settings_field(
+			'custom_breakpoints',
+			esc_html__( 'Custom Breakpoints', 'scrollcrafter' ),
+			[ $this, 'render_field_custom_breakpoints' ],
+			'scrollcrafter',
+			'scrollcrafter_breakpoints_section'
+		);
+
+		// Sekcja: GSAP
 		add_settings_section(
 			'scrollcrafter_assets_section',
 			esc_html__( 'GSAP & Assets', 'scrollcrafter' ),
@@ -62,7 +77,6 @@ class Settings_Page
 			'scrollcrafter'
 		);
 
-		// Pole: Tryb ładowania (Local vs CDN)
 		add_settings_field(
 			'gsap_mode',
 			esc_html__( 'GSAP Source', 'scrollcrafter' ),
@@ -71,7 +85,6 @@ class Settings_Page
 			'scrollcrafter_assets_section'
 		);
 
-		// Pole: Custom CDN URL (GSAP)
 		add_settings_field(
 			'gsap_cdn_url',
 			esc_html__( 'Custom GSAP URL', 'scrollcrafter' ),
@@ -80,7 +93,6 @@ class Settings_Page
 			'scrollcrafter_assets_section'
 		);
 
-		// Pole: Custom CDN URL (ScrollTrigger)
 		add_settings_field(
 			'scrolltrigger_cdn',
 			esc_html__( 'Custom ScrollTrigger URL', 'scrollcrafter' ),
@@ -94,16 +106,32 @@ class Settings_Page
 	{
 		$output = [];
 
-		// Debug Mode
 		$output['debug_mode'] = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
 
-		// GSAP Mode
-		$allowed_modes = [ 'local', 'cdn_custom', 'cdn_gsap_docs' ];
-		$output['gsap_mode'] = in_array( $input['gsap_mode'] ?? '', $allowed_modes, true ) 
-			? $input['gsap_mode'] 
-			: 'local';
+        // Breakpoints Sanitize
+        // Zamieniamy tekst "mobile: 768" na tablicę ['mobile' => 768]
+        $raw_bp = $input['custom_breakpoints'] ?? '';
+        $bp_array = [];
+        if ( ! empty( $raw_bp ) ) {
+            $lines = explode( "\n", $raw_bp );
+            foreach ( $lines as $line ) {
+                $line = trim( $line );
+                if ( empty( $line ) ) continue;
+                
+                $parts = explode( ':', $line );
+                if ( count( $parts ) === 2 ) {
+                    $key = trim( $parts[0] );
+                    $val = (int) trim( $parts[1] );
+                    if ( $key && $val > 0 ) {
+                        $bp_array[ $key ] = $val;
+                    }
+                }
+            }
+        }
+        $output['custom_breakpoints'] = $bp_array;
 
-		// URLs
+		$allowed_modes = [ 'local', 'cdn_custom', 'cdn_gsap_docs' ];
+		$output['gsap_mode'] = in_array( $input['gsap_mode'] ?? '', $allowed_modes, true ) ? $input['gsap_mode'] : 'local';
 		$output['gsap_cdn_url']      = esc_url_raw( $input['gsap_cdn_url'] ?? '' );
 		$output['scrolltrigger_cdn'] = esc_url_raw( $input['scrolltrigger_cdn'] ?? '' );
 
@@ -112,9 +140,7 @@ class Settings_Page
 
 	public function render_page(): void
 	{
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
+		if ( ! current_user_can( 'manage_options' ) ) return;
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'ScrollCrafter Settings', 'scrollcrafter' ); ?></h1>
@@ -128,6 +154,28 @@ class Settings_Page
 		</div>
 		<?php
 	}
+
+    public function render_breakpoints_section_desc(): void
+    {
+        echo '<p>' . esc_html__( 'Define custom breakpoints. Format: slug: width (one per line). Example:', 'scrollcrafter' ) . '<br><code>mobile: 768</code><br><code>tablet: 1024</code></p>';
+        echo '<p class="description">' . esc_html__( 'If empty, breakpoints from Elementor will be used automatically.', 'scrollcrafter' ) . '</p>';
+    }
+
+    public function render_field_custom_breakpoints(): void
+    {
+        $config = Config::instance();
+        // Konwertuj array z powrotem na string dla textarea
+        $custom = $config->get( 'custom_breakpoints', [] );
+        $text = '';
+        if ( is_array( $custom ) ) {
+            foreach ( $custom as $k => $v ) {
+                $text .= "$k: $v\n";
+            }
+        }
+        ?>
+        <textarea name="<?php echo self::OPTION_NAME; ?>[custom_breakpoints]" rows="5" cols="40" class="regular-text code"><?php echo esc_textarea( $text ); ?></textarea>
+        <?php
+    }
 
 	public function render_assets_section_desc(): void
 	{
@@ -143,7 +191,7 @@ class Settings_Page
 			<?php echo esc_html__( 'Enable Debug Mode', 'scrollcrafter' ); ?>
 		</label>
 		<p class="description">
-			<?php echo esc_html__( 'Enables GSAP markers on frontend and detailed logging to debug.log.', 'scrollcrafter' ); ?>
+			<?php echo esc_html__( 'Enables GSAP markers on frontend and detailed logging.', 'scrollcrafter' ); ?>
 		</p>
 		<?php
 	}
@@ -158,9 +206,6 @@ class Settings_Page
 			<option value="cdn_gsap_docs" <?php selected( $current, 'cdn_gsap_docs' ); ?>>CDN (jsDelivr - Standard)</option>
 			<option value="cdn_custom" <?php selected( $current, 'cdn_custom' ); ?>>CDN (Custom URLs)</option>
 		</select>
-		<p class="description">
-			<?php echo esc_html__( 'Use "Local" for GDPR compliance. Use "CDN" for performance.', 'scrollcrafter' ); ?>
-		</p>
 		<?php
 	}
 
@@ -169,8 +214,7 @@ class Settings_Page
 		$config = Config::instance();
 		$val = $config->get( 'gsap_cdn_url' );
 		?>
-		<input type="url" name="<?php echo self::OPTION_NAME; ?>[gsap_cdn_url]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="https://...">
-		<p class="description"><?php echo esc_html__( 'Only used if Mode is "CDN (Custom URLs)".', 'scrollcrafter' ); ?></p>
+		<input type="url" name="<?php echo self::OPTION_NAME; ?>[gsap_cdn_url]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
 		<?php
 	}
 
@@ -179,7 +223,7 @@ class Settings_Page
 		$config = Config::instance();
 		$val = $config->get( 'scrolltrigger_cdn' );
 		?>
-		<input type="url" name="<?php echo self::OPTION_NAME; ?>[scrolltrigger_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text" placeholder="https://...">
+		<input type="url" name="<?php echo self::OPTION_NAME; ?>[scrolltrigger_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
 		<?php
 	}
 }
