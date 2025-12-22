@@ -11,18 +11,14 @@ class Tween_Config_Builder
         string $targetSelector,
         string $targetType
     ): array {
-        // 1. Config Globalny
         $animData = $parsed['animation'] ?? [];
         $finalConfig = $this->buildTweenConfig($animData, $scrollTrigger);
 
-        // 2. Config Media
         $mediaConfigs = [];
         $mediaRaw = $parsed['media'] ?? [];
 
         foreach ($mediaRaw as $mediaSlug => $mediaData) {
-            // Czy są nadpisania animacji?
             $mediaAnim = $mediaData['animation'] ?? [];
-            // Czy są nadpisania scrolla?
             $mediaScroll = $mediaData['scroll'] ?? []; 
 
             if (empty($mediaAnim) && empty($mediaScroll)) {
@@ -31,13 +27,8 @@ class Tween_Config_Builder
 
             $mergedAnim = $this->mergeAnimData($animData, $mediaAnim);
             
-            // ScrollTrigger
             $mergedScroll = !empty($mediaScroll) ? $mediaScroll : $scrollTrigger;
 
-            // Jeśli w mediaScroll jest strict, upewnij się, że trafi do mergedAnim, 
-            // żeby buildTweenConfig go złapał (lub przekaż go osobno).
-            // W parserze 'strict' trafia do tablicy scroll lub animation.
-            // Najbezpieczniej: jeśli strict jest w mediaScroll, nadpisz strict w mergedAnim.
             if (isset($mediaScroll['strict'])) {
                 $mergedAnim['strict'] = $mediaScroll['strict'];
             }
@@ -45,8 +36,6 @@ class Tween_Config_Builder
             $mediaConfigs[$mediaSlug] = $this->buildTweenConfig($mergedAnim, $mergedScroll);
         }
         
-        // Debug
-        // error_log('[SC Tween Builder] media: ' . print_r($mediaConfigs, true));
         
         return [
             'widget' => 'scroll_animation', 
@@ -132,18 +121,13 @@ class Tween_Config_Builder
                 break;
         }
 
-        // --- FIX: PRZEKAZANIE STRICT ---
-        // Tutaj był problem - strict nie był przepisywany do wyniku
         if (isset($anim['strict'])) {
             $finalConfig['strict'] = (bool)$anim['strict'];
         }
-        // -------------------------------
 
         if (!empty($scrollTrigger)) {
-            // Jeśli strict jest w scrollTrigger (z parsera), też go wyciągnijmy na wierzch
             if (isset($scrollTrigger['strict'])) {
                 $finalConfig['strict'] = (bool)$scrollTrigger['strict'];
-                // Usuwamy z scrollTrigger, bo GSAP by krzyczał o nieznaną właściwość
                 unset($scrollTrigger['strict']);
             }
 

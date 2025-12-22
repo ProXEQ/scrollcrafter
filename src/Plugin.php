@@ -48,22 +48,17 @@ final class Plugin
 	{
 		add_action( 'init', [ $this, 'load_textdomain' ] );
 
-		// Link "Settings" na liście wtyczek
 		add_filter( 
 			'plugin_action_links_' . plugin_basename( SCROLLCRAFTER_FILE ), 
 			[ $this, 'add_settings_link' ] 
 		);
 
-		// Hooki dla assets.
 		$this->assets->hooks();
 
-		// Integracja z Elementorem.
 		$this->elementor->hooks();
 
-		// Kontroler walidacji skryptu (REST API).
 		$this->validation->hooks();
 
-		// Strona ustawień w panelu admina.
 		$this->settings->hooks();
 
 		add_action(
@@ -98,7 +93,6 @@ final class Plugin
 			esc_html__( 'Settings', 'scrollcrafter' )
 		);
 
-		// Dodajemy na początku tablicy
 		array_unshift( $links, $settings_link );
 
 		return $links;

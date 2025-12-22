@@ -10,7 +10,6 @@ class Animation_Injector
 {
     public function hooks(): void
     {
-        // Kontenery (flex/grid) – po sekcji Advanced.
         add_action(
             'elementor/element/container/_section_responsive/after_section_end',
             [ $this, 'add_section_for_container' ],
@@ -18,7 +17,6 @@ class Animation_Injector
             2
         );
 
-        // Wszystkie widgety (common-optimized) – po sekcji Responsive.
         add_action(
             'elementor/element/common-optimized/_section_responsive/after_section_end',
             [ $this, 'add_section_for_common' ],

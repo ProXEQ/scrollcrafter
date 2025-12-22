@@ -17,7 +17,6 @@ class Animation_Render
 
     public function __construct()
     {
-        // Te klasy analizujemy w kolejnych krokach
         $this->parser         = new Script_Parser();
         $this->tweenBuilder   = new Tween_Config_Builder();
         $this->timelineBuilder = new Timeline_Config_Builder();
@@ -34,8 +33,6 @@ class Animation_Render
             return;
         }
 
-        // Pobranie ustawień "raw" jest szybsze niż pełne get_settings_for_display() w niektórych przypadkach,
-        // ale w Elementorze 3.0+ to jest standard.
         $settings = $element->get_settings_for_display();
 
         if ( empty( $settings['scrollcrafter_enable'] ) || 'yes' !== $settings['scrollcrafter_enable'] ) {
@@ -50,41 +47,33 @@ class Animation_Render
         try {
             $parsed = $this->parser->parse( $script );
         } catch ( \Throwable $e ) {
-            // Cichy błąd na produkcji, log tylko w debugu
             if ( Config::instance()->is_debug() ) {
                 Logger::log_exception( $e, 'animation_parsing' );
             }
             return;
         }
 
-        // Ustalenie selektora
         $widget_id       = $element->get_id();
         $target_selector = $parsed['target']['selector'] ?? ( '.elementor-element-' . $widget_id );
         $target_type     = isset( $parsed['target']['selector'] ) ? 'custom' : 'wrapper';
 
-        // Budowanie konfiguracji ScrollTrigger
         $scroll_config = $parsed['scroll'] ?? [];
         $scrollTrigger = $this->build_scroll_trigger_config( $scroll_config, $widget_id );
 
-        // Budowanie głównego configu (Timeline vs Tween)
         $is_timeline = ! empty( $parsed['timeline']['steps'] );
 
-        // Przekazujemy $element do buildera, może być potrzebny do kontekstu
         if ( $is_timeline ) {
             $config = $this->timelineBuilder->build( $element, $parsed, $scrollTrigger, $target_selector, $target_type );
         } else {
             $config = $this->tweenBuilder->build( $element, $parsed, $scrollTrigger, $target_selector, $target_type );
         }
 
-        // Dodanie ostrzeżeń z parsera do configu (dla JS w konsoli)
         if ( ! empty( $parsed['_warnings'] ) && Config::instance()->is_debug() ) {
             $config['_debug_warnings'] = $parsed['_warnings'];
         }
 
-        // Filtr dla developerów
         $config = apply_filters( 'scrollcrafter/frontend/config', $config, $element, $parsed );
 
-        // Wstrzyknięcie atrybutu do DOM
         $element->add_render_attribute(
             '_wrapper',
             'data-scrollcrafter-config',
@@ -94,24 +83,20 @@ class Animation_Render
 
     private function build_scroll_trigger_config( array $scroll, string $widget_id ): array
     {
-        // Domyślne wartości
         $defaults = [
-            'trigger'       => null, // Zostanie ustawione w JS na podstawie elementu
+            'trigger'       => null,
             'start'         => 'top 80%',
             'end'           => 'bottom 20%',
             'toggleActions' => 'play none none reverse',
-            'scrub'         => false, // false lub true lub number
-            'markers'       => Config::instance()->is_debug(), // Markers widoczne tylko w trybie debug
-            'id'            => 'sc-' . $widget_id, // Unikalne ID dla debugowania GSAP
+            'scrub'         => false,
+            'markers'       => Config::instance()->is_debug(),
+            'id'            => 'sc-' . $widget_id,
         ];
 
-        // Mapowanie kluczy 1:1, które po prostu przechodzą dalej
         $pass_through = [ 'pin', 'pinSpacing', 'anticipatePin', 'once', 'snap' ];
 
         $config = array_merge( $defaults, array_intersect_key( $scroll, $defaults ) );
 
-        // Nadpisanie wartościami z DSL, jeśli istnieją i nie są puste/null
-        // (uproszczona logika, w praktyce array_merge wyżej załatwia sprawę dla kluczy, które się pokrywają)
         
         foreach ( $pass_through as $key ) {
             if ( isset( $scroll[ $key ] ) ) {
@@ -119,7 +104,6 @@ class Animation_Render
             }
         }
 
-        // Specyficzne nadpisanie markers z DSL, jeśli ktoś wymusił
         if ( isset( $scroll['markers'] ) ) {
             $config['markers'] = (bool) $scroll['markers'];
         }

@@ -1,4 +1,3 @@
-/* --- Główny Kontener Modala --- */
 .sc-dsl-editor {
   position: fixed;
   inset: 0;
@@ -42,7 +41,6 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* --- Header --- */
 .sc-dsl-editor__header {
   display: flex;
   align-items: center;
@@ -81,7 +79,6 @@
   opacity: 1;
 }
 
-/* --- SIDEBAR (CHEAT SHEET) --- */
 
 .sc-dsl-editor__sidebar {
   width: 250px;
@@ -112,20 +109,18 @@
 }
 
 .sc-cs-item.is-used {
-  opacity: 0.3; /* Mocne wyszarzenie */
-  pointer-events: none; /* Opcjonalnie: zablokuj klikanie, żeby nie dublować */
+  opacity: 0.3;
+  pointer-events: none;
   filter: grayscale(1);
 }
 
-/* Opcjonalnie: ikona "check" */
 .sc-cs-item.is-used::after {
   content: '✓';
   margin-left: auto;
   font-weight: bold;
-  color: #56d364; /* Zielony */
+  color: #56d364;
 }
 
-/* --- Sekcje w Sidebarze --- */
 
 .sc-cs-section {
   margin-bottom: 16px;
@@ -163,7 +158,6 @@
   font-size: 10px;
 }
 
-/* --- Body & Editor Area --- */
 .sc-dsl-editor__body {
   flex: 1;
   display: flex;
@@ -197,7 +191,6 @@
   font-size: 13px;
 }
 
-/* --- Status Bar --- */
 .sc-dsl-editor__status {
   font-size: 11px;
   line-height: 1.4;
@@ -211,11 +204,9 @@
   font-family: monospace;
 }
 
-/* Scrollbar dla sidebara */
 .sc-dsl-editor__sidebar-content::-webkit-scrollbar { width: 6px; }
 .sc-dsl-editor__sidebar-content::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
 
-/* Responsywność - na małych ekranach ukrywamy sidebar lub robimy go na dole */
 @media (max-width: 800px) {
   .sc-dsl-editor__body { flex-direction: column; }
   .sc-dsl-editor__sidebar { width: 100%; height: 150px; border-top: 1px solid #30363d; }
@@ -226,7 +217,6 @@
 .sc-dsl-editor__status--ok .sc-dsl-editor__status-text { color: #56d364; }
 .sc-dsl-editor__status--warning .sc-dsl-editor__status-text { color: #e3b341; }
 
-/* --- Footer --- */
 .sc-dsl-editor__footer {
   padding: 12px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -255,18 +245,15 @@
   color: #fff;
 }
 
-/* --- CodeMirror Linting & Errors (CRITICAL PART) --- */
 
-/* 1. BŁĄD: Czerwony wężyk + tło */
 .cm-lintRange-error {
-    background-color: rgba(248, 81, 73, 0.15); /* Delikatne tło */
+    background-color: rgba(248, 81, 73, 0.15);
     background-image: url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3"><path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="%23f85149" fill="none" stroke-width="1.2"/></svg>');
     background-position: bottom;
     background-repeat: repeat-x;
     padding-bottom: 2px;
 }
 
-/* 2. OSTRZEŻENIE: Żółty wężyk + tło */
 .cm-lintRange-warning {
     background-color: rgba(227, 179, 65, 0.15);
     background-image: url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="6" height="3"><path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="%23e3b341" fill="none" stroke-width="1.2"/></svg>');
@@ -275,7 +262,6 @@
     padding-bottom: 2px;
 }
 
-/* 3. Markery (Kropki na marginesie) */
 .cm-lint-marker {
     width: 8px;
     height: 8px;
@@ -296,7 +282,6 @@
     background-color: #e3b341;
 }
 
-/* 4. Tooltip (Dymek z błędem) */
 .cm-tooltip.cm-tooltip-lint {
     background-color: #1f232b !important;
     border: 1px solid #30363d !important;
@@ -320,7 +305,6 @@
 .cm-tooltip-lint .cm-diagnostic-error { border-color: #f85149; }
 .cm-tooltip-lint .cm-diagnostic-warning { border-color: #e3b341; }
 
-/* --- Animacja Błędu (Shake) --- */
 @keyframes sc-shake {
   0%, 100% { transform: translateX(0); }
   20%, 60% { transform: translateX(-5px); }
@@ -330,7 +314,6 @@
   animation: sc-shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
 
-/* --- Responsywność --- */
 @media (max-width: 900px) {
   .sc-dsl-editor__panel {
     width: auto;

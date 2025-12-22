@@ -14,10 +14,8 @@ class Plugin_Integration
 {
     public function hooks(): void
     {
-        // Rejestracja widgetów.
         add_action( 'elementor/widgets/register', [ $this, 'register_widgets' ] );
         
-        // Assety dla dedykowanych widgetów (frontend + editor).
         add_action( 'elementor/frontend/after_enqueue_scripts', [ $this, 'enqueue_widget_assets' ] );
         add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'enqueue_widget_assets' ] );
     }
@@ -45,7 +43,6 @@ class Plugin_Integration
 
         foreach ( $widget_classes as $widget_class ) {
             try {
-                // Walidacja: czy klasa istnieje i dziedziczy po Widget_Base
                 if ( ! class_exists( $widget_class ) ) {
                     $failed[] = $widget_class . ' (class not found)';
                     continue;
@@ -56,7 +53,6 @@ class Plugin_Integration
                     continue;
                 }
 
-                // Instancjonowanie i rejestracja
                 $widget_instance = new $widget_class();
                 $widgets_manager->register( $widget_instance );
                 $registered[] = $widget_class;
@@ -64,14 +60,12 @@ class Plugin_Integration
             } catch ( \Throwable $e ) {
                 $failed[] = $widget_class . ' (exception: ' . $e->getMessage() . ')';
                 
-                // Logujemy wyjątek, jeśli debug jest włączony
                 if ( Config::instance()->is_debug() ) {
                     Logger::log_exception( $e, 'widget_registration' );
                 }
             }
         }
 
-        // Jeden zbiorczy log zamiast wielu
         if ( ! empty( $registered ) && Config::instance()->is_debug() ) {
             Logger::log( 'Registered widgets: ' . implode( ', ', $registered ), 'elementor' );
         }

@@ -37,7 +37,6 @@ class Script_Parser
                 continue;
             }
 
-            // 1. Nagłówek sekcji
             if ($this->isSectionHeader($line)) {
                 $parsed = $this->parseSectionHeader($line);
                 
@@ -49,13 +48,11 @@ class Script_Parser
                 $currentMedia = $parsed['media'] ?? null;
                 $currentSection = $parsed['section'];
                 
-                // Inicjalizacja struktury dla mediów
                 if ($currentMedia) {
                     if (!isset($result['media'][$currentMedia])) {
                         $result['media'][$currentMedia] = [];
                     }
                     
-                    // Timeline w mediach wymaga specjalnej struktury
                     if ($currentSection === self::SECTION_TIMELINE) {
                          if (!isset($result['media'][$currentMedia]['timeline'])) {
                              $result['media'][$currentMedia]['timeline'] = [ 'defaults' => [] ];
@@ -65,7 +62,6 @@ class Script_Parser
                              $result['media'][$currentMedia]['timeline'] = [ 'steps' => [] ];
                          }
                     } else {
-                         // Proste sekcje (animation, scroll, target)
                          if (!isset($result['media'][$currentMedia][$currentSection])) {
                              $result['media'][$currentMedia][$currentSection] = [];
                          }
@@ -75,7 +71,6 @@ class Script_Parser
                 continue;
             }
 
-            // 2. Pary klucz: wartość
             if (!str_contains($line, ':')) {
                 $result['_warnings'][] = "Line $lineNum: Missing colon separator (:).";
                 continue;
@@ -87,7 +82,6 @@ class Script_Parser
                 continue;
             }
 
-            // Obsługa dot notation (np. timeline.defaults.ease) - tylko dla Global
             if (!$currentMedia && str_contains($rawKey, '.')) {
                  if ($this->handleDotNotation($result, $rawKey, $rawValue)) {
                      continue;
@@ -97,12 +91,9 @@ class Script_Parser
             $key   = strtolower($rawKey);
             $value = $rawValue;
 
-            // --- KLUCZOWA POPRAWKA: Przełączanie między Global a Media ---
             
             if ($currentMedia) {
-                // *** LOGIKA DLA MEDIA QUERY ***
                 
-                // 1. Timeline Step
                 if (is_array($currentSection) && ($currentSection['type'] ?? '') === 'step') {
                     $idx = $currentSection['index'];
                     if (!isset($result['media'][$currentMedia]['timeline']['steps'][$idx])) {
@@ -110,13 +101,9 @@ class Script_Parser
                     }
                     $this->assignStepKey($result['media'][$currentMedia]['timeline']['steps'][$idx], $key, $value);
                 } 
-                // 2. Timeline Defaults
                 elseif ($currentSection === self::SECTION_TIMELINE) {
-                     // Zakładamy, że w media [timeline] to defaults (albo trzeba obsłużyć prefiks timeline.defaults)
-                     // Dla uproszczenia w media: [timeline @mobile] -> duration: 0.5
                      $this->assignSimpleKey($result['media'][$currentMedia]['timeline']['defaults'], $key, $value);
                 }
-                // 3. Animation / Scroll / Target
                 else {
                     $targetArray = &$result['media'][$currentMedia][$currentSection];
                     
@@ -130,7 +117,6 @@ class Script_Parser
                 }
 
             } else {
-                // *** LOGIKA GLOBALNA (STARA) ***
                 
                 if ($currentSection === self::SECTION_ANIM) {
                     $this->assignAnimationKey($result['animation'], $key, $value);
@@ -152,11 +138,10 @@ class Script_Parser
             }
         }
 
-        // Sortowanie
         $this->sortSteps($result['timeline']);
         foreach ($result['media'] as &$mediaCfg) {
             if (isset($mediaCfg['timeline'])) {
-                $this->sortSteps($mediaCfg['timeline'], true); // true = zachowaj klucze
+                $this->sortSteps($mediaCfg['timeline'], true);
             }
         }
 
@@ -173,9 +158,7 @@ class Script_Parser
         }
     }
     
-    // Helper dla prostych wartości w timeline defaults
     private function assignSimpleKey(array &$arr, string $key, string $value): void {
-        // Obsługa duration, delay itp.
         if (in_array($key, ['duration', 'delay', 'stagger'])) {
             $arr[$key] = (float)$value;
         } else {
@@ -183,7 +166,6 @@ class Script_Parser
         }
     }
 
-    // --- METODY POMOCNICZE (bez zmian) ---
 
     private function stripInlineComment(string $line): string
     {
@@ -288,7 +270,6 @@ class Script_Parser
              
         } elseif ($key === 'strict') {
              $scroll['strict'] = $this->parseBool($value);
-        // ---------------------------------
         
         } else {
              $scroll[$realKey] = $value;

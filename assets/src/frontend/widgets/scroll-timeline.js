@@ -29,14 +29,12 @@ function buildMediaQuery(targetSlug, isStrict, sortedBreakpoints) {
     return `${minQuery}${maxQuery}`;
 }
 
-// --- HELPERS ---
 /**
  * Helper: Bezpieczny parser wyrażeń matematycznych (Rozszerzony)
  */
 function parseSmartValue(val, contextNode) {
     if (typeof val !== 'string') return val;
 
-    // Kompatybilność wsteczna
     if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
     if (val === 'calc_scroll_width') val = 'calc(sw)';
     if (val === 'calc_100vh') val = 'calc(vh)';
@@ -45,31 +43,21 @@ function parseSmartValue(val, contextNode) {
         const expression = val.match(/^calc\s*\((.*)\)$/i)[1];
 
         return () => {
-            // 1. Podstawowe wymiary
             const vw = window.innerWidth;
             const vh = window.innerHeight;
-            const cw = contextNode.clientWidth || 0;  // Szerokość elementu/kontenera
-            const ch = contextNode.clientHeight || 0; // Wysokość elementu
+            const cw = contextNode.clientWidth || 0;
+            const ch = contextNode.clientHeight || 0;
             
-            // Scroll Width (dla kontenerów horyzontalnych)
-            // scrollWidth to cała zawartość, clientWidth to widok.
-            // sw = ile faktycznie "wystaje" do przewinięcia.
             const totalScrollW = contextNode.scrollWidth - cw;
             const sw = totalScrollW > 0 ? totalScrollW : 0;
 
-            // 2. Obliczone zmienne pomocnicze (NOWOŚĆ)
             
-            // center: Przesunięcie potrzebne, by element o szerokości cw był na środku ekranu (vw)
-            // Użyteczne przy 'x'. Jeśli x=0 to lewa krawędź, to x=center wyśrodkuje go.
             const center = (vw - cw) / 2;
 
-            // end: Przesunięcie do prawej krawędzi (ale nie poza nią)
             const end = vw - cw;
 
-            // vcenter: To samo dla osi Y (rzadsze w scroll triggerze poziomym, ale przydatne w animacjach)
             const vcenter = (vh - ch) / 2;
             
-            // Definicje zmiennych do Regexa i podstawiania
             const varsMap = {
                 sw: sw,
                 cw: cw,
@@ -81,11 +69,8 @@ function parseSmartValue(val, contextNode) {
                 end: end
             };
 
-            // Krok A: Walidacja bezpieczeństwa
-            // Dodajemy nowe słowa kluczowe do listy dozwolonych (usuwamy je przed testem cyfr)
             let cleanExpr = expression;
             Object.keys(varsMap).forEach(key => {
-                // Usuwamy całe słowa (np. center), flagi 'gi'
                 const regex = new RegExp(`\\b${key}\\b`, 'gi');
                 cleanExpr = cleanExpr.replace(regex, '');
             });
@@ -95,9 +80,7 @@ function parseSmartValue(val, contextNode) {
                 return 0;
             }
 
-            // Krok B: Podstawienie wartości
             let finalExpr = expression;
-            // Sortujemy klucze od najdłuższych, żeby np. 'vcenter' nie zostało zamienione częściowo przez 'center'
             const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
 
             sortedKeys.forEach(key => {
@@ -105,7 +88,6 @@ function parseSmartValue(val, contextNode) {
                 finalExpr = finalExpr.replace(regex, varsMap[key]);
             });
 
-            // Krok C: Obliczenie
             try {
                 return new Function('return ' + finalExpr)();
             } catch (e) {
@@ -118,7 +100,6 @@ function parseSmartValue(val, contextNode) {
     return val;
 }
 
-// Rekurencyjne parsowanie obiektu vars
 function parseMacros(vars, contextNode) {
   if (!vars || typeof vars !== 'object') return vars;
   const out = { ...vars };
@@ -128,7 +109,6 @@ function parseMacros(vars, contextNode) {
       out[key] = parseMacros(val, contextNode);
       return;
     }
-    // Używamy nowej funkcji
     out[key] = parseSmartValue(val, contextNode);
   });
   return out;
@@ -139,11 +119,9 @@ function getPinElement(node) {
   return node;
 }
 
-// --- GŁÓWNA FUNKCJA KREACJI TIMELINE'U ---
 function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) {
   const pinElem = getPinElement(node);
 
-  // Targety
   const targetCfg = configData.target || globalConfig.target || {};
   let mainTargets = [pinElem];
 
@@ -152,13 +130,11 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     if (found.length) mainTargets = Array.from(found);
   }
 
-  // Vars
   const timelineVars = { ...(configData.timelineVars || {}) };
   if (timelineVars.defaults) {
     timelineVars.defaults = parseMacros(timelineVars.defaults, pinElem);
   }
 
-  // ScrollTrigger
   if (!timelineVars.scrollTrigger) timelineVars.scrollTrigger = {};
   const st = timelineVars.scrollTrigger;
 
@@ -170,7 +146,6 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
 
   const tl = gsap.timeline(timelineVars);
 
-  // Steps
   const steps = configData.steps || [];
   steps.forEach((step, index) => {
     const method = step.method || 'to';
@@ -210,7 +185,6 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
 
 registerWidget('scroll_timeline', (node, config) => {
   const debug = !!window.ScrollCrafterConfig?.debug;
-  // Zmiana: Pobieramy posortowane breakpointy zamiast starej mapy
   const sysBreakpoints = window.ScrollCrafterConfig?.breakpoints || [];
   const logPrefix = `[ScrollCrafter][timeline:${config.id || 'tl'}]`;
 
@@ -225,23 +199,18 @@ registerWidget('scroll_timeline', (node, config) => {
 
   const mm = gsap.matchMedia();
 
-  // 1. Global Timeline
-  // Tutaj używamy min-width: 0px jako fallback dla "wszystkiego"
   mm.add("(min-width: 0px)", () => {
      if (config.steps && config.steps.length > 0) {
          createTimeline(node, config, config, debug, logPrefix, gsap);
      }
   });
 
-  // 2. Media Timelines
   if (config.media) {
       Object.keys(config.media).forEach((mediaSlug) => {
           const mediaConfig = config.media[mediaSlug];
           
-          // Pobieramy flagę strict (którą dodał PHP Builder)
           const isStrict = !!mediaConfig.strict;
 
-          // Budujemy query
           const query = buildMediaQuery(mediaSlug, isStrict, sysBreakpoints);
 
           if (query) {

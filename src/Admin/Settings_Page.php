@@ -37,7 +37,6 @@ class Settings_Page
 			]
 		);
 
-		// Sekcja: Główna konfiguracja
 		add_settings_section(
 			'scrollcrafter_main_section',
 			esc_html__( 'General Configuration', 'scrollcrafter' ),
@@ -53,7 +52,6 @@ class Settings_Page
 			'scrollcrafter_main_section'
 		);
 
-        // Sekcja: Breakpointy (NOWA)
         add_settings_section(
 			'scrollcrafter_breakpoints_section',
 			esc_html__( 'Breakpoints', 'scrollcrafter' ),
@@ -69,7 +67,6 @@ class Settings_Page
 			'scrollcrafter_breakpoints_section'
 		);
 
-		// Sekcja: GSAP
 		add_settings_section(
 			'scrollcrafter_assets_section',
 			esc_html__( 'GSAP & Assets', 'scrollcrafter' ),
@@ -108,8 +105,6 @@ class Settings_Page
 
 		$output['debug_mode'] = isset( $input['debug_mode'] ) && '1' === $input['debug_mode'];
 
-        // Breakpoints Sanitize
-        // Zamieniamy tekst "mobile: 768" na tablicę ['mobile' => 768]
         $raw_bp = $input['custom_breakpoints'] ?? '';
         $bp_array = [];
         if ( ! empty( $raw_bp ) ) {
@@ -164,7 +159,6 @@ class Settings_Page
     public function render_field_custom_breakpoints(): void
     {
         $config = Config::instance();
-        // Konwertuj array z powrotem na string dla textarea
         $custom = $config->get( 'custom_breakpoints', [] );
         $text = '';
         if ( is_array( $custom ) ) {

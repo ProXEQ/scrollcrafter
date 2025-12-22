@@ -8,7 +8,6 @@ import { getGsap, getScrollTrigger } from '../core/gsap-loader';
 function parseSmartValue(val, contextNode) {
     if (typeof val !== 'string') return val;
 
-    // Kompatybilność wsteczna
     if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
     if (val === 'calc_scroll_width') val = 'calc(sw)';
     if (val === 'calc_100vh') val = 'calc(vh)';
@@ -25,7 +24,6 @@ function parseSmartValue(val, contextNode) {
             const totalScrollW = contextNode.scrollWidth - cw;
             const sw = totalScrollW > 0 ? totalScrollW : 0;
 
-            // Zmienne pomocnicze
             const center = (vw - cw) / 2;
             const vcenter = (vh - ch) / 2;
             const end = vw - cw;
@@ -47,7 +45,6 @@ function parseSmartValue(val, contextNode) {
             }
 
             let finalExpr = expression;
-            // Sortujemy klucze od najdłuższych
             const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
 
             sortedKeys.forEach(key => {
@@ -137,9 +134,7 @@ registerWidget('scroll_animation', (node, config) => {
     return;
   }
 
-  // --- Helper: Tworzenie i uruchamianie Tweena ---
   const createTween = (cfg, contextNode) => {
-    // Określenie targetu (elementu do animacji)
     const targetConfig = cfg.target || config.target || {}; 
     let elements = [];
 
@@ -159,14 +154,11 @@ registerWidget('scroll_animation', (node, config) => {
     const animConfig = cfg.animation || {};
     const method = animConfig.method || 'from';
 
-    // Przetwarzanie Makr i Calc() w vars
-    // Używamy pierwszego elementu jako kontekstu do obliczeń (np. clientWidth)
     const calcContext = elements[0]; 
 
     const vars = parseMacros({ ...animConfig.vars }, calcContext);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
 
-    // Obsługa ScrollTrigger
     if (vars.scrollTrigger) {
       vars.scrollTrigger.trigger = contextNode;
       if (config.id) vars.scrollTrigger.id = 'sc-' + config.id;
@@ -186,10 +178,8 @@ registerWidget('scroll_animation', (node, config) => {
     return null;
   };
 
-  // --- GŁÓWNA LOGIKA MATCH MEDIA ---
   const mm = gsap.matchMedia();
 
-  // 1. Global (domyślna animacja)
   mm.add("(min-width: 0px)", () => {
     if (config.animation) {
        logConfig('Global config', config);
@@ -199,7 +189,6 @@ registerWidget('scroll_animation', (node, config) => {
 
   const sysBreakpoints = window.ScrollCrafterConfig?.breakpoints || [];
 
-  // 2. Media Overrides
   if (config.media) {
     Object.keys(config.media).forEach((mediaSlug) => {
       const mediaAnim = config.media[mediaSlug];

@@ -15,19 +15,16 @@ class Logger
      */
     public static function is_enabled(): bool
     {
-        // 1. Jeśli WP_DEBUG nie jest włączone, nigdy nie loguj.
         if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
             error_log( '[ScrollCrafter][Logger] WP_DEBUG is not enabled. Logging is disabled.' );
             return false;
         }
 
-        // 2. Jeśli WP_DEBUG_LOG nie jest włączone, logowanie nie ma sensu (nie trafi do pliku).
         if ( defined( 'WP_DEBUG_LOG' ) && ! WP_DEBUG_LOG ) {
             error_log( '[ScrollCrafter][Logger] WP_DEBUG_LOG is not enabled. Logging is disabled.' );
             return false;
         }
 
-        // 3. Sprawdź ustawienia wtyczki (jeśli klasa Config jest dostępna).
         if ( class_exists( Config::class ) ) {
             return Config::instance()->is_debug();
         }
@@ -62,8 +59,6 @@ class Logger
      */
     public static function log_exception( \Throwable $e, string $context = 'exception' ): void
     {
-        // Wyjątki logujemy zawsze, jeśli WP_DEBUG jest włączone, niezależnie od ustawień wtyczki,
-        // ponieważ są to błędy krytyczne.
         if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
             return;
         }
@@ -79,7 +74,6 @@ class Logger
             $e->getTraceAsString()
         );
 
-        // Używamy error_log bezpośrednio, aby pominąć sprawdzenie is_enabled()
         $prefix = sprintf( '[ScrollCrafter][%s] ', $context );
         error_log( $prefix . $message );
     }

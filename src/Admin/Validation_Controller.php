@@ -62,7 +62,6 @@ class Validation_Controller
         }
 
         try {
-            // Parser teraz zwraca klucz 'media'
             $parsed = $this->parser->parse( $script );
             error_log('[SC Parser] Parsed: ' . print_r($parsed, true));
         } catch ( \Throwable $e ) {
@@ -72,13 +71,10 @@ class Validation_Controller
         $errors   = array_map( fn($e) => $this->normalize_message($e, 'error'), $parsed['_errors'] ?? [] );
         $warnings = array_map( fn($w) => $this->normalize_message($w, 'warning'), $parsed['_warnings'] ?? [] );
 
-        // Walidacja logiki (teraz rekursywna dla mediów)
         $logicIssues = $this->validate_logic( $parsed, $script );
         
-        // 2. Walidacja Bezpieczeństwa (Calc Expressions) - NOWOŚĆ
         $securityIssues = $this->validate_calc_expressions( $parsed, $script );
 
-        // Łączymy wyniki
         $allIssues = array_merge($logicIssues, $securityIssues);
         
         foreach ( $allIssues as $issue ) {
@@ -101,7 +97,6 @@ class Validation_Controller
             $targetType     = isset( $parsed['target']['selector'] ) ? 'custom' : 'wrapper';
             $scrollTrigger  = $this->build_scroll_trigger_config( $parsed['scroll'] ?? [] );
             
-            // Detekcja trybu timeline musi uwzględniać kroki w media
             $hasSteps = !empty($parsed['timeline']['steps']);
             if (!$hasSteps && !empty($parsed['media'])) {
                 foreach ($parsed['media'] as $m) {
@@ -132,13 +127,11 @@ class Validation_Controller
     {
         $issues = [];
 
-        // Helper do sprawdzania kluczy w danej sekcji
         $check_keys = function( $data, $sectionName, $allowedKeys ) use ( &$issues, $script ) {
             if ( empty( $data ) ) return;
             foreach ( $data as $key => $val ) {
                 $normalizedKey = strtolower($key);
                 if ( ! in_array( $normalizedKey, $allowedKeys, true ) ) {
-                    // Próbujemy znaleźć linię w kodzie
                     $line = $this->find_line_number($script, $key . ':');
                     $issues[] = $this->create_issue(
                         "Unknown key '{$key}' in [{$sectionName}].", 'warning', $line
@@ -147,7 +140,6 @@ class Validation_Controller
             }
         };
 
-        // Helper do sprawdzania kroków
         $check_steps = function( $steps, $contextPrefix = '' ) use ( &$issues, $script ) {
             if ( empty( $steps ) ) return;
             foreach ( $steps as $index => $step ) {
@@ -163,12 +155,10 @@ class Validation_Controller
             }
         };
 
-        // 1. Walidacja Globalna
         $check_keys( $parsed['animation'] ?? [], 'animation', self::ALLOWED_KEYS['animation'] );
         $check_keys( $parsed['scroll'] ?? [], 'scroll', self::ALLOWED_KEYS['scroll'] );
         $check_steps( $parsed['timeline']['steps'] ?? [] );
 
-        // 2. Walidacja Mediów (Responsive)
         if ( ! empty( $parsed['media'] ) ) {
             foreach ( $parsed['media'] as $mediaSlug => $mediaData ) {
                 $check_keys( $mediaData['animation'] ?? [], "animation @{$mediaSlug}", self::ALLOWED_KEYS['animation'] );
@@ -223,7 +213,6 @@ class Validation_Controller
         $lines = explode("\n", $script);
         foreach ($lines as $index => $line) {
             $trimLine = trim($line);
-            // Ignorujemy linie będące w całości komentarzami (zaczynające się od //)
             if (strpos($trimLine, '//') === 0) {
                 continue;
             }
@@ -256,7 +245,6 @@ class Validation_Controller
                              $cleanExpr = preg_replace("/\\b{$v}\\b/i", '', $cleanExpr);
                         }
                         
-                        // Sprawdzamy czy zostały tylko bezpieczne znaki (cyfry, operatory)
                         if ( ! preg_match( '/^[0-9\.\+\-\*\/\(\)\s]*$/', $cleanExpr ) ) {
                              $lines = explode("\n", $script);
                              $lineNum = 1;

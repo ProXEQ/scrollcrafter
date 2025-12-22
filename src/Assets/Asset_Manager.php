@@ -25,7 +25,6 @@ class Asset_Manager
      * Używamy tego w obu metodach (frontend i editor), żeby uniknąć duplikacji kodu.
      */
     private function get_sorted_breakpoints(): array {
-        // Sprawdź czy Elementor jest aktywny
         if ( ! did_action( 'elementor/loaded' ) ) {
             return [];
         }
@@ -36,11 +35,10 @@ class Asset_Manager
         foreach ($elementor_breakpoints as $bp_key => $bp_instance) {
             $sorted_breakpoints[] = [
                 'key' => $bp_key,
-                'value' => $bp_instance->get_value(), // int (np. 767)
+                'value' => $bp_instance->get_value(),
             ];
         }
 
-        // Sortuj rosnąco (mobile -> tablet -> desktop)
         usort($sorted_breakpoints, function($a, $b) {
             return $a['value'] - $b['value'];
         });
@@ -59,7 +57,6 @@ class Asset_Manager
         $config = Config::instance();
         $mode   = $config->get_gsap_mode();
 
-        // 1. Rejestracja GSAP (bez zmian)
         if ( 'cdn_gsap_docs' === $mode ) {
             wp_register_script('scrollcrafter-gsap', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/gsap.min.js', [], null, true);
             wp_register_script('scrollcrafter-gsap-scrolltrigger', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/ScrollTrigger.min.js', ['scrollcrafter-gsap'], null, true);
@@ -71,23 +68,20 @@ class Asset_Manager
             wp_register_script('scrollcrafter-gsap-scrolltrigger', SCROLLCRAFTER_URL . 'assets/vendor/gsap/ScrollTrigger.min.js', ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
         }
 
-        // 2. Rejestracja Bundle
         wp_register_script(
             'scrollcrafter-frontend',
             SCROLLCRAFTER_URL . 'assets/js/frontend.bundle.js',
-            [ 'scrollcrafter-gsap-scrolltrigger' ], // Ważne: zależy od ScrollTriggera
+            [ 'scrollcrafter-gsap-scrolltrigger' ],
             SCROLLCRAFTER_VERSION,
             true
         );
 
-        // 3. Localize Script (Przekazanie danych do JS)
-        // To jest kluczowy moment - tutaj przekazujemy breakpointy na frontend
         wp_localize_script(
             'scrollcrafter-frontend',
-            'ScrollCrafterConfig', // Globalna zmienna w window
+            'ScrollCrafterConfig',
             [   
                 'debug'       => $config->is_debug(),
-                'breakpoints' => $this->get_sorted_breakpoints() // Używamy helpera
+                'breakpoints' => $this->get_sorted_breakpoints()
             ]
         );
     }
@@ -116,9 +110,6 @@ class Asset_Manager
 			true
 		);
 
-        // Przekazanie danych również do skryptu edytora (CodeMirror)
-        // Uwaga: 'scrollcrafter-frontend' już dostał dane wyżej (w register), 
-        // ale 'scrollcrafter-editor' to osobny plik i też może ich potrzebować.
         $config = Config::instance();
         wp_localize_script(
             'scrollcrafter-editor',

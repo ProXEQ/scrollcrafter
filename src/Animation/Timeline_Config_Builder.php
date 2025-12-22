@@ -11,7 +11,6 @@ class Timeline_Config_Builder
         string $targetSelector,
         string $targetType
     ): array {
-        // --- 1. Budowa Configu Globalnego (Standard) ---
         $tlData = $parsed['timeline'] ?? [];
         $defaults = $tlData['defaults'] ?? [];
         $timelineVars = [];
@@ -26,7 +25,6 @@ class Timeline_Config_Builder
 
         $steps = $this->buildSteps($tlData['steps'] ?? []);
 
-        // --- 2. Budowa Configu dla Media (Responsive) ---
         $mediaConfigs = [];
         $mediaRaw = $parsed['media'] ?? [];
 
@@ -34,43 +32,32 @@ class Timeline_Config_Builder
             $mediaConfig = [];
             $mediaTlData = $mediaData['timeline'] ?? [];
 
-            // a) Nadpisywanie Defaults
             if (!empty($mediaTlData['defaults'])) {
                 $mediaConfig['timelineVars']['defaults'] = $mediaTlData['defaults'];
             }
             
-            // b) ScrollTrigger w media
             $mediaScroll = $mediaData['scroll'] ?? [];
             if (!empty($mediaScroll)) {
                 $mediaConfig['timelineVars']['scrollTrigger'] = $mediaScroll;
             }
 
-            // c) Obsługa flagi STRICT (Nowość)
-            // Strict może być w defaults (timeline) lub w scrollTrigger
             $isStrict = false;
 
-            // Sprawdzamy w defaults (np. [timeline @mobile] strict: true)
             if (isset($mediaTlData['defaults']['strict'])) {
                 $isStrict = (bool)$mediaTlData['defaults']['strict'];
-                // Usuwamy z defaults, żeby GSAP nie krzyczał
                 unset($mediaConfig['timelineVars']['defaults']['strict']);
             }
             
-            // Sprawdzamy w scroll (np. [scroll @mobile] strict: true)
             if (isset($mediaScroll['strict'])) {
                 $isStrict = (bool)$mediaScroll['strict'];
-                // Usuwamy z scrollTrigger
                 unset($mediaConfig['timelineVars']['scrollTrigger']['strict']);
             }
 
-            // Zapisujemy flagę w głównym obiekcie mediaConfig
             if ($isStrict) {
                 $mediaConfig['strict'] = true;
             }
 
-            // d) Nadpisywanie Kroków (Steps)
             if (!empty($mediaTlData['steps'])) {
-                // Pobieramy globalne kroki jako bazę
                 $mergedStepsRaw = $tlData['steps'] ?? [];
                 
                 foreach ($mediaTlData['steps'] as $idx => $stepOverride) {
@@ -85,7 +72,6 @@ class Timeline_Config_Builder
                 $mediaConfig['steps'] = $this->buildSteps($mergedStepsRaw);
             }
 
-            // Jeśli cokolwiek zdefiniowano dla tego breakpointu, dodajemy do wyniku
             if (!empty($mediaConfig)) {
                 $mediaConfigs[$mediaSlug] = $mediaConfig;
             }

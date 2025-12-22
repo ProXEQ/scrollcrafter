@@ -8,22 +8,16 @@ import { linter, lintGutter } from '@codemirror/lint';
 
 import { FIELD_DEFS, SECTION_HEADERS } from './field-defs';
 
-// ---------- CONFIG ----------
 const DEBUG = !!window.ScrollCrafterConfig?.debug;
 const log = (...args) => DEBUG && console.log('[SC Editor]', ...args);
 
-// Pobierz breakpointy
 const BREAKPOINTS = window.ScrollCrafterConfig?.breakpoints || {}; 
-const BREAKPOINT_SLUGS = Object.keys(BREAKPOINTS); // np. ['mobile', 'tablet']
+const BREAKPOINT_SLUGS = Object.keys(BREAKPOINTS);
 
-// ---------- DYNAMIC HEADERS ----------
 function getDynamicHeaders() {
-    // Klonujemy bazowe
     let headers = [...SECTION_HEADERS];
 
-    // Dodajemy warianty z @breakpoint
-    // Np. [animation @mobile]
-    const responsiveSections = ['animation', 'scroll', 'step.1']; // Dla których chcemy podpowiedzi
+    const responsiveSections = ['animation', 'scroll', 'step.1'];
 
     BREAKPOINT_SLUGS.forEach(slug => {
         responsiveSections.forEach(secKey => {
@@ -31,7 +25,7 @@ function getDynamicHeaders() {
                 label: `[${secKey} @${slug}]`,
                 type: 'keyword',
                 detail: `Responsive: ${slug}`,
-                boost: -1 // Niższy priorytet niż zwykłe
+                boost: -1
             });
         });
     });
@@ -39,10 +33,8 @@ function getDynamicHeaders() {
     return headers;
 }
 
-// Stan globalny walidacji
 let lastValidationState = { valid: true, hasCriticalErrors: false, diagnostics: [] };
 
-// ---------- API HELPER ----------
 async function fetchValidation(scriptContent) {
     const apiRoot = window.wpApiSettings?.root || '/wp-json/';
     const nonce = window.wpApiSettings?.nonce || '';
@@ -60,7 +52,6 @@ async function fetchValidation(scriptContent) {
     }
 }
 
-// ---------- DSL Language & Theme ----------
 const dslLanguage = StreamLanguage.define({
   startState() { return {}; },
   token(stream) {
@@ -72,11 +63,11 @@ const dslLanguage = StreamLanguage.define({
       return 'keyword';
     }
     if (stream.match(/^[a-zA-Z0-9_.]+(?=:)/)) return 'propertyName';
-    if (stream.match(/^#[a-fA-F0-9]{3,6}\b/)) { // Prosty HEX color
-        return 'atom'; // Kolorowanie na inny kolor (np. fioletowy/niebieski)
+    if (stream.match(/^#[a-fA-F0-9]{3,6}\b/)) {
+        return 'atom';
     }
-    if (stream.match(/^#[a-zA-Z0-9_-]+/)) { // CSS ID selector
-        return 'string'; // Kolorowanie jak string
+    if (stream.match(/^#[a-zA-Z0-9_-]+/)) {
+        return 'string';
     }
     if (stream.peek() === ':') { stream.next(); return null; }
     if (stream.match(/^-?\d*\.?\d+/)) return 'number';
@@ -103,12 +94,10 @@ const dslTheme = EditorView.theme({
   }, { dark: true }
 );
 
-// ---------- Autocomplete Logic ----------
 function getSectionFieldDefs(sectionName) {
   if (!sectionName) return null;
   
-  // Normalizacja: usuń część @mobile, żeby dopasować klucz w FIELD_DEFS
-  let baseName = sectionName.split('@')[0].trim(); // usuń @mobile
+  let baseName = sectionName.split('@')[0].trim();
   if (FIELD_DEFS[baseName]) return FIELD_DEFS[baseName];
   if (baseName.startsWith('step.')) return FIELD_DEFS['step.*'];
   
@@ -147,7 +136,6 @@ function insertAtCursor(view, text) {
     view.focus();
 }
 
-// --- Generator HTML Cheat Sheet (Updated) ---
 function renderCheatSheet(container, view) {
     if (!FIELD_DEFS) return;
 
@@ -174,7 +162,6 @@ function renderCheatSheet(container, view) {
         html += `</div>`;
     });
 
-    // Sekcja Responsive
     const bpList = BREAKPOINT_SLUGS.length ? BREAKPOINT_SLUGS.join(', ') : 'No breakpoints defined';
     html += `<div class="sc-cs-section">
                 <div class="sc-cs-title">Responsive (@)</div>
@@ -199,7 +186,6 @@ function renderCheatSheet(container, view) {
     });
 }
 
-// --- Inteligentny Cheat Sheet ---
 function updateCheatSheetState(view) {
     const state = view.state;
     const doc = state.doc;
@@ -211,11 +197,9 @@ function updateCheatSheetState(view) {
     
     let sectionStartLine = -1;
 
-    // A. Znajdź sekcję (w tym @mobile)
     for (let l = currentLineNo; l >= 1; l--) {
         const lineText = doc.line(l).text.trim();
         if (lineText.startsWith('[') && lineText.endsWith(']')) {
-            // [animation @mobile] -> animation @mobile
             currentSectionName = lineText.slice(1, -1).trim().toLowerCase();
             sectionStartLine = l;
             break;
@@ -223,18 +207,15 @@ function updateCheatSheetState(view) {
     }
 
     if (currentSectionName) {
-        // Normalizacja do nazw w panelu (usuń @mobile)
         let baseName = currentSectionName.split('@')[0].trim();
         if (baseName.startsWith('step.')) baseName = 'step.*';
 
-        // Skanuj klucze
         for (let l = sectionStartLine + 1; l <= doc.lines; l++) {
             const lineText = doc.line(l).text.trim();
             if (lineText.startsWith('[') && lineText.endsWith(']')) break;
             const match = lineText.match(/^([a-zA-Z0-9_.]+):/);
             if (match) usedKeys.add(match[1]);
         }
-        // Używamy baseName do podświetlania w UI
         currentSectionName = baseName;
     }
 
@@ -264,7 +245,6 @@ function getCurrentSection(state, pos) {
     const text = state.doc.line(ln).text.trim();
     if (text.startsWith('[') && text.endsWith(']')) {
       let name = text.slice(1, -1).trim().toLowerCase();
-      // Tu zwracamy pełną nazwę (np. "animation @mobile"), funkcja getSectionFieldDefs sobie ją utnie
       return { name, inSection: true };
     }
   }
@@ -294,12 +274,10 @@ function dslCompletionSource(context) {
   if (textBefore.includes('#')) return null;
   const { name: sectionName } = getCurrentSection(state, pos);
 
-  // 1. Slash command (podpowiedzi kluczy)
   const word = context.matchBefore(/\/[a-zA-Z0-9_.]*/);
   if (word) {
       if (!sectionName) return null;
       let options = filterMissingKeys(sectionName, state, pos);
-      // Jeśli jesteśmy w timeline, podpowiedz nowy krok
       if (sectionName.startsWith('timeline')) {
           options.push({ label: '[step.1]', type: 'keyword', detail: 'New step' });
       }
@@ -307,12 +285,11 @@ function dslCompletionSource(context) {
       return { from: word.from + 1, options: withSlashApply(options, word.from) };
   }
 
-  // 2. Value Autocomplete (wartości po dwukropku)
   const matchValueContext = textBefore.match(/([a-zA-Z0-9_.]+):\s*([^:]*)$/);
   if (matchValueContext) {
       const rawKey = matchValueContext[1];
       const filterText = matchValueContext[2] || '';
-      const defs = getSectionFieldDefs(sectionName); // Tu defs dostaje np. "animation" nawet jak sectionName="animation @mobile"
+      const defs = getSectionFieldDefs(sectionName);
       
       if (defs && defs[rawKey] && defs[rawKey].values) {
           return {
@@ -323,20 +300,16 @@ function dslCompletionSource(context) {
       return null;
   }
 
-  // 3. Section Headers & Keys
   if (textBefore.trim() === '') {
-       // Jeśli jesteśmy w sekcji -> podpowiadamy klucze. Jeśli nie -> podpowiadamy nagłówki sekcji
        const options = sectionName ? getFieldCompletionsForSection(sectionName) : [];
-       const headers = getDynamicHeaders(); // Dynamiczne nagłówki z breakpointami
+       const headers = getDynamicHeaders();
        return { from: pos, options: [...options, ...headers] };
   }
   
-  // Jeśli zaczynamy pisać [ -> podpowiedz nagłówki
   if (textBefore.trim().startsWith('[')) {
       return { from: line.from + lineText.indexOf('['), options: getDynamicHeaders() };
   }
   
-  // Podpowiadanie kluczy w trakcie pisania
   if (sectionName) {
       const w = context.matchBefore(/[a-zA-Z0-9_.]+/);
       if (w) return { from: w.from, options: getFieldCompletionsForSection(sectionName) };
