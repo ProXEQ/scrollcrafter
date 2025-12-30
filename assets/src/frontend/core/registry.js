@@ -1,8 +1,5 @@
-// registry.js
 const registry = {};
 
-// WeakSet jest idealny do śledzenia obiektów DOM bez wycieków pamięci.
-// Gdy element zniknie z DOM, zniknie też z tego Setu.
 const initializedNodes = new WeakSet();
 
 export function registerWidget(type, initFn) {
@@ -14,14 +11,10 @@ export function initWidgetsInScope(root = document) {
     return;
   }
 
-  // Pobieramy tylko te, które mają konfigurację
   const nodes = root.querySelectorAll('[data-scrollcrafter-config]');
   
   nodes.forEach((node) => {
-    // 1. Zabezpieczenie przed podwójną inicjalizacją
     if (initializedNodes.has(node)) {
-        // Opcjonalnie: można sprawdzić czy config się zmienił, ale w WP zazwyczaj
-        // zmiana configu wiąże się z wymianą całego węzła DOM, więc to wystarczy.
         return;
     }
 
@@ -44,13 +37,10 @@ export function initWidgetsInScope(root = document) {
     }
 
     try {
-      // 2. Uruchomienie widgetu
       registry[type](node, config);
       
-      // 3. Oznaczenie jako zainicjalizowany
       initializedNodes.add(node);
 
-      // 4. Dispatch eventu
       node.dispatchEvent(
         new CustomEvent('scrollcrafter:init', {
           bubbles: true,

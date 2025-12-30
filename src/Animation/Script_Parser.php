@@ -41,7 +41,11 @@ class Script_Parser
                 $parsed = $this->parseSectionHeader($line);
                 
                 if ($parsed === false) {
-                    $result['_warnings'][] = "Line $lineNum: Unknown section header ignored.";
+                    /* translators: %d: Line number in the script */
+                    $result['_warnings'][] = [
+                        'message' => __("Unknown section header ignored.", 'scrollcrafter'),
+                        'line'    => $lineNum
+                    ];
                     continue;
                 }
 
@@ -71,8 +75,11 @@ class Script_Parser
                 continue;
             }
 
-            if (!str_contains($line, ':')) {
-                $result['_warnings'][] = "Line $lineNum: Missing colon separator (:).";
+            if (strpos($line, ':') === false) {
+                $result['_warnings'][] = [
+                    'message' => __("Missing colon separator (:).", 'scrollcrafter'),
+                    'line'    => $lineNum
+                ];
                 continue;
             }
 
@@ -132,7 +139,11 @@ class Script_Parser
                     $this->assignStepKey($result['timeline']['steps'][$idx], $key, $value);
                 } else {
                     if ($currentSection === self::SECTION_TIMELINE) {
-                        $result['_warnings'][] = "Line $lineNum: Properties in [timeline] must use 'timeline.defaults' prefix.";
+                        /* translators: %d: Line number in the script */
+                        $result['_warnings'][] = [
+                            'message' => __("Properties in [timeline] must use 'timeline.defaults' prefix.", 'scrollcrafter'),
+                            'line'    => $lineNum
+                        ];
                     }
                 }
             }
@@ -182,7 +193,7 @@ class Script_Parser
     {
         $content = trim($line, '[] ');
         $media = null;
-        if (str_contains($content, '@')) {
+        if (strpos($content, '@') !== false) {
             $parts = explode('@', $content, 2);
             $content = trim($parts[0]);
             $media = trim($parts[1]);
@@ -303,7 +314,7 @@ class Script_Parser
 
         foreach ($parts as $part) {
             $part = trim($part);
-            if ($part === '' || !str_contains($part, '=')) continue;
+            if ($part === '' || strpos($part, '=') === false) continue;
             [$k, $v] = array_map('trim', explode('=', $part, 2));
             if ($k === '') continue;
             $vars[$k] = $this->parseSmartValue($v);

@@ -1,0 +1,52 @@
+{
+    "translation-revision-date": "2025-12-29 14:43+0000",
+    "generator": "Loco https://localise.biz/",
+    "source": "assets/src/editor/scrollcrafter-editor.js",
+    "domain": "scrollcrafter",
+    "locale_data": {
+        "scrollcrafter": {
+            "": {
+                "domain": "",
+                "lang": "pl_PL",
+                "plural-forms": "nplurals=3; plural=(n==1 ? 0 : n%10 >= 2 && n%10<=4 &&(n%100<10||n%100 >= 20)? 1 : 2);"
+            },
+            "Applied!": [
+                "Zastosowano!"
+            ],
+            "Apply & Preview": [
+                "Zapisz"
+            ],
+            "Cancel": [
+                "Anuluj"
+            ],
+            "Cheat Sheet": [
+                "\u015aci\u0105gawka"
+            ],
+            "Checking...": [
+                "Sprawdzanie..."
+            ],
+            "Fix errors before saving!": [
+                "Napraw b\u0142\u0119dy przed zapisaniem!"
+            ],
+            "Found %d error.": [
+                "Znaleziono %d b\u0142\u0105d.",
+                "Znaleziono %d b\u0142\u0119dy.",
+                "Znaleziono %d b\u0142\u0119d\u00f3w."
+            ],
+            "Ready": [
+                "Gotowy"
+            ],
+            "Script is valid.": [
+                "Skrypt jest poprawny."
+            ],
+            "Valid (%d warning).": [
+                "Poprawny (lecz zawiera %d ostrze\u017cenie)",
+                "Poprawny (lecz zawiera %d ostrze\u017cenia)",
+                "Poprawny (lecz zawiera %d ostrze\u017ce\u0144)"
+            ],
+            "Your code has %d warning(s). This might cause unexpected behavior. Are you sure you want to save?": [
+                "Tw\u00f3j kod ma %d ostrze\u017ce(\u0144/nie). Mo\u017ce to spowodowa\u0107 nieprzewidziane skutki. Czy chcesz kontynuowa\u0107?"
+            ]
+        }
+    }
+}

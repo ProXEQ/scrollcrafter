@@ -34732,125 +34732,129 @@
   }
 
   // assets/src/editor/field-defs.js
+  var { __, _n, sprintf } = wp.i18n;
   var COMMON_VARS = [
-    { label: "opacity=0", detail: "hide" },
-    { label: "opacity=1", detail: "show" },
-    { label: "autoAlpha=0", detail: "hide + visibility:hidden" },
-    { label: "x=100", detail: "move right 100px" },
-    { label: "x=-100", detail: "move left 100px" },
-    { label: "y=50", detail: "move down 50px" },
-    { label: "y=-50", detail: "move up 50px" },
-    { label: "scale=0.5", detail: "shrink" },
-    { label: "scale=1.2", detail: "grow" },
-    { label: "rotation=360", detail: "spin" },
-    { label: "filter=blur(10px)", detail: "blur effect" },
-    { label: "backgroundColor=#ff0000", detail: "change color" },
-    { label: "transformOrigin=center center", detail: "pivot point" },
-    { label: "x=calc(sw * -1)", detail: "full scroll left" },
-    { label: "x=calc((sw * -1) + center)", detail: "scroll & center" },
-    { label: "x=calc(end)", detail: "align right" }
+    { label: "opacity=0", detail: __("hide", "scrollcrafter") },
+    { label: "opacity=1", detail: __("show", "scrollcrafter") },
+    { label: "autoAlpha=0", detail: __("hide + visibility:hidden", "scrollcrafter") },
+    { label: "x=100", detail: __("move right 100px", "scrollcrafter") },
+    { label: "x=-100", detail: __("move left 100px", "scrollcrafter") },
+    { label: "xPercent=50", detail: __("move 50% of container width", "scrollcrafter") },
+    { label: "y=50", detail: __("move down 50px", "scrollcrafter") },
+    { label: "y=-50", detail: __("move up 50px", "scrollcrafter") },
+    { label: "yPercent=-100", detail: __("move up 100% of container height", "scrollcrafter") },
+    { label: "scale=0.5", detail: __("shrink", "scrollcrafter") },
+    { label: "scale=1.2", detail: __("grow", "scrollcrafter") },
+    { label: "rotation=360", detail: __("spin", "scrollcrafter") },
+    { label: "filter=blur(10px)", detail: __("blur effect", "scrollcrafter") },
+    { label: "backgroundColor=#ff0000", detail: __("change color", "scrollcrafter") },
+    { label: "borderRadius=50%", detail: __("make round", "scrollcrafter") },
+    { label: "transformOrigin=center center", detail: __("pivot point", "scrollcrafter") },
+    { label: "x=calc(sw * -1)", detail: __("full scroll left", "scrollcrafter") },
+    { label: "x=calc((sw * -1) + center)", detail: __("scroll & center", "scrollcrafter") },
+    { label: "x=calc(end)", detail: __("align right", "scrollcrafter") }
   ];
   var COMMON_EASES = [
-    { label: "none", detail: "Linear" },
-    { label: "power1.out", detail: "Subtle" },
-    { label: "power2.out", detail: "Standard" },
-    { label: "power3.out", detail: "Strong" },
-    { label: "power4.out", detail: "Sharp" },
-    { label: "back.out(1.7)", detail: "Overshoot" },
-    { label: "elastic.out(1, 0.3)", detail: "Bouncy" },
-    { label: "circ.out", detail: "Circular" },
-    { label: "expo.out", detail: "Exponential" },
-    { label: "sine.inOut", detail: "Smooth wave" }
+    { label: "none", detail: __("Linear", "scrollcrafter") },
+    { label: "power1.out", detail: __("Subtle", "scrollcrafter") },
+    { label: "power2.out", detail: __("Standard", "scrollcrafter") },
+    { label: "power3.out", detail: __("Strong", "scrollcrafter") },
+    { label: "power4.out", detail: __("Sharp", "scrollcrafter") },
+    { label: "back.out(1.7)", detail: __("Overshoot", "scrollcrafter") },
+    { label: "elastic.out(1, 0.3)", detail: __("Bouncy", "scrollcrafter") },
+    { label: "circ.out", detail: __("Circular", "scrollcrafter") },
+    { label: "expo.out", detail: __("Exponential", "scrollcrafter") },
+    { label: "sine.inOut", detail: __("Smooth wave", "scrollcrafter") }
   ];
   var FIELD_DEFS = {
     // --- [animation] ---
     animation: {
       type: {
         label: "type:",
-        detail: "method",
+        detail: __("method", "scrollcrafter"),
         values: [
-          { label: "from", detail: "Animate from state" },
-          { label: "to", detail: "Animate to state" },
-          { label: "fromTo", detail: "Control start & end" },
-          { label: "set", detail: "Instant change" }
+          { label: "from", detail: __("Animate from state", "scrollcrafter") },
+          { label: "to", detail: __("Animate to state", "scrollcrafter") },
+          { label: "fromTo", detail: __("Control start & end", "scrollcrafter") },
+          { label: "set", detail: __("Instant change", "scrollcrafter") }
         ]
       },
       from: {
         label: "from:",
-        detail: "start vars",
+        detail: __("start vars", "scrollcrafter"),
         values: COMMON_VARS
       },
       to: {
         label: "to:",
-        detail: "end vars",
+        detail: __("end vars", "scrollcrafter"),
         values: COMMON_VARS
       },
       duration: {
         label: "duration:",
-        detail: "seconds",
+        detail: __("seconds", "scrollcrafter"),
         values: [{ label: "0.5" }, { label: "1" }, { label: "2" }]
       },
-      delay: { label: "delay:", detail: "seconds" },
+      delay: { label: "delay:", detail: __("seconds", "scrollcrafter") },
       ease: {
         label: "ease:",
-        detail: "timing function",
+        detail: __("timing function", "scrollcrafter"),
         values: COMMON_EASES
       },
       stagger: {
         label: "stagger:",
-        detail: "seconds/object",
+        detail: __("seconds/object", "scrollcrafter"),
         values: [{ label: "0.1" }, { label: "0.2" }, { label: '{ amount: 1, from: "center" }' }]
       },
-      repeat: { label: "repeat:", detail: "count (-1 = infinite)", values: [{ label: "-1" }, { label: "1" }] },
-      yoyo: { label: "yoyo:", detail: "bool", values: [{ label: "true" }] }
+      repeat: { label: "repeat:", detail: __("count (-1 = infinite)", "scrollcrafter"), values: [{ label: "-1" }, { label: "1" }] },
+      yoyo: { label: "yoyo:", detail: __("bool", "scrollcrafter"), values: [{ label: "true" }] }
     },
     // --- [scroll] ---
     scroll: {
-      trigger: { label: "trigger:", detail: "selector (default: self)" },
+      trigger: { label: "trigger:", detail: __("selector (default: self)", "scrollcrafter") },
       start: {
         label: "start:",
-        detail: "trigger & viewport",
+        detail: __("trigger & viewport", "scrollcrafter"),
         values: [
-          { label: "top 80%", detail: "trigger-top hits viewport-80%" },
-          { label: "top center", detail: "trigger-top hits viewport-center" },
-          { label: "top bottom", detail: "start when visible" }
+          { label: "top 80%", detail: __("trigger-top hits viewport-80%", "scrollcrafter") },
+          { label: "top center", detail: __("trigger-top hits viewport-center", "scrollcrafter") },
+          { label: "top bottom", detail: __("start when visible", "scrollcrafter") }
         ]
       },
       end: {
         label: "end:",
-        detail: "trigger & viewport",
+        detail: __("trigger & viewport", "scrollcrafter"),
         values: [
-          { label: "bottom 20%", detail: "trigger-bottom hits viewport-20%" },
-          { label: "bottom top", detail: "end when fully invisible" },
-          { label: "+=500", detail: "scroll 500px from start" }
+          { label: "bottom 20%", detail: __("trigger-bottom hits viewport-20%", "scrollcrafter") },
+          { label: "bottom top", detail: __("end when fully invisible", "scrollcrafter") },
+          { label: "+=500", detail: __("scroll 500px from start", "scrollcrafter") }
         ]
       },
       scrub: {
         label: "scrub:",
-        detail: "bool/lag",
-        values: [{ label: "true", detail: "Sync with scroll" }, { label: "1", detail: "1s smooth lag" }]
+        detail: __("bool/lag", "scrollcrafter"),
+        values: [{ label: "true", detail: __("Sync with scroll", "scrollcrafter") }, { label: "1", detail: __("1s smooth lag", "scrollcrafter") }]
       },
       pin: {
         label: "pin:",
-        detail: "bool/selector",
-        values: [{ label: "true", detail: "Pin trigger element" }]
+        detail: __("bool/selector", "scrollcrafter"),
+        values: [{ label: "true", detail: __("Pin trigger element", "scrollcrafter") }]
       },
-      pinSpacing: { label: "pinSpacing:", detail: "bool", values: [{ label: "true" }, { label: "false" }] },
-      anticipatePin: { label: "anticipatePin:", detail: "number", values: [{ label: "1" }] },
-      once: { label: "once:", detail: "bool", values: [{ label: "true", detail: "Play only once" }] },
-      markers: { label: "markers:", detail: "debug", values: [{ label: "true" }] },
+      pinSpacing: { label: "pinSpacing:", detail: __("bool", "scrollcrafter"), values: [{ label: "true" }, { label: "false" }] },
+      anticipatePin: { label: "anticipatePin:", detail: __("number", "scrollcrafter"), values: [{ label: "1" }] },
+      once: { label: "once:", detail: __("bool", "scrollcrafter"), values: [{ label: "true", detail: __("Play only once", "scrollcrafter") }] },
+      markers: { label: "markers:", detail: __("debug", "scrollcrafter"), values: [{ label: "true" }] },
       toggleActions: {
         label: "toggleActions:",
-        detail: "onEnter onLeave onEnterBack onLeaveBack",
+        detail: __("onEnter onLeave onEnterBack onLeaveBack", "scrollcrafter"),
         values: [
-          { label: "play none none reverse", detail: "Default" },
-          { label: "play pause resume reset", detail: "Replayable" },
-          { label: "restart none none none", detail: "Always restart" }
+          { label: "play none none reverse", detail: __("Default", "scrollcrafter") },
+          { label: "play pause resume reset", detail: __("Replayable", "scrollcrafter") },
+          { label: "restart none none none", detail: __("Always restart", "scrollcrafter") }
         ]
       },
       snap: {
         label: "snap:",
-        detail: "number/array",
+        detail: __("number/array", "scrollcrafter"),
         values: [{ label: "1 / (items.length - 1)" }, { label: "0.5" }]
       }
     },
@@ -34858,24 +34862,24 @@
     target: {
       selector: {
         label: "selector:",
-        detail: "CSS selector",
-        info: 'Scope: current widget children. Use ".class" or "tag".'
+        detail: __("CSS selector", "scrollcrafter"),
+        info: __('Scope: current widget children. Use ".class" or "tag".', "scrollcrafter")
       }
     },
     // --- [timeline] ---
     timeline: {
-      "timeline.defaults.duration": { label: "timeline.defaults.duration:", detail: "seconds" },
-      "timeline.defaults.ease": { label: "timeline.defaults.ease:", detail: "ease", values: COMMON_EASES },
-      "timeline.defaults.stagger": { label: "timeline.defaults.stagger:", detail: "seconds" },
-      "timeline.repeat": { label: "timeline.repeat:", detail: "count" },
-      "timeline.repeatDelay": { label: "timeline.repeatDelay:", detail: "seconds" },
-      "timeline.yoyo": { label: "timeline.yoyo:", detail: "bool" }
+      "timeline.defaults.duration": { label: "timeline.defaults.duration:", detail: __("seconds", "scrollcrafter") },
+      "timeline.defaults.ease": { label: "timeline.defaults.ease:", detail: __("ease", "scrollcrafter"), values: COMMON_EASES },
+      "timeline.defaults.stagger": { label: "timeline.defaults.stagger:", detail: __("seconds", "scrollcrafter") },
+      "timeline.repeat": { label: "timeline.repeat:", detail: __("count", "scrollcrafter") },
+      "timeline.repeatDelay": { label: "timeline.repeatDelay:", detail: __("seconds", "scrollcrafter") },
+      "timeline.yoyo": { label: "timeline.yoyo:", detail: __("bool", "scrollcrafter") }
     },
     // --- [step.N] ---
     "step.*": {
       type: {
         label: "type:",
-        detail: "method",
+        detail: __("method", "scrollcrafter"),
         values: [
           { label: "to" },
           { label: "from" },
@@ -34886,43 +34890,44 @@
       },
       selector: {
         label: "selector:",
-        detail: "override target",
-        info: "Target a specific child just for this step"
+        detail: __("override target", "scrollcrafter"),
+        info: __("Target a specific child just for this step", "scrollcrafter")
       },
-      // Position Parameter (Kluczowa poprawka względem Twojego kodu)
+      // Position Parameter
       position: {
         label: "position:",
-        detail: "timeline placement",
+        detail: __("timeline placement", "scrollcrafter"),
         values: [
-          { label: "<", detail: "Start with previous" },
-          { label: ">", detail: "Start after previous" },
-          { label: "-=0.5", detail: "Overlap 0.5s" },
-          { label: "+=1", detail: "Wait 1s" }
+          { label: "<", detail: __("Start with previous", "scrollcrafter") },
+          { label: ">", detail: __("Start after previous", "scrollcrafter") },
+          { label: "-=0.5", detail: __("Overlap 0.5s", "scrollcrafter") },
+          { label: "+=1", detail: __("Wait 1s", "scrollcrafter") }
         ]
       },
       // Standard Animation Props
-      from: { label: "from:", detail: "start vars", values: COMMON_VARS },
-      to: { label: "to:", detail: "end vars", values: COMMON_VARS },
-      // startAt to obiekt "reset" przed animacją (GSAP specific)
-      startAt: { label: "startAt:", detail: "immediate setup vars", values: COMMON_VARS },
-      duration: { label: "duration:", detail: "seconds" },
-      delay: { label: "delay:", detail: "seconds (in step)" },
-      ease: { label: "ease:", detail: "ease", values: COMMON_EASES },
-      stagger: { label: "stagger:", detail: "seconds" },
+      from: { label: "from:", detail: __("start vars", "scrollcrafter"), values: COMMON_VARS },
+      to: { label: "to:", detail: __("end vars", "scrollcrafter"), values: COMMON_VARS },
+      // startAt
+      startAt: { label: "startAt:", detail: __("immediate setup vars", "scrollcrafter"), values: COMMON_VARS },
+      duration: { label: "duration:", detail: __("seconds", "scrollcrafter") },
+      delay: { label: "delay:", detail: __("seconds (in step)", "scrollcrafter") },
+      ease: { label: "ease:", detail: __("ease", "scrollcrafter"), values: COMMON_EASES },
+      stagger: { label: "stagger:", detail: __("seconds", "scrollcrafter") },
       // Dla type: addLabel
-      label: { label: "label:", detail: "string name" }
+      label: { label: "label:", detail: __("string name", "scrollcrafter") }
     }
   };
   var SECTION_HEADERS = [
-    { label: "[animation]", type: "keyword", detail: "Single Tween" },
-    { label: "[scroll]", type: "keyword", detail: "ScrollTrigger Config" },
-    { label: "[timeline]", type: "keyword", detail: "Timeline Defaults" },
-    { label: "[target]", type: "keyword", detail: "Override Target" },
-    { label: "[step.1]", type: "keyword", detail: "First Step" },
-    { label: "[step.2]", type: "keyword", detail: "Next Step..." }
+    { label: "[animation]", type: "keyword", detail: __("Single Tween", "scrollcrafter") },
+    { label: "[scroll]", type: "keyword", detail: __("ScrollTrigger Config", "scrollcrafter") },
+    { label: "[timeline]", type: "keyword", detail: __("Timeline Defaults", "scrollcrafter") },
+    { label: "[target]", type: "keyword", detail: __("Override Target", "scrollcrafter") },
+    { label: "[step.1]", type: "keyword", detail: __("First Step", "scrollcrafter") },
+    { label: "[step.2]", type: "keyword", detail: __("Next Step...", "scrollcrafter") }
   ];
 
   // assets/src/editor/scrollcrafter-editor.js
+  var { __: __2, _n: _n2, sprintf: sprintf2 } = wp.i18n;
   var _a3;
   var DEBUG = !!((_a3 = window.ScrollCrafterConfig) == null ? void 0 : _a3.debug);
   var _a4;
@@ -34938,7 +34943,6 @@
           type: "keyword",
           detail: `Responsive: ${slug}`,
           boost: -1
-          // Niższy priorytet niż zwykłe
         });
       });
     });
@@ -34981,12 +34985,8 @@
         return "keyword";
       }
       if (stream.match(/^[a-zA-Z0-9_.]+(?=:)/)) return "propertyName";
-      if (stream.match(/^#[a-fA-F0-9]{3,6}\b/)) {
-        return "atom";
-      }
-      if (stream.match(/^#[a-zA-Z0-9_-]+/)) {
-        return "string";
-      }
+      if (stream.match(/^#[a-fA-F0-9]{3,6}\b/)) return "atom";
+      if (stream.match(/^#[a-zA-Z0-9_-]+/)) return "string";
       if (stream.peek() === ":") {
         stream.next();
         return null;
@@ -35057,7 +35057,7 @@
     view.focus();
   }
   function renderCheatSheet(container, view) {
-    if (!FIELD_DEFS) return;
+    if (!container || !FIELD_DEFS) return;
     let html = "";
     const sections = [
       { key: "animation", label: "[animation]" },
@@ -35229,8 +35229,12 @@ from: opacity=1
   var dslLinter = linter(async (view) => {
     const doc3 = view.state.doc.toString();
     const statusEl = document.querySelector(".sc-dsl-editor__status-text");
+    let iconEl = null;
     if (statusEl) {
-      statusEl.textContent = "Checking...";
+      iconEl = statusEl.parentElement.querySelector(".sc-dsl-editor__status-icon");
+    }
+    if (statusEl) {
+      statusEl.textContent = __2("Checking...", "scrollcrafter");
       statusEl.style.color = "#8b949e";
     }
     const data = await fetchValidation(doc3);
@@ -35283,16 +35287,27 @@ from: opacity=1
     mapDiag(data.warnings, "warning");
     lastValidationState = { valid: !hasErrors, hasCriticalErrors: hasErrors, diagnostics, rawData: data };
     if (statusEl) {
-      const parent = statusEl.parentElement;
+      const parent = statusEl.closest(".sc-dsl-editor__status");
       if (hasErrors) {
-        statusEl.textContent = `Found ${data.errors.length} error(s).`;
-        parent.className = "sc-dsl-editor__status sc-dsl-editor__status--error";
+        const errorMsg = sprintf2(
+          _n2("Found %d error.", "Found %d errors.", data.errors.length, "scrollcrafter"),
+          data.errors.length
+        );
+        statusEl.textContent = errorMsg;
+        if (iconEl) iconEl.textContent = "\u2715";
+        if (parent) parent.className = "sc-dsl-editor__status sc-dsl-editor__status--error";
       } else if (data.warnings && data.warnings.length > 0) {
-        statusEl.textContent = `Valid (${data.warnings.length} warnings).`;
-        parent.className = "sc-dsl-editor__status sc-dsl-editor__status--warning";
+        const warnMsg = sprintf2(
+          _n2("Valid (%d warning).", "Valid (%d warnings).", data.warnings.length, "scrollcrafter"),
+          data.warnings.length
+        );
+        statusEl.textContent = warnMsg;
+        if (iconEl) iconEl.textContent = "\u26A0";
+        if (parent) parent.className = "sc-dsl-editor__status sc-dsl-editor__status--warning";
       } else {
-        statusEl.textContent = "Script is valid.";
-        parent.className = "sc-dsl-editor__status sc-dsl-editor__status--ok";
+        statusEl.textContent = __2("Script is valid.", "scrollcrafter");
+        if (iconEl) iconEl.textContent = "\u2714";
+        if (parent) parent.className = "sc-dsl-editor__status sc-dsl-editor__status--ok";
       }
     }
     return diagnostics;
@@ -35312,7 +35327,7 @@ from: opacity=1
         highlightSpecialChars(),
         drawSelection(),
         lineNumbers(),
-        placeholder("Start with [animation]..."),
+        placeholder(__2("Start with [animation]...", "scrollcrafter")),
         dslTheme,
         dslLanguage,
         syntaxHighlighting(dslHighlightStyle),
@@ -35342,6 +35357,8 @@ from: opacity=1
       modal.innerHTML = `
       <div class="sc-dsl-editor__backdrop"></div>
       <div class="sc-dsl-editor__panel">
+        
+        <!-- HEADER -->
         <div class="sc-dsl-editor__header">
           <div class="sc-dsl-editor__title">
             <span class="sc-dsl-editor__title-main">ScrollCrafter DSL</span>
@@ -35349,22 +35366,35 @@ from: opacity=1
           </div>
           <button type="button" class="sc-dsl-editor__close">&times;</button>
         </div>
+        
+        <!-- BODY: EDYTOR + SIDEBAR -->
         <div class="sc-dsl-editor__body">
             <div class="sc-dsl-editor__main-area">
                 <div class="sc-dsl-editor__editor-container">
                     <div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div>
                 </div>
-                <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
+                <!-- Status zosta\u0142 przeniesiony do footera -->
             </div>
+            
+            <!-- PRZYWR\xD3CONY SIDEBAR -->
             <div class="sc-dsl-editor__sidebar">
-                <div class="sc-dsl-editor__sidebar-header">Cheat Sheet</div>
+                <div class="sc-dsl-editor__sidebar-header">${__2("Cheat Sheet", "scrollcrafter")}</div>
                 <div class="sc-dsl-editor__sidebar-content" id="sc-cs-content"></div>
             </div>
         </div>
+        
+        <!-- FOOTER: STATUS + BUTTONY -->
         <div class="sc-dsl-editor__footer">
-          <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">Cancel</button>
-          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply & Preview</button>
+          <div class="sc-dsl-editor__status">
+            <span class="sc-dsl-editor__status-icon">\u25CF</span>
+            <span class="sc-dsl-editor__status-text">${__2("Ready", "scrollcrafter")}</span>
+          </div>
+          <div class="sc-dsl-editor__actions">
+              <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">${__2("Cancel", "scrollcrafter")}</button>
+              <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">${__2("Apply & Preview", "scrollcrafter")}</button>
+          </div>
         </div>
+
       </div>
     `;
       document.body.appendChild(modal);
@@ -35381,15 +35411,19 @@ from: opacity=1
       const elementType = model.get("widgetType") || model.get("elType") || "Element";
       const modal = ensureModal();
       const statusText = modal.querySelector(".sc-dsl-editor__status-text");
+      const statusIcon = modal.querySelector(".sc-dsl-editor__status-icon");
       modal.querySelector(".sc-dsl-editor__title-sub").textContent = `${elementType} (${elementId})`;
-      statusText.textContent = "Checking...";
-      modal.querySelector(".sc-dsl-editor__status").className = "sc-dsl-editor__status";
+      statusText.textContent = __2("Checking...", "scrollcrafter");
+      if (statusIcon) statusIcon.textContent = "\u25CF";
+      const statusContainer = modal.querySelector(".sc-dsl-editor__status");
+      if (statusContainer) statusContainer.className = "sc-dsl-editor__status";
       const cmInstance = createEditor(modal.querySelector("#sc-dsl-editor-cm"), currentScript);
       renderCheatSheet(modal.querySelector("#sc-cs-content"), cmInstance);
       updateCheatSheetState(cmInstance);
       const close = () => modal.classList.remove("sc-dsl-editor--open");
       const bindClose = (selector) => {
-        modal.querySelector(selector).onclick = close;
+        const el = modal.querySelector(selector);
+        if (el) el.onclick = close;
       };
       bindClose(".sc-dsl-editor__close");
       bindClose(".sc-dsl-editor__cancel");
@@ -35416,25 +35450,27 @@ from: opacity=1
           const panel = modal.querySelector(".sc-dsl-editor__panel");
           panel.classList.add("sc-shake");
           setTimeout(() => panel.classList.remove("sc-shake"), 500);
-          statusText.textContent = "Fix errors before saving!";
+          statusText.textContent = __2("Fix errors before saving!", "scrollcrafter");
           statusText.style.color = "#e06c75";
           return;
         }
         const warnings = lastValidationState.diagnostics.filter((d) => d.severity === "warning");
         if (warnings.length > 0) {
-          const proceed = confirm(`\u26A0\uFE0F Your code has ${warnings.length} warning(s).
-
-This might cause unexpected behavior. Are you sure you want to save?`);
-          if (!proceed) return;
+          const proceedMsg = sprintf2(
+            __2("Your code has %d warning(s). This might cause unexpected behavior. Are you sure you want to save?", "scrollcrafter"),
+            warnings.length
+          );
+          if (!confirm(proceedMsg)) return;
         }
         triggerElementorUpdate(currentCode);
         if (model.trigger) model.trigger("change", model);
         if (currentPageView.render) currentPageView.render();
-        statusText.textContent = "Applied!";
+        statusText.textContent = __2("Applied!", "scrollcrafter");
         statusText.style.color = "#98c379";
         setTimeout(close, 500);
       };
-      modal.querySelector(".sc-dsl-editor__apply-preview").onclick = handleApply;
+      const applyBtn = modal.querySelector(".sc-dsl-editor__apply-preview");
+      if (applyBtn) applyBtn.onclick = handleApply;
       modal.classList.add("sc-dsl-editor--open");
     };
     $(window).on("elementor/init", () => {

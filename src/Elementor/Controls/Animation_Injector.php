@@ -23,8 +23,6 @@ class Animation_Injector
             10,
             2
         );
-
-        Logger::log( 'Animation_Injector specific hooks registered', 'elementor' );
     }
 
     public function add_section_for_container( Element_Base $element, array $args ): void
@@ -78,8 +76,8 @@ class Animation_Injector
                 'label'       => esc_html__( 'Animation script', 'scrollcrafter' ),
                 'type'        => Controls_Manager::TEXTAREA,
                 'rows'        => 10,
-                'placeholder' => "type: from\nfrom: y=50, opacity=0\nto: y=0, opacity=1\nduration: 0.8\nease: power2.out\nstart: top 80%\nend: bottom 20%\nscrub: true\nonce: false",
-                'description' => esc_html__( 'ScrollCrafter DSL v1. Each line: key: value. Use from/to, duration, ease, start, end, scrub, once, toggleActions, selector.', 'scrollcrafter' ),
+                'placeholder' => esc_html__( "[animation] ...", 'scrollcrafter' ),
+                'description' => esc_html__( 'Click button at the bottom to open the DSL Editor.', 'scrollcrafter' ),
                 'condition'   => [
                     'scrollcrafter_enable' => 'yes',
                 ],

@@ -1,186 +1,177 @@
-// assets/src/editor/field-defs.js
+const { __, _n, sprintf } = wp.i18n;
 
-// Wspólne wartości dla właściwości CSS (używane w animation i steps)
 const COMMON_VARS = [
-  { label: 'opacity=0', detail: 'hide' },
-  { label: 'opacity=1', detail: 'show' },
-  { label: 'autoAlpha=0', detail: 'hide + visibility:hidden' },
-  { label: 'x=100', detail: 'move right 100px' },
-  { label: 'x=-100', detail: 'move left 100px' },
-  { label: 'y=50', detail: 'move down 50px' },
-  { label: 'y=-50', detail: 'move up 50px' },
-  { label: 'scale=0.5', detail: 'shrink' },
-  { label: 'scale=1.2', detail: 'grow' },
-  { label: 'rotation=360', detail: 'spin' },
-  { label: 'filter=blur(10px)', detail: 'blur effect' },
-  { label: 'backgroundColor=#ff0000', detail: 'change color' },
-  { label: 'transformOrigin=center center', detail: 'pivot point' },
-  { label: 'x=calc(sw * -1)', detail: 'full scroll left' },
-  { label: 'x=calc((sw * -1) + center)', detail: 'scroll & center' },
-  { label: 'x=calc(end)', detail: 'align right' },
+  { label: 'opacity=0', detail: __('hide', 'scrollcrafter') },
+  { label: 'opacity=1', detail: __('show', 'scrollcrafter') },
+  { label: 'autoAlpha=0', detail: __('hide + visibility:hidden', 'scrollcrafter') },
+  { label: 'x=100', detail: __('move right 100px', 'scrollcrafter') },
+  { label: 'x=-100', detail: __('move left 100px', 'scrollcrafter') },
+  { label: 'xPercent=50', detail: __('move 50% of container width', 'scrollcrafter') },
+  { label: 'y=50', detail: __('move down 50px', 'scrollcrafter') },
+  { label: 'y=-50', detail: __('move up 50px', 'scrollcrafter') },
+  { label: 'yPercent=-100', detail: __('move up 100% of container height', 'scrollcrafter') },
+  { label: 'scale=0.5', detail: __('shrink', 'scrollcrafter') },
+  { label: 'scale=1.2', detail: __('grow', 'scrollcrafter') },
+  { label: 'rotation=360', detail: __('spin', 'scrollcrafter') },
+  { label: 'filter=blur(10px)', detail: __('blur effect', 'scrollcrafter') },
+  { label: 'backgroundColor=#ff0000', detail: __('change color', 'scrollcrafter') },
+  { label: 'borderRadius=50%', detail: __('make round', 'scrollcrafter') },
+  { label: 'transformOrigin=center center', detail: __('pivot point', 'scrollcrafter') },
+  { label: 'x=calc(sw * -1)', detail: __('full scroll left', 'scrollcrafter') },
+  { label: 'x=calc((sw * -1) + center)', detail: __('scroll & center', 'scrollcrafter') },
+  { label: 'x=calc(end)', detail: __('align right', 'scrollcrafter') },
 ];
 
-// Wspólne wartości dla Easingu
 const COMMON_EASES = [
-  { label: 'none', detail: 'Linear' },
-  { label: 'power1.out', detail: 'Subtle' },
-  { label: 'power2.out', detail: 'Standard' },
-  { label: 'power3.out', detail: 'Strong' },
-  { label: 'power4.out', detail: 'Sharp' },
-  { label: 'back.out(1.7)', detail: 'Overshoot' },
-  { label: 'elastic.out(1, 0.3)', detail: 'Bouncy' },
-  { label: 'circ.out', detail: 'Circular' },
-  { label: 'expo.out', detail: 'Exponential' },
-  { label: 'sine.inOut', detail: 'Smooth wave' }
+  { label: 'none', detail: __('Linear', 'scrollcrafter') },
+  { label: 'power1.out', detail: __('Subtle', 'scrollcrafter') },
+  { label: 'power2.out', detail: __('Standard', 'scrollcrafter') },
+  { label: 'power3.out', detail: __('Strong', 'scrollcrafter') },
+  { label: 'power4.out', detail: __('Sharp', 'scrollcrafter') },
+  { label: 'back.out(1.7)', detail: __('Overshoot', 'scrollcrafter') },
+  { label: 'elastic.out(1, 0.3)', detail: __('Bouncy', 'scrollcrafter') },
+  { label: 'circ.out', detail: __('Circular', 'scrollcrafter') },
+  { label: 'expo.out', detail: __('Exponential', 'scrollcrafter') },
+  { label: 'sine.inOut', detail: __('Smooth wave', 'scrollcrafter') }
 ];
 
 export const FIELD_DEFS = {
-  // --- [animation] ---
   animation: {
     type: {
-      label: 'type:', detail: 'method',
+      label: 'type:', detail: __('method', 'scrollcrafter'),
       values: [
-        { label: 'from', detail: 'Animate from state' }, 
-        { label: 'to', detail: 'Animate to state' }, 
-        { label: 'fromTo', detail: 'Control start & end' },
-        { label: 'set', detail: 'Instant change' }
+        { label: 'from', detail: __('Animate from state', 'scrollcrafter') },
+        { label: 'to', detail: __('Animate to state', 'scrollcrafter') }, 
+        { label: 'fromTo', detail: __('Control start & end', 'scrollcrafter') },
+        { label: 'set', detail: __('Instant change', 'scrollcrafter') }
       ]
     },
     from: { 
-      label: 'from:', detail: 'start vars', 
+      label: 'from:', detail: __('start vars', 'scrollcrafter'),
       values: COMMON_VARS 
     },
     to: { 
-      label: 'to:', detail: 'end vars', 
+      label: 'to:', detail: __('end vars', 'scrollcrafter'), 
       values: COMMON_VARS 
     },
     duration: { 
-      label: 'duration:', detail: 'seconds',
+      label: 'duration:', detail: __('seconds', 'scrollcrafter'),
       values: [{ label: '0.5' }, { label: '1' }, { label: '2' }]
     },
-    delay: { label: 'delay:', detail: 'seconds' },
+    delay: { label: 'delay:', detail: __('seconds', 'scrollcrafter') },
     ease: {
-      label: 'ease:', detail: 'timing function',
+      label: 'ease:', detail: __('timing function', 'scrollcrafter'),
       values: COMMON_EASES
     },
     stagger: { 
-        label: 'stagger:', detail: 'seconds/object', 
+        label: 'stagger:', detail: __('seconds/object', 'scrollcrafter'), 
         values: [{ label: '0.1' }, { label: '0.2' }, { label: '{ amount: 1, from: "center" }' }]
     },
-    repeat: { label: 'repeat:', detail: 'count (-1 = infinite)', values: [{ label: '-1' }, { label: '1' }] },
-    yoyo: { label: 'yoyo:', detail: 'bool', values: [{ label: 'true' }] }
+    repeat: { label: 'repeat:', detail: __('count (-1 = infinite)', 'scrollcrafter'), values: [{ label: '-1' }, { label: '1' }] },
+    yoyo: { label: 'yoyo:', detail: __('bool', 'scrollcrafter'), values: [{ label: 'true' }] }
   },
 
-  // --- [scroll] ---
   scroll: {
-    trigger: { label: 'trigger:', detail: 'selector (default: self)' },
+    trigger: { label: 'trigger:', detail: __('selector (default: self)', 'scrollcrafter') },
     start: { 
-      label: 'start:', detail: 'trigger & viewport', 
+      label: 'start:', detail: __('trigger & viewport', 'scrollcrafter'), 
       values: [
-        { label: 'top 80%', detail: 'trigger-top hits viewport-80%' }, 
-        { label: 'top center', detail: 'trigger-top hits viewport-center' },
-        { label: 'top bottom', detail: 'start when visible' }
+        { label: 'top 80%', detail: __('trigger-top hits viewport-80%', 'scrollcrafter') }, 
+        { label: 'top center', detail: __('trigger-top hits viewport-center', 'scrollcrafter') },
+        { label: 'top bottom', detail: __('start when visible', 'scrollcrafter') }
       ] 
     },
     end: { 
-      label: 'end:', detail: 'trigger & viewport', 
+      label: 'end:', detail: __('trigger & viewport', 'scrollcrafter'), 
       values: [
-        { label: 'bottom 20%', detail: 'trigger-bottom hits viewport-20%' }, 
-        { label: 'bottom top', detail: 'end when fully invisible' },
-        { label: '+=500', detail: 'scroll 500px from start' }
+        { label: 'bottom 20%', detail: __('trigger-bottom hits viewport-20%', 'scrollcrafter') }, 
+        { label: 'bottom top', detail: __('end when fully invisible', 'scrollcrafter') },
+        { label: '+=500', detail: __('scroll 500px from start', 'scrollcrafter') }
       ] 
     },
     scrub: { 
-      label: 'scrub:', detail: 'bool/lag', 
-      values: [{ label: 'true', detail: 'Sync with scroll' }, { label: '1', detail: '1s smooth lag' }] 
+      label: 'scrub:', detail: __('bool/lag', 'scrollcrafter'), 
+      values: [{ label: 'true', detail: __('Sync with scroll', 'scrollcrafter') }, { label: '1', detail: __('1s smooth lag', 'scrollcrafter') }] 
     },
     pin: { 
-      label: 'pin:', detail: 'bool/selector', 
-      values: [{ label: 'true', detail: 'Pin trigger element' }] 
+      label: 'pin:', detail: __('bool/selector', 'scrollcrafter'), 
+      values: [{ label: 'true', detail: __('Pin trigger element', 'scrollcrafter') }] 
     },
-    pinSpacing: { label: 'pinSpacing:', detail: 'bool', values: [{ label: 'true' }, { label: 'false' }] },
-    anticipatePin: { label: 'anticipatePin:', detail: 'number', values: [{ label: '1' }] },
-    once: { label: 'once:', detail: 'bool', values: [{ label: 'true', detail: 'Play only once' }] },
-    markers: { label: 'markers:', detail: 'debug', values: [{ label: 'true' }] },
+    pinSpacing: { label: 'pinSpacing:', detail: __('bool', 'scrollcrafter'), values: [{ label: 'true' }, { label: 'false' }] },
+    anticipatePin: { label: 'anticipatePin:', detail: __('number', 'scrollcrafter'), values: [{ label: '1' }] },
+    once: { label: 'once:', detail: __('bool', 'scrollcrafter'), values: [{ label: 'true', detail: __('Play only once', 'scrollcrafter') }] },
+    markers: { label: 'markers:', detail: __('debug', 'scrollcrafter'), values: [{ label: 'true' }] },
     toggleActions: { 
-      label: 'toggleActions:', detail: 'onEnter onLeave onEnterBack onLeaveBack', 
+      label: 'toggleActions:', detail: __('onEnter onLeave onEnterBack onLeaveBack', 'scrollcrafter'), 
       values: [
-        { label: 'play none none reverse', detail: 'Default' }, 
-        { label: 'play pause resume reset', detail: 'Replayable' },
-        { label: 'restart none none none', detail: 'Always restart' }
+        { label: 'play none none reverse', detail: __('Default', 'scrollcrafter') }, 
+        { label: 'play pause resume reset', detail: __('Replayable', 'scrollcrafter') },
+        { label: 'restart none none none', detail: __('Always restart', 'scrollcrafter') }
       ]
     },
     snap: { 
-        label: 'snap:', detail: 'number/array', 
+        label: 'snap:', detail: __('number/array', 'scrollcrafter'), 
         values: [{ label: '1 / (items.length - 1)' }, { label: '0.5' }] 
     }
   },
 
-  // --- [target] ---
   target: {
     selector: { 
-        label: 'selector:', detail: 'CSS selector', 
-        info: 'Scope: current widget children. Use ".class" or "tag".' 
+        label: 'selector:', detail: __('CSS selector', 'scrollcrafter'), 
+        info: __('Scope: current widget children. Use ".class" or "tag".', 'scrollcrafter')
     },
   },
 
-  // --- [timeline] ---
   timeline: {
-    'timeline.defaults.duration': { label: 'timeline.defaults.duration:', detail: 'seconds' },
-    'timeline.defaults.ease': { label: 'timeline.defaults.ease:', detail: 'ease', values: COMMON_EASES },
-    'timeline.defaults.stagger': { label: 'timeline.defaults.stagger:', detail: 'seconds' },
-    'timeline.repeat': { label: 'timeline.repeat:', detail: 'count' },
-    'timeline.repeatDelay': { label: 'timeline.repeatDelay:', detail: 'seconds' },
-    'timeline.yoyo': { label: 'timeline.yoyo:', detail: 'bool' },
+    'timeline.defaults.duration': { label: 'timeline.defaults.duration:', detail: __('seconds', 'scrollcrafter') },
+    'timeline.defaults.ease': { label: 'timeline.defaults.ease:', detail: __('ease', 'scrollcrafter'), values: COMMON_EASES },
+    'timeline.defaults.stagger': { label: 'timeline.defaults.stagger:', detail: __('seconds', 'scrollcrafter') },
+    'timeline.repeat': { label: 'timeline.repeat:', detail: __('count', 'scrollcrafter') },
+    'timeline.repeatDelay': { label: 'timeline.repeatDelay:', detail: __('seconds', 'scrollcrafter') },
+    'timeline.yoyo': { label: 'timeline.yoyo:', detail: __('bool', 'scrollcrafter') },
   },
 
-  // --- [step.N] ---
   'step.*': {
     type: { 
-        label: 'type:', detail: 'method', 
+        label: 'type:', detail: __('method', 'scrollcrafter'), 
         values: [
             { label: 'to' }, { label: 'from' }, { label: 'fromTo' }, 
             { label: 'set' }, { label: 'addLabel' }
         ] 
     },
     selector: { 
-        label: 'selector:', detail: 'override target', 
-        info: 'Target a specific child just for this step' 
+        label: 'selector:', detail: __('override target', 'scrollcrafter'), 
+        info: __('Target a specific child just for this step', 'scrollcrafter') 
     }, 
     
-    // Position Parameter (Kluczowa poprawka względem Twojego kodu)
     position: { 
-        label: 'position:', detail: 'timeline placement', 
+        label: 'position:', detail: __('timeline placement', 'scrollcrafter'), 
         values: [
-            { label: '<', detail: 'Start with previous' }, 
-            { label: '>', detail: 'Start after previous' },
-            { label: '-=0.5', detail: 'Overlap 0.5s' },
-            { label: '+=1', detail: 'Wait 1s' }
+            { label: '<', detail: __('Start with previous', 'scrollcrafter') }, 
+            { label: '>', detail: __('Start after previous', 'scrollcrafter') },
+            { label: '-=0.5', detail: __('Overlap 0.5s', 'scrollcrafter') },
+            { label: '+=1', detail: __('Wait 1s', 'scrollcrafter') }
         ] 
     },
 
-    // Standard Animation Props
-    from: { label: 'from:', detail: 'start vars', values: COMMON_VARS },
-    to: { label: 'to:', detail: 'end vars' , values: COMMON_VARS },
-    
-    // startAt to obiekt "reset" przed animacją (GSAP specific)
-    startAt: { label: 'startAt:', detail: 'immediate setup vars', values: COMMON_VARS },
+    from: { label: 'from:', detail: __('start vars', 'scrollcrafter'), values: COMMON_VARS },
+    to: { label: 'to:', detail: __('end vars', 'scrollcrafter') , values: COMMON_VARS },
 
-    duration: { label: 'duration:', detail: 'seconds' },
-    delay: { label: 'delay:', detail: 'seconds (in step)' },
-    ease: { label: 'ease:', detail: 'ease', values: COMMON_EASES },
-    stagger: { label: 'stagger:', detail: 'seconds' },
-    
-    // Dla type: addLabel
-    label: { label: 'label:', detail: 'string name' }
+    startAt: { label: 'startAt:', detail: __('immediate setup vars', 'scrollcrafter'), values: COMMON_VARS },
+    duration: { label: 'duration:', detail: __('seconds', 'scrollcrafter') },
+    delay: { label: 'delay:', detail: __('seconds (in step)', 'scrollcrafter') },
+    ease: { label: 'ease:', detail: __('ease', 'scrollcrafter'), values: COMMON_EASES },
+    stagger: { label: 'stagger:', detail: __('seconds', 'scrollcrafter') },
+
+    label: { label: 'label:', detail: __('string name', 'scrollcrafter') }
   },
 };
 
 export const SECTION_HEADERS = [
-  { label: '[animation]', type: 'keyword', detail: 'Single Tween' },
-  { label: '[scroll]', type: 'keyword', detail: 'ScrollTrigger Config' },
-  { label: '[timeline]', type: 'keyword', detail: 'Timeline Defaults' },
-  { label: '[target]', type: 'keyword', detail: 'Override Target' },
-  { label: '[step.1]', type: 'keyword', detail: 'First Step' },
-  { label: '[step.2]', type: 'keyword', detail: 'Next Step...' },
+  { label: '[animation]', type: 'keyword', detail: __('Single Tween', 'scrollcrafter') },
+  { label: '[scroll]', type: 'keyword', detail: __('ScrollTrigger Config', 'scrollcrafter') },
+  { label: '[timeline]', type: 'keyword', detail: __('Timeline Defaults', 'scrollcrafter') },
+  { label: '[target]', type: 'keyword', detail: __('Override Target', 'scrollcrafter') },
+  { label: '[step.1]', type: 'keyword', detail: __('First Step', 'scrollcrafter') },
+  { label: '[step.2]', type: 'keyword', detail: __('Next Step...', 'scrollcrafter') },
 ];

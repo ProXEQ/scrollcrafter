@@ -1,0 +1,162 @@
+{
+    "translation-revision-date": "2025-12-29 14:43+0000",
+    "generator": "Loco https://localise.biz/",
+    "source": "assets/src/editor/field-defs.js",
+    "domain": "scrollcrafter",
+    "locale_data": {
+        "scrollcrafter": {
+            "": {
+                "domain": "",
+                "lang": "pl_PL",
+                "plural-forms": "nplurals=3; plural=(n==1 ? 0 : n%10 >= 2 && n%10<=4 &&(n%100<10||n%100 >= 20)? 1 : 2);"
+            },
+            "1s smooth lag": [
+                "P\u0142ynne przej\u015bcie 1s"
+            ],
+            "align right": [
+                "Do prawej"
+            ],
+            "Always restart": [
+                "Zawsze restartuj"
+            ],
+            "Animate from state": [
+                "Animuj od stanu"
+            ],
+            "Animate to state": [
+                "Animuj do stanu"
+            ],
+            "blur effect": [
+                "efekt rozmazania"
+            ],
+            "bool": [
+                "zmienna"
+            ],
+            "bool/lag": [
+                "zmienna/lag"
+            ],
+            "bool/selector": [
+                "zmienna/selektor"
+            ],
+            "Bouncy": [
+                "Bouncy"
+            ],
+            "change color": [
+                "zmie\u0144 kolor"
+            ],
+            "Control start & end": [
+                "Kontroluj start oraz koniec"
+            ],
+            "count": [
+                "odliczanie"
+            ],
+            "count (-1 = infinite)": [
+                "odliczanie (-1 = niesko\u0144czono\u015b\u0107)"
+            ],
+            "CSS selector": [
+                "Selektor CSS"
+            ],
+            "debug": [
+                "debug"
+            ],
+            "Default": [
+                "Domy\u015blnie"
+            ],
+            "ease": [
+                "wyg\u0142adzanie"
+            ],
+            "Exponential": [
+                "Gwa\u0142townie"
+            ],
+            "First Step": [
+                "Pierwszy krok"
+            ],
+            "full scroll left": [
+                "Ca\u0142kowite przewini\u0119cie w lewo"
+            ],
+            "grow": [
+                "grow"
+            ],
+            "hide": [
+                "ukrycie"
+            ],
+            "hide + visibility:hidden": [
+                "ukrycie"
+            ],
+            "Linear": [
+                "Linearne"
+            ],
+            "method": [
+                "metoda"
+            ],
+            "move 50% of container width": [
+                "Przesu\u0144 o 50% wzgl\u0119dem szeroko\u015bci kontenera"
+            ],
+            "move down 50px": [
+                "Przesu\u0144 w d\u00f3\u0142 o 50px"
+            ],
+            "move left 100px": [
+                "Przesu\u0144 w lewo o 100px"
+            ],
+            "move right 100px": [
+                "przesu\u0144 w prawo o 100px"
+            ],
+            "move up 100% of container height": [
+                "przesu\u0144 w g\u00f3r\u0119 o 100% wysoko\u015bci obiektu."
+            ],
+            "move up 50px": [
+                "przesu\u0144 w g\u00f3r\u0119 o 50px"
+            ],
+            "Next Step...": [
+                "Nast\u0119pny krok..."
+            ],
+            "number": [
+                "liczba"
+            ],
+            "number/array": [
+                "liczba/lista"
+            ],
+            "onEnter onLeave onEnterBack onLeaveBack": [
+                "onEnter onLeave onEnterBack onLeaveBack"
+            ],
+            "Play only once": [
+                "Odtw\u00f3rz tylko raz"
+            ],
+            "Scope: current widget children. Use \".class\" or \"tag\".": [
+                "Zakres: obecne dzieci wid\u017cet\u00f3w. U\u017cyj \".class\" lub \"tag\"."
+            ],
+            "scroll & center": [
+                "scroll i \u015brodek"
+            ],
+            "scroll 500px from start": [
+                "scroll 500px od pkt. startu"
+            ],
+            "ScrollTrigger Config": [
+                "Konfiguracja ScrollTriggera"
+            ],
+            "seconds": [
+                "sekund"
+            ],
+            "seconds (in step)": [
+                "sekund (w kroku)"
+            ],
+            "seconds/object": [
+                "sekund/obiekt"
+            ],
+            "selector (default: self)": [
+                "selektor (Domy\u015blnie: ten)"
+            ],
+            "Start after previous": [
+                "Wystartuj po poprzednim"
+            ],
+            "Sync with scroll": [
+                "Zsynchronizuj z przewijaniem"
+            ],
+            "timing function": [
+                "czasowa funkcja"
+            ],
+            "Wait 1s": [
+                "Poczekaj 1 sekund\u0119"
+            ]
+        }
+    }
+}

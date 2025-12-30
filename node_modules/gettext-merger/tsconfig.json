@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"noImplicitAny": true,
+		"removeComments": true,
+		"preserveConstEnums": true,
+		"sourceMap": true,
+		"strict": true,
+		"downlevelIteration": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"experimentalDecorators": true,
+		"rootDir": "src",
+		"outDir": "lib/esm",
+		// Minify
+		"pretty": false,
+		// types
+		"typeRoots": [
+			"src/types.d.ts",
+			"node_modules/@types",
+			"@types"
+		]
+	},
+	"include": [
+		"./src/**/*"
+	]
+}

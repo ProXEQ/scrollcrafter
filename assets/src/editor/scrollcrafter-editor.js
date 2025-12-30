@@ -5,8 +5,10 @@ import { autocompletion, acceptCompletion, startCompletion } from '@codemirror/a
 import { syntaxHighlighting, HighlightStyle, StreamLanguage } from '@codemirror/language';
 import { tags } from '@codemirror/highlight';
 import { linter, lintGutter } from '@codemirror/lint';
-
 import { FIELD_DEFS, SECTION_HEADERS } from './field-defs';
+
+// Używamy globalnego wp.i18n
+const { __, _n, sprintf } = wp.i18n;
 
 const DEBUG = !!window.ScrollCrafterConfig?.debug;
 const log = (...args) => DEBUG && console.log('[SC Editor]', ...args);
@@ -16,9 +18,7 @@ const BREAKPOINT_SLUGS = Object.keys(BREAKPOINTS);
 
 function getDynamicHeaders() {
     let headers = [...SECTION_HEADERS];
-
     const responsiveSections = ['animation', 'scroll', 'step.1'];
-
     BREAKPOINT_SLUGS.forEach(slug => {
         responsiveSections.forEach(secKey => {
             headers.push({
@@ -29,7 +29,6 @@ function getDynamicHeaders() {
             });
         });
     });
-
     return headers;
 }
 
@@ -63,12 +62,8 @@ const dslLanguage = StreamLanguage.define({
       return 'keyword';
     }
     if (stream.match(/^[a-zA-Z0-9_.]+(?=:)/)) return 'propertyName';
-    if (stream.match(/^#[a-fA-F0-9]{3,6}\b/)) {
-        return 'atom';
-    }
-    if (stream.match(/^#[a-zA-Z0-9_-]+/)) {
-        return 'string';
-    }
+    if (stream.match(/^#[a-fA-F0-9]{3,6}\b/)) return 'atom';
+    if (stream.match(/^#[a-zA-Z0-9_-]+/)) return 'string';
     if (stream.peek() === ':') { stream.next(); return null; }
     if (stream.match(/^-?\d*\.?\d+/)) return 'number';
     stream.next(); return null;
@@ -96,11 +91,9 @@ const dslTheme = EditorView.theme({
 
 function getSectionFieldDefs(sectionName) {
   if (!sectionName) return null;
-  
   let baseName = sectionName.split('@')[0].trim();
   if (FIELD_DEFS[baseName]) return FIELD_DEFS[baseName];
   if (baseName.startsWith('step.')) return FIELD_DEFS['step.*'];
-  
   return null;
 }
 
@@ -137,7 +130,7 @@ function insertAtCursor(view, text) {
 }
 
 function renderCheatSheet(container, view) {
-    if (!FIELD_DEFS) return;
+    if (!container || !FIELD_DEFS) return; // Zabezpieczenie przed null
 
     let html = '';
     const sections = [
@@ -190,11 +183,9 @@ function updateCheatSheetState(view) {
     const state = view.state;
     const doc = state.doc;
     const selection = state.selection.main;
-    
     let currentSectionName = null;
     let usedKeys = new Set();
     const currentLineNo = doc.lineAt(selection.head).number;
-    
     let sectionStartLine = -1;
 
     for (let l = currentLineNo; l >= 1; l--) {
@@ -290,7 +281,6 @@ function dslCompletionSource(context) {
       const rawKey = matchValueContext[1];
       const filterText = matchValueContext[2] || '';
       const defs = getSectionFieldDefs(sectionName);
-      
       if (defs && defs[rawKey] && defs[rawKey].values) {
           return {
               from: pos - filterText.length, 
@@ -320,7 +310,17 @@ function dslCompletionSource(context) {
 const dslLinter = linter(async (view) => {
   const doc = view.state.doc.toString();
   const statusEl = document.querySelector('.sc-dsl-editor__status-text');
-  if (statusEl) { statusEl.textContent = 'Checking...'; statusEl.style.color = '#8b949e'; }
+  
+  // Bezpieczne pobranie ikony (jeśli istnieje)
+  let iconEl = null;
+  if (statusEl) {
+      iconEl = statusEl.parentElement.querySelector('.sc-dsl-editor__status-icon');
+  }
+
+  if (statusEl) { 
+      statusEl.textContent = __('Checking...', 'scrollcrafter'); 
+      statusEl.style.color = '#8b949e'; 
+  }
 
   const data = await fetchValidation(doc);
   if (DEBUG) console.log('[Linter API Response]', data);
@@ -346,7 +346,6 @@ const dslLinter = linter(async (view) => {
                   lineNo = 1;
               }
           }
-
           if (lineNo > view.state.doc.lines) lineNo = view.state.doc.lines;
 
           const ln = view.state.doc.line(lineNo);
@@ -381,16 +380,27 @@ const dslLinter = linter(async (view) => {
   lastValidationState = { valid: !hasErrors, hasCriticalErrors: hasErrors, diagnostics, rawData: data };
 
   if (statusEl) {
-      const parent = statusEl.parentElement;
+      const parent = statusEl.closest('.sc-dsl-editor__status'); // Pobieramy kontener nadrzędny
       if (hasErrors) {
-          statusEl.textContent = `Found ${data.errors.length} error(s).`;
-          parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--error';
+          const errorMsg = sprintf(
+              _n('Found %d error.', 'Found %d errors.', data.errors.length, 'scrollcrafter'),
+              data.errors.length
+          );
+          statusEl.textContent = errorMsg;
+          if (iconEl) iconEl.textContent = '✕';
+          if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--error';
       } else if (data.warnings && data.warnings.length > 0) {
-          statusEl.textContent = `Valid (${data.warnings.length} warnings).`;
-          parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--warning';
+          const warnMsg = sprintf(
+              _n('Valid (%d warning).', 'Valid (%d warnings).', data.warnings.length, 'scrollcrafter'),
+              data.warnings.length
+          );
+          statusEl.textContent = warnMsg;
+          if (iconEl) iconEl.textContent = '⚠';
+          if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--warning';
       } else {
-          statusEl.textContent = 'Script is valid.';
-          parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--ok';
+          statusEl.textContent = __('Script is valid.', 'scrollcrafter');
+          if (iconEl) iconEl.textContent = '✔';
+          if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--ok';
       }
   }
   return diagnostics;
@@ -409,7 +419,7 @@ function createEditor(parentNode, initialDoc) {
       highlightSpecialChars(),
       drawSelection(),
       lineNumbers(),
-      placeholder('Start with [animation]...'),
+      placeholder(__('Start with [animation]...', 'scrollcrafter')),
       dslTheme,
       dslLanguage,
       syntaxHighlighting(dslHighlightStyle),
@@ -435,9 +445,13 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     modal = document.createElement('div');
     modal.id = MODAL_ID;
     modal.className = 'sc-dsl-editor';
+    
+    // POPRAWIONA STRUKTURA HTML
     modal.innerHTML = `
       <div class="sc-dsl-editor__backdrop"></div>
       <div class="sc-dsl-editor__panel">
+        
+        <!-- HEADER -->
         <div class="sc-dsl-editor__header">
           <div class="sc-dsl-editor__title">
             <span class="sc-dsl-editor__title-main">ScrollCrafter DSL</span>
@@ -445,22 +459,35 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
           </div>
           <button type="button" class="sc-dsl-editor__close">&times;</button>
         </div>
+        
+        <!-- BODY: EDYTOR + SIDEBAR -->
         <div class="sc-dsl-editor__body">
             <div class="sc-dsl-editor__main-area">
                 <div class="sc-dsl-editor__editor-container">
                     <div class="sc-dsl-editor__editor" id="sc-dsl-editor-cm"></div>
                 </div>
-                <div class="sc-dsl-editor__status"><span class="sc-dsl-editor__status-text">Ready</span></div>
+                <!-- Status został przeniesiony do footera -->
             </div>
+            
+            <!-- PRZYWRÓCONY SIDEBAR -->
             <div class="sc-dsl-editor__sidebar">
-                <div class="sc-dsl-editor__sidebar-header">Cheat Sheet</div>
+                <div class="sc-dsl-editor__sidebar-header">${__('Cheat Sheet', 'scrollcrafter')}</div>
                 <div class="sc-dsl-editor__sidebar-content" id="sc-cs-content"></div>
             </div>
         </div>
+        
+        <!-- FOOTER: STATUS + BUTTONY -->
         <div class="sc-dsl-editor__footer">
-          <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">Cancel</button>
-          <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">Apply & Preview</button>
+          <div class="sc-dsl-editor__status">
+            <span class="sc-dsl-editor__status-icon">●</span>
+            <span class="sc-dsl-editor__status-text">${__('Ready', 'scrollcrafter')}</span>
+          </div>
+          <div class="sc-dsl-editor__actions">
+              <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">${__('Cancel', 'scrollcrafter')}</button>
+              <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">${__('Apply & Preview', 'scrollcrafter')}</button>
+          </div>
         </div>
+
       </div>
     `;
     document.body.appendChild(modal);
@@ -480,17 +507,26 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
 
     const modal = ensureModal();
     const statusText = modal.querySelector('.sc-dsl-editor__status-text');
+    const statusIcon = modal.querySelector('.sc-dsl-editor__status-icon');
+
     modal.querySelector('.sc-dsl-editor__title-sub').textContent = `${elementType} (${elementId})`;
     
-    statusText.textContent = 'Checking...';
-    modal.querySelector('.sc-dsl-editor__status').className = 'sc-dsl-editor__status';
+    statusText.textContent = __('Checking...', 'scrollcrafter');
+    if(statusIcon) statusIcon.textContent = '●';
+    
+    // Reset klasy statusu
+    const statusContainer = modal.querySelector('.sc-dsl-editor__status');
+    if(statusContainer) statusContainer.className = 'sc-dsl-editor__status';
 
     const cmInstance = createEditor(modal.querySelector('#sc-dsl-editor-cm'), currentScript);
     renderCheatSheet(modal.querySelector('#sc-cs-content'), cmInstance);
     updateCheatSheetState(cmInstance);
 
     const close = () => modal.classList.remove('sc-dsl-editor--open');
-    const bindClose = (selector) => { modal.querySelector(selector).onclick = close; };
+    const bindClose = (selector) => { 
+        const el = modal.querySelector(selector);
+        if(el) el.onclick = close; 
+    };
     bindClose('.sc-dsl-editor__close');
     bindClose('.sc-dsl-editor__cancel');
     bindClose('.sc-dsl-editor__backdrop');
@@ -518,26 +554,31 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
           const panel = modal.querySelector('.sc-dsl-editor__panel');
           panel.classList.add('sc-shake');
           setTimeout(() => panel.classList.remove('sc-shake'), 500);
-          statusText.textContent = 'Fix errors before saving!';
+          statusText.textContent = __('Fix errors before saving!', 'scrollcrafter');
           statusText.style.color = '#e06c75';
           return;
       }
       const warnings = lastValidationState.diagnostics.filter(d => d.severity === 'warning');
       if (warnings.length > 0) {
-          const proceed = confirm(`⚠️ Your code has ${warnings.length} warning(s).\n\nThis might cause unexpected behavior. Are you sure you want to save?`);
-          if (!proceed) return;
+          const proceedMsg = sprintf(
+              __('Your code has %d warning(s). This might cause unexpected behavior. Are you sure you want to save?', 'scrollcrafter'),
+              warnings.length
+          );
+          if (!confirm(proceedMsg)) return;
       }
 
       triggerElementorUpdate(currentCode);
       if (model.trigger) model.trigger('change', model);
       if (currentPageView.render) currentPageView.render();
-      
-      statusText.textContent = 'Applied!';
+
+      statusText.textContent = __('Applied!', 'scrollcrafter');
       statusText.style.color = '#98c379';
       setTimeout(close, 500);
     };
 
-    modal.querySelector('.sc-dsl-editor__apply-preview').onclick = handleApply;
+    const applyBtn = modal.querySelector('.sc-dsl-editor__apply-preview');
+    if(applyBtn) applyBtn.onclick = handleApply;
+    
     modal.classList.add('sc-dsl-editor--open');
   };
 

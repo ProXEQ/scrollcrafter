@@ -58,7 +58,7 @@ class Validation_Controller
         $mode   = (string) $request->get_param( 'mode' );
 
         if ( '' === trim( $script ) ) {
-            return $this->response_with_error( 'The script is empty.', 'empty_script' );
+            return $this->response_with_error(__('The script is empty.', 'scrollcrafter'), 'empty_script');
         }
 
         try {
@@ -112,7 +112,13 @@ class Validation_Controller
                 $config = $this->tweenBuilder->build($fakeElement, $parsed, $scrollTrigger, $targetSelector, $targetType);
             }
         } catch ( \Throwable $e ) {
-            return $this->response_with_error( 'Builder Error: ' . $e->getMessage(), 'BUILDER_ERROR' );
+            $message = sprintf(
+                /* translators: 1: Error message, 2: Line number. */
+                __('Error building the configuration: %1$s (line %2$d).', 'scrollcrafter'),
+                $e->getMessage(),
+                $e->getLine() > 0 ? $e->getLine() : 1
+            );
+            return $this->response_with_error( $message, 'BUILDER_ERROR', $e->getLine() > 0 ? $e->getLine() : 1 );
         }
 
         return new WP_REST_Response([
@@ -133,9 +139,13 @@ class Validation_Controller
                 $normalizedKey = strtolower($key);
                 if ( ! in_array( $normalizedKey, $allowedKeys, true ) ) {
                     $line = $this->find_line_number($script, $key . ':');
-                    $issues[] = $this->create_issue(
-                        "Unknown key '{$key}' in [{$sectionName}].", 'warning', $line
+                    $message = sprintf(
+                        /* translators: %s: The unknown key found. */
+                        __("Unknown key '%s' in [%s].", 'scrollcrafter'),
+                        $key,
+                        $sectionName
                     );
+                    $issues[] = $this->create_issue( $message, 'warning', $line );
                 }
             }
         };
@@ -148,7 +158,15 @@ class Validation_Controller
                     if ( ! in_array( $normalizedKey, self::ALLOWED_KEYS['step'], true ) ) {
                         $line = $this->find_line_number($script, $key . ':');
                         $issues[] = $this->create_issue( 
-                            "Unknown key '{$key}' in [{$contextPrefix}step." . ($index + 1) . "].", 'warning', $line 
+                            sprintf(
+                                /* translators: 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number */
+                                __( "Unknown key '%1\$s' in [%2\$sstep.%3\$d].", 'scrollcrafter' ),
+                                $key,
+                                $contextPrefix,
+                                ($index + 1)
+                            ),
+                            'warning', 
+                            $line 
                         );
                     }
                 }
@@ -196,18 +214,20 @@ class Validation_Controller
     }
 
     private function normalize_message( $item, string $severity = 'error' ): array {
-        $message = 'Unknown issue';
-        $line    = 1;
-        if ( is_string( $item ) ) { $message = $item; } 
-        elseif ( is_array( $item ) ) {
-            $message = (string) ( $item['message'] ?? 'Unknown issue' );
-            $line    = (int) ( $item['line'] ?? 1 );
-        }
-        if ( $line === 1 && preg_match( '/at line (\d+)/i', $message, $matches ) ) {
-            $line = (int) $matches[1];
-        }
-        return [ 'message' => $message, 'severity' => $severity, 'line' => $line ];
+    if ( is_array( $item ) && isset( $item['line'] ) ) {
+        return [
+            'message'  => $item['message'],
+            'severity' => $severity,
+            'line'     => (int) $item['line']
+        ];
     }
+
+    return [
+        'message'  => is_string($item) ? $item : 'Unknown issue',
+        'severity' => $severity,
+        'line'     => 1
+    ];
+}
 
     private function find_line_number(string $script, string $searchPhrase): int {
         $lines = explode("\n", $script);
@@ -224,7 +244,7 @@ class Validation_Controller
         return 1;
     }
 
-        /**
+    /**
      * Sprawdza bezpieczeństwo wyrażeń calc()
      */
     private function validate_calc_expressions( array $parsed, string $script ): array
@@ -252,11 +272,16 @@ class Validation_Controller
                                  if (strpos($line, $val) !== false) { $lineNum = $idx + 1; break; }
                              }
 
-                             $issues[] = [ 
-                                'message' => "Unsafe characters in calc(): '{$expression}'. Only math and vars (sw, vw, center...) are allowed.",
+                             $issues[] = [
+                                'message' => sprintf(
+                                    /* translators: %s: The unsafe expression found in calc(). */
+                                    __( "Unsafe characters in calc(): '%s'. Only math and vars (sw, vw, center...) are allowed.", 'scrollcrafter' ),
+                                    $expression
+                                ),
                                 'severity' => 'error',
-                                'line' => $lineNum
-                             ];
+                                'line'     => $lineNum,
+                            ];
+
                         }
                     }
                 }

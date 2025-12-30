@@ -1,0 +1,591 @@
+# Copyright (C) 2025 ScrollCrafter for Elementor
+# This file is distributed under the GPLv2 or later license.
+msgid ""
+msgstr ""
+"Project-Id-Version: ScrollCrafter for Elementor 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugins/scrollcrafter\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"POT-Creation-Date: 2025-12-29T14:41:38.803Z\n"
+"PO-Revision-Date: 2025-MO-DA HO:MI+ZONE\n"
+"Last-Translator: PixelMobs, ProXEQ <connect@pixelmobs.com>\n"
+"Language-Team: PixelMobs, ProXEQ <connect@pixelmobs.com>\n"
+"X-Generator: @wp-blocks/make-pot 1.6.3\n"
+"Language: en\n"
+"X-Domain: scrollcrafter\n"
+
+#: scrollcrafter.php
+#. Name of the plugin
+msgid "ScrollCrafter for Elementor"
+msgstr ""
+
+#: scrollcrafter.php
+#. Url of the plugin
+msgid "https://pixelmobs.com/scrollcrafter"
+msgstr ""
+
+#: scrollcrafter.php
+#. Description of the plugin
+msgid "Create advanced scroll-based animations visually with Elementor and GSAP."
+msgstr ""
+
+#: scrollcrafter.php
+#. Author of the plugin
+msgid "PixelMobs, ProXEQ"
+msgstr ""
+
+#: scrollcrafter.php
+#. Author URI of the plugin
+msgid "https://pixelmobs.com"
+msgstr ""
+
+# %s: Minimum PHP version.
+#: scrollcrafter.php:78
+#: scrollcrafter.php:119
+msgid "ScrollCrafter requires PHP in version at least %s."
+msgstr ""
+
+# %s: Minimum WordPress version.
+#: scrollcrafter.php:128
+msgid "ScrollCrafter requires WordPress in version at least %s."
+msgstr ""
+
+#: scrollcrafter.php:135
+msgid "ScrollCrafter requires an active Elementor plugin."
+msgstr ""
+
+# %s: Minimum Elementor version.
+#: scrollcrafter.php:141
+msgid "ScrollCrafter requires Elementor in version at least %s."
+msgstr ""
+
+#: src/Plugin.php:93
+msgid "Settings"
+msgstr ""
+
+# %d: Line number in the script
+#: src/Animation/Script_Parser.php:46
+msgid "Unknown section header ignored."
+msgstr ""
+
+#: src/Animation/Script_Parser.php:80
+msgid "Missing colon separator (:)."
+msgstr ""
+
+# %d: Line number in the script
+#: src/Animation/Script_Parser.php:144
+msgid "Properties in [timeline] must use 'timeline.defaults' prefix."
+msgstr ""
+
+#: src/Admin/Validation_Controller.php:61
+msgid "The script is empty."
+msgstr ""
+
+# 1: Error message, 2: Line number.
+#: src/Admin/Validation_Controller.php:117
+msgid "Error building the configuration: %1$s (line %2$d)."
+msgstr ""
+
+# %s: The unknown key found.
+#: src/Admin/Validation_Controller.php:144
+msgid "Unknown key '%s' in [%s]."
+msgstr ""
+
+# 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number
+#: src/Admin/Validation_Controller.php:163
+msgid "Unknown key '%1\\$s' in [%2\\$sstep.%3\\$d]."
+msgstr ""
+
+# %s: The unsafe expression found in calc().
+#: src/Admin/Validation_Controller.php:278
+msgid ""
+"Unsafe characters in calc(): '%s'. Only math and vars (sw, vw, center...) "
+"are allowed."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:42
+msgid "General Configuration"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:49
+msgid "Debug Mode"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:57
+msgid "Breakpoints"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:64
+msgid "Custom Breakpoints"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:72
+msgid "GSAP & Assets"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:79
+msgid "GSAP Source"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:87
+msgid "Custom GSAP URL"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:95
+msgid "Custom ScrollTrigger URL"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:141
+msgid "ScrollCrafter Settings"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:155
+msgid "Define custom breakpoints. Format: slug: width (one per line). Example:"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:156
+msgid "If empty, breakpoints from Elementor will be used automatically."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:176
+msgid "Choose how the GSAP library should be loaded on your site."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:185
+msgid "Enable Debug Mode"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:188
+msgid "Enables GSAP markers on frontend and detailed logging."
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:324
+#: assets/src/editor/scrollcrafter-editor.js:495
+msgid "Checking..."
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:389
+msgid "Found %d error."
+msgid_plural "Found %d errors."
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/src/editor/scrollcrafter-editor.js:396
+msgid "Valid (%d warning)."
+msgid_plural "Valid (%d warnings)."
+msgstr[0] ""
+msgstr[1] ""
+
+#: assets/src/editor/scrollcrafter-editor.js:402
+msgid "Script is valid."
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:422
+msgid "Start with [animation]..."
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:463
+msgid "Ready"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:466
+msgid "Cheat Sheet"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:471
+msgid "Cancel"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:472
+msgid "Apply & Preview"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:531
+msgid "Fix errors before saving!"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:538
+msgid ""
+"Your code has %d warning(s). This might cause unexpected behavior. Are you "
+"sure you want to save?"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:548
+msgid "Applied!"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:6
+msgid "hide"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:7
+msgid "show"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:8
+msgid "hide + visibility:hidden"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:9
+msgid "move right 100px"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:10
+msgid "move left 100px"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:11
+msgid "move 50% of container width"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:12
+msgid "move down 50px"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:13
+msgid "move up 50px"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:14
+msgid "move up 100% of container height"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:15
+msgid "shrink"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:16
+msgid "grow"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:17
+msgid "spin"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:18
+msgid "blur effect"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:19
+msgid "change color"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:20
+msgid "make round"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:21
+msgid "pivot point"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:22
+msgid "full scroll left"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:23
+msgid "scroll & center"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:24
+msgid "align right"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:29
+msgid "Linear"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:30
+msgid "Subtle"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:31
+msgid "Standard"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:32
+msgid "Strong"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:33
+msgid "Sharp"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:34
+msgid "Overshoot"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:35
+msgid "Bouncy"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:36
+msgid "Circular"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:37
+msgid "Exponential"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:38
+msgid "Smooth wave"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:45
+#: assets/src/editor/field-defs.js:144
+msgid "method"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:47
+msgid "Animate from state"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:48
+msgid "Animate to state"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:49
+msgid "Control start & end"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:50
+msgid "Instant change"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:54
+#: assets/src/editor/field-defs.js:167
+msgid "start vars"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:58
+#: assets/src/editor/field-defs.js:168
+msgid "end vars"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:62
+#: assets/src/editor/field-defs.js:65
+#: assets/src/editor/field-defs.js:133
+#: assets/src/editor/field-defs.js:135
+#: assets/src/editor/field-defs.js:137
+#: assets/src/editor/field-defs.js:172
+#: assets/src/editor/field-defs.js:175
+msgid "seconds"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:67
+msgid "timing function"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:71
+msgid "seconds/object"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:74
+msgid "count (-1 = infinite)"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:75
+#: assets/src/editor/field-defs.js:105
+#: assets/src/editor/field-defs.js:107
+#: assets/src/editor/field-defs.js:138
+msgid "bool"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:80
+msgid "selector (default: self)"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:82
+#: assets/src/editor/field-defs.js:90
+msgid "trigger & viewport"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:84
+msgid "trigger-top hits viewport-80%"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:85
+msgid "trigger-top hits viewport-center"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:86
+msgid "start when visible"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:92
+msgid "trigger-bottom hits viewport-20%"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:93
+msgid "end when fully invisible"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:94
+msgid "scroll 500px from start"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:98
+msgid "bool/lag"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:99
+msgid "Sync with scroll"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:99
+msgid "1s smooth lag"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:102
+msgid "bool/selector"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:103
+msgid "Pin trigger element"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:106
+msgid "number"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:107
+msgid "Play only once"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:108
+msgid "debug"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:110
+msgid "onEnter onLeave onEnterBack onLeaveBack"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:112
+msgid "Default"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:113
+msgid "Replayable"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:114
+msgid "Always restart"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:118
+msgid "number/array"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:126
+msgid "CSS selector"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:127
+msgid "Scope: current widget children. Use \".class\" or \"tag\"."
+msgstr ""
+
+#: assets/src/editor/field-defs.js:134
+#: assets/src/editor/field-defs.js:174
+msgid "ease"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:136
+msgid "count"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:151
+msgid "override target"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:152
+msgid "Target a specific child just for this step"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:157
+msgid "timeline placement"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:159
+msgid "Start with previous"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:160
+msgid "Start after previous"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:161
+msgid "Overlap 0.5s"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:162
+msgid "Wait 1s"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:171
+msgid "immediate setup vars"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:173
+msgid "seconds (in step)"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:178
+msgid "string name"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:183
+msgid "Single Tween"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:184
+msgid "ScrollTrigger Config"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:185
+msgid "Timeline Defaults"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:186
+msgid "Override Target"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:187
+msgid "First Step"
+msgstr ""
+
+#: assets/src/editor/field-defs.js:188
+msgid "Next Step..."
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:56
+msgid "ScrollCrafter Animations"
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:64
+msgid "Enable ScrollCrafter"
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:66
+msgid "Yes"
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:67
+msgid "No"
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:76
+msgid "Animation script"
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:79
+msgid "[animation] ..."
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:80
+msgid "Click button at the bottom to open the DSL Editor."
+msgstr ""
+
+#: src/Elementor/Controls/Animation_Injector.php:91
+msgid "Open DSL Editor"
+msgstr ""

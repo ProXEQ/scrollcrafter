@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/sprintf.ts"],
+  "sourcesContent": ["/**\n * External dependencies\n */\nimport _sprintf from '@tannin/sprintf';\n\n/**\n * Internal dependencies\n */\nimport type { DistributeSprintfArgs, TranslatableText } from './types';\n\nexport function sprintf< T extends string >(\n\tformat: T | TranslatableText< T >,\n\t...args: DistributeSprintfArgs< T >\n): string;\nexport function sprintf< T extends string >(\n\tformat: T | TranslatableText< T >,\n\targs: DistributeSprintfArgs< T >\n): string;\n\n/**\n * Returns a formatted string.\n *\n * @param format The format of the string to generate.\n * @param args   Arguments to apply to the format.\n *\n * @see https://www.npmjs.com/package/@tannin/sprintf\n *\n * @return The formatted string.\n */\nexport function sprintf< T extends string >(\n\tformat: T | TranslatableText< T >,\n\t...args: DistributeSprintfArgs< T >\n): string {\n\treturn _sprintf( format as T, ...( args as DistributeSprintfArgs< T > ) );\n}\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;AAGA,qBAAqB;AA0Bd,SAAS,QACf,WACG,MACM;AACT,aAAO,eAAAA,SAAU,QAAa,GAAK,IAAqC;AACzE;",
+  "names": ["_sprintf"]
+}
