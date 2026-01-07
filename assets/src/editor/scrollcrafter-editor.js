@@ -13,42 +13,44 @@ const { __, _n, sprintf } = wp.i18n;
 const DEBUG = !!window.ScrollCrafterConfig?.debug;
 const log = (...args) => DEBUG && console.log('[SC Editor]', ...args);
 
-const BREAKPOINTS = window.ScrollCrafterConfig?.breakpoints || {}; 
-const BREAKPOINT_SLUGS = Object.keys(BREAKPOINTS);
+const BREAKPOINTS = window.ScrollCrafterConfig?.breakpoints || [];
+const BREAKPOINT_SLUGS = Array.isArray(BREAKPOINTS)
+  ? BREAKPOINTS.map(bp => bp.key)
+  : Object.keys(BREAKPOINTS);
 
 function getDynamicHeaders() {
-    let headers = [...SECTION_HEADERS];
-    const responsiveSections = ['animation', 'scroll', 'step.1'];
-    BREAKPOINT_SLUGS.forEach(slug => {
-        responsiveSections.forEach(secKey => {
-            headers.push({
-                label: `[${secKey} @${slug}]`,
-                type: 'keyword',
-                detail: `Responsive: ${slug}`,
-                boost: -1
-            });
-        });
+  let headers = [...SECTION_HEADERS];
+  const responsiveSections = ['animation', 'scroll', 'step.1'];
+  BREAKPOINT_SLUGS.forEach(slug => {
+    responsiveSections.forEach(secKey => {
+      headers.push({
+        label: `[${secKey} @${slug}]`,
+        type: 'keyword',
+        detail: `Responsive: ${slug}`,
+        boost: -1
+      });
     });
-    return headers;
+  });
+  return headers;
 }
 
 let lastValidationState = { valid: true, hasCriticalErrors: false, diagnostics: [] };
 
 async function fetchValidation(scriptContent) {
-    const apiRoot = window.wpApiSettings?.root || '/wp-json/';
-    const nonce = window.wpApiSettings?.nonce || '';
-    try {
-        const res = await fetch(`${apiRoot}scrollcrafter/v1/validate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
-            body: JSON.stringify({ script: scriptContent, mode: 'auto' })
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-    } catch (e) {
-        console.error('[SC Validation] Error:', e);
-        return { ok: false, errors: [{ message: 'Validation API unreachable', line: 1 }] };
-    }
+  const apiRoot = window.wpApiSettings?.root || '/wp-json/';
+  const nonce = window.wpApiSettings?.nonce || '';
+  try {
+    const res = await fetch(`${apiRoot}scrollcrafter/v1/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
+      body: JSON.stringify({ script: scriptContent, mode: 'auto' })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (e) {
+    console.error('[SC Validation] Error:', e);
+    return { ok: false, errors: [{ message: 'Validation API unreachable', line: 1 }] };
+  }
 }
 
 const dslLanguage = StreamLanguage.define({
@@ -80,13 +82,13 @@ const dslHighlightStyle = HighlightStyle.define([
 ]);
 
 const dslTheme = EditorView.theme({
-    '&': { backgroundColor: '#14161d', color: '#f5f5f5', fontSize: '12px' },
-    '.cm-content': { fontFamily: 'Menlo, Monaco, Consolas, monospace', padding: '6px 8px' },
-    '.cm-scroller': { overflow: 'auto' },
-    '.cm-line': { padding: '0 2px' },
-    '.cm-tooltip': { backgroundColor: '#21252b', border: '1px solid #181a1f', color: '#f5f5f5' },
-    '.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: '#2c313a', color: '#fff' }
-  }, { dark: true }
+  '&': { backgroundColor: '#14161d', color: '#f5f5f5', fontSize: '12px' },
+  '.cm-content': { fontFamily: 'Menlo, Monaco, Consolas, monospace', padding: '6px 8px' },
+  '.cm-scroller': { overflow: 'auto' },
+  '.cm-line': { padding: '0 2px' },
+  '.cm-tooltip': { backgroundColor: '#21252b', border: '1px solid #181a1f', color: '#f5f5f5' },
+  '.cm-tooltip-autocomplete > ul > li[aria-selected]': { backgroundColor: '#2c313a', color: '#fff' }
+}, { dark: true }
 );
 
 function getSectionFieldDefs(sectionName) {
@@ -119,115 +121,115 @@ function withSlashApply(options, slashPos) {
 }
 
 function insertAtCursor(view, text) {
-    const state = view.state;
-    const range = state.selection.main;
-    view.dispatch({
-        changes: { from: range.from, to: range.to, insert: text },
-        selection: { anchor: range.from + text.length },
-        scrollIntoView: true
-    });
-    view.focus();
+  const state = view.state;
+  const range = state.selection.main;
+  view.dispatch({
+    changes: { from: range.from, to: range.to, insert: text },
+    selection: { anchor: range.from + text.length },
+    scrollIntoView: true
+  });
+  view.focus();
 }
 
 function renderCheatSheet(container, view) {
-    if (!container || !FIELD_DEFS) return; // Zabezpieczenie przed null
+  if (!container || !FIELD_DEFS) return; // Zabezpieczenie przed null
 
-    let html = '';
-    const sections = [
-        { key: 'animation', label: '[animation]' },
-        { key: 'scroll', label: '[scroll]' },
-        { key: 'timeline', label: '[timeline]' },
-        { key: 'step.*', label: '[step]' } 
-    ];
+  let html = '';
+  const sections = [
+    { key: 'animation', label: '[animation]' },
+    { key: 'scroll', label: '[scroll]' },
+    { key: 'timeline', label: '[timeline]' },
+    { key: 'step.*', label: '[step]' }
+  ];
 
-    sections.forEach(sec => {
-        const fields = FIELD_DEFS[sec.key];
-        if (!fields) return;
+  sections.forEach(sec => {
+    const fields = FIELD_DEFS[sec.key];
+    if (!fields) return;
 
-        html += `<div class="sc-cs-section">`;
-        html += `<div class="sc-cs-title">${sec.label}</div>`;
-        
-        Object.entries(fields).forEach(([fieldName, def]) => {
-            html += `<div class="sc-cs-item" data-insert="${fieldName}: ">
+    html += `<div class="sc-cs-section">`;
+    html += `<div class="sc-cs-title">${sec.label}</div>`;
+
+    Object.entries(fields).forEach(([fieldName, def]) => {
+      html += `<div class="sc-cs-item" data-insert="${fieldName}: ">
                         ${fieldName} <span>${def.detail || ''}</span>
                      </div>`;
-        });
-        html += `</div>`;
     });
+    html += `</div>`;
+  });
 
-    const bpList = BREAKPOINT_SLUGS.length ? BREAKPOINT_SLUGS.join(', ') : 'No breakpoints defined';
-    html += `<div class="sc-cs-section">
+  const bpList = BREAKPOINT_SLUGS.length ? BREAKPOINT_SLUGS.join(', ') : 'No breakpoints defined';
+  html += `<div class="sc-cs-section">
                 <div class="sc-cs-title">Responsive (@)</div>
                 <div class="sc-cs-info" style="font-size:10px; color:#aaa; margin-bottom:5px;">Available: ${bpList}</div>
                 <div class="sc-cs-item" data-insert="[animation @mobile]\n">Override Animation</div>
                 <div class="sc-cs-item" data-insert="[scroll @mobile]\n">Override Scroll</div>
              </div>`;
 
-    html += `<div class="sc-cs-section">
+  html += `<div class="sc-cs-section">
                 <div class="sc-cs-title">Snippets</div>
                 <div class="sc-cs-item" data-insert="[animation]\ntype: from\nfrom: opacity=0, y=50\nduration: 1\n">Fade In Up</div>
                 <div class="sc-cs-item" data-insert="[scroll]\nstart: top 80%\nend: bottom 20%\nscrub: 1\nmarkers: true\n">Scroll Trigger</div>
                 <div class="sc-cs-item" data-insert="[animation]\ntype: from\nfrom: opacity=0\n\n[animation @mobile]\nfrom: opacity=1\n">Responsive Fade</div>
              </div>`;
 
-    container.innerHTML = html;
-    container.querySelectorAll('.sc-cs-item').forEach(el => {
-        el.addEventListener('click', () => {
-            const textToInsert = el.dataset.insert;
-            insertAtCursor(view, textToInsert);
-        });
+  container.innerHTML = html;
+  container.querySelectorAll('.sc-cs-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const textToInsert = el.dataset.insert;
+      insertAtCursor(view, textToInsert);
     });
+  });
 }
 
 function updateCheatSheetState(view) {
-    const state = view.state;
-    const doc = state.doc;
-    const selection = state.selection.main;
-    let currentSectionName = null;
-    let usedKeys = new Set();
-    const currentLineNo = doc.lineAt(selection.head).number;
-    let sectionStartLine = -1;
+  const state = view.state;
+  const doc = state.doc;
+  const selection = state.selection.main;
+  let currentSectionName = null;
+  let usedKeys = new Set();
+  const currentLineNo = doc.lineAt(selection.head).number;
+  let sectionStartLine = -1;
 
-    for (let l = currentLineNo; l >= 1; l--) {
-        const lineText = doc.line(l).text.trim();
-        if (lineText.startsWith('[') && lineText.endsWith(']')) {
-            currentSectionName = lineText.slice(1, -1).trim().toLowerCase();
-            sectionStartLine = l;
-            break;
-        }
+  for (let l = currentLineNo; l >= 1; l--) {
+    const lineText = doc.line(l).text.trim();
+    if (lineText.startsWith('[') && lineText.endsWith(']')) {
+      currentSectionName = lineText.slice(1, -1).trim().toLowerCase();
+      sectionStartLine = l;
+      break;
     }
+  }
 
-    if (currentSectionName) {
-        let baseName = currentSectionName.split('@')[0].trim();
-        if (baseName.startsWith('step.')) baseName = 'step.*';
+  if (currentSectionName) {
+    let baseName = currentSectionName.split('@')[0].trim();
+    if (baseName.startsWith('step.')) baseName = 'step.*';
 
-        for (let l = sectionStartLine + 1; l <= doc.lines; l++) {
-            const lineText = doc.line(l).text.trim();
-            if (lineText.startsWith('[') && lineText.endsWith(']')) break;
-            const match = lineText.match(/^([a-zA-Z0-9_.]+):/);
-            if (match) usedKeys.add(match[1]);
-        }
-        currentSectionName = baseName;
+    for (let l = sectionStartLine + 1; l <= doc.lines; l++) {
+      const lineText = doc.line(l).text.trim();
+      if (lineText.startsWith('[') && lineText.endsWith(']')) break;
+      const match = lineText.match(/^([a-zA-Z0-9_.]+):/);
+      if (match) usedKeys.add(match[1]);
     }
+    currentSectionName = baseName;
+  }
 
-    const sidebar = document.getElementById('sc-cs-content');
-    if (!sidebar) return;
+  const sidebar = document.getElementById('sc-cs-content');
+  if (!sidebar) return;
 
-    sidebar.querySelectorAll('.sc-cs-item').forEach(el => el.classList.remove('is-used'));
+  sidebar.querySelectorAll('.sc-cs-item').forEach(el => el.classList.remove('is-used'));
 
-    if (!currentSectionName) return;
-    const sectionHeaders = Array.from(sidebar.querySelectorAll('.sc-cs-title'));
-    const activeSidebarHeader = sectionHeaders.find(h => h.textContent.includes(currentSectionName));
-    
-    if (activeSidebarHeader) {
-        const parentSection = activeSidebarHeader.parentElement;
-        const items = parentSection.querySelectorAll('.sc-cs-item');
-        items.forEach(item => {
-            const insertText = item.dataset.insert || '';
-            const keyName = insertText.split(':')[0].trim();
-            if (usedKeys.has(keyName)) item.classList.add('is-used');
-        });
-    }
+  if (!currentSectionName) return;
+  const sectionHeaders = Array.from(sidebar.querySelectorAll('.sc-cs-title'));
+  const activeSidebarHeader = sectionHeaders.find(h => h.textContent.includes(currentSectionName));
+
+  if (activeSidebarHeader) {
+    const parentSection = activeSidebarHeader.parentElement;
+    const items = parentSection.querySelectorAll('.sc-cs-item');
+    items.forEach(item => {
+      const insertText = item.dataset.insert || '';
+      const keyName = insertText.split(':')[0].trim();
+      if (usedKeys.has(keyName)) item.classList.add('is-used');
+    });
+  }
 }
 
 function getCurrentSection(state, pos) {
@@ -250,7 +252,7 @@ function filterMissingKeys(sectionName, state, pos) {
     if (text.startsWith('[') && text.endsWith(']')) break;
     const colonIndex = text.indexOf(':');
     if (colonIndex > 0) {
-       used.add(text.slice(0, colonIndex + 1).trim());
+      used.add(text.slice(0, colonIndex + 1).trim());
     }
   }
   return getFieldCompletionsForSection(sectionName).filter(entry => !used.has(entry.label));
@@ -267,42 +269,42 @@ function dslCompletionSource(context) {
 
   const word = context.matchBefore(/\/[a-zA-Z0-9_.]*/);
   if (word) {
-      if (!sectionName) return null;
-      let options = filterMissingKeys(sectionName, state, pos);
-      if (sectionName.startsWith('timeline')) {
-          options.push({ label: '[step.1]', type: 'keyword', detail: 'New step' });
-      }
-      if (!options.length) return null;
-      return { from: word.from + 1, options: withSlashApply(options, word.from) };
+    if (!sectionName) return null;
+    let options = filterMissingKeys(sectionName, state, pos);
+    if (sectionName.startsWith('timeline')) {
+      options.push({ label: '[step.1]', type: 'keyword', detail: 'New step' });
+    }
+    if (!options.length) return null;
+    return { from: word.from + 1, options: withSlashApply(options, word.from) };
   }
 
   const matchValueContext = textBefore.match(/([a-zA-Z0-9_.]+):\s*([^:]*)$/);
   if (matchValueContext) {
-      const rawKey = matchValueContext[1];
-      const filterText = matchValueContext[2] || '';
-      const defs = getSectionFieldDefs(sectionName);
-      if (defs && defs[rawKey] && defs[rawKey].values) {
-          return {
-              from: pos - filterText.length, 
-              options: defs[rawKey].values.map(v => ({ label: v.label, type: 'enum', detail: v.detail, apply: v.label }))
-          };
-      }
-      return null;
+    const rawKey = matchValueContext[1];
+    const filterText = matchValueContext[2] || '';
+    const defs = getSectionFieldDefs(sectionName);
+    if (defs && defs[rawKey] && defs[rawKey].values) {
+      return {
+        from: pos - filterText.length,
+        options: defs[rawKey].values.map(v => ({ label: v.label, type: 'enum', detail: v.detail, apply: v.label }))
+      };
+    }
+    return null;
   }
 
   if (textBefore.trim() === '') {
-       const options = sectionName ? getFieldCompletionsForSection(sectionName) : [];
-       const headers = getDynamicHeaders();
-       return { from: pos, options: [...options, ...headers] };
+    const options = sectionName ? getFieldCompletionsForSection(sectionName) : [];
+    const headers = getDynamicHeaders();
+    return { from: pos, options: [...options, ...headers] };
   }
-  
+
   if (textBefore.trim().startsWith('[')) {
-      return { from: line.from + lineText.indexOf('['), options: getDynamicHeaders() };
+    return { from: line.from + lineText.indexOf('['), options: getDynamicHeaders() };
   }
-  
+
   if (sectionName) {
-      const w = context.matchBefore(/[a-zA-Z0-9_.]+/);
-      if (w) return { from: w.from, options: getFieldCompletionsForSection(sectionName) };
+    const w = context.matchBefore(/[a-zA-Z0-9_.]+/);
+    if (w) return { from: w.from, options: getFieldCompletionsForSection(sectionName) };
   }
   return null;
 }
@@ -310,16 +312,16 @@ function dslCompletionSource(context) {
 const dslLinter = linter(async (view) => {
   const doc = view.state.doc.toString();
   const statusEl = document.querySelector('.sc-dsl-editor__status-text');
-  
+
   // Bezpieczne pobranie ikony (jeśli istnieje)
   let iconEl = null;
   if (statusEl) {
-      iconEl = statusEl.parentElement.querySelector('.sc-dsl-editor__status-icon');
+    iconEl = statusEl.parentElement.querySelector('.sc-dsl-editor__status-icon');
   }
 
-  if (statusEl) { 
-      statusEl.textContent = __('Checking...', 'scrollcrafter'); 
-      statusEl.style.color = '#8b949e'; 
+  if (statusEl) {
+    statusEl.textContent = __('Checking...', 'scrollcrafter');
+    statusEl.style.color = '#8b949e';
   }
 
   const data = await fetchValidation(doc);
@@ -329,49 +331,49 @@ const dslLinter = linter(async (view) => {
   let hasErrors = false;
 
   const mapDiag = (list, severity) => {
-      (list || []).forEach(item => {
-          const msg = item.message || String(item);
-          let lineNo = parseInt(item.line, 10);
-          if (!lineNo || isNaN(lineNo) || lineNo < 1) {
-              const match = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
-              if (match) {
-                  const docString = view.state.doc.toString();
-                  const foundIdx = docString.indexOf(match[1]);
-                  if (foundIdx !== -1) {
-                      lineNo = view.state.doc.lineAt(foundIdx).number;
-                  } else {
-                      lineNo = 1;
-                  }
-              } else {
-                  lineNo = 1;
-              }
+    (list || []).forEach(item => {
+      const msg = item.message || String(item);
+      let lineNo = parseInt(item.line, 10);
+      if (!lineNo || isNaN(lineNo) || lineNo < 1) {
+        const match = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
+        if (match) {
+          const docString = view.state.doc.toString();
+          const foundIdx = docString.indexOf(match[1]);
+          if (foundIdx !== -1) {
+            lineNo = view.state.doc.lineAt(foundIdx).number;
+          } else {
+            lineNo = 1;
           }
-          if (lineNo > view.state.doc.lines) lineNo = view.state.doc.lines;
+        } else {
+          lineNo = 1;
+        }
+      }
+      if (lineNo > view.state.doc.lines) lineNo = view.state.doc.lines;
 
-          const ln = view.state.doc.line(lineNo);
-          const lineText = ln.text;
-          let from = ln.from + (lineText.length - lineText.trimStart().length);
-          let to = ln.to;
+      const ln = view.state.doc.line(lineNo);
+      const lineText = ln.text;
+      let from = ln.from + (lineText.length - lineText.trimStart().length);
+      let to = ln.to;
 
-          const quotedWord = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
-          if (quotedWord) {
-              const word = quotedWord[1];
-              const idx = lineText.indexOf(word);
-              if (idx !== -1) {
-                  from = ln.from + idx;
-                  to = from + word.length;
-              }
-          } else if (msg.toLowerCase().includes('section')) {
-              const bracketMatch = lineText.match(/\[.*?\]/);
-              if (bracketMatch) {
-                  from = ln.from + bracketMatch.index;
-                  to = from + bracketMatch[0].length;
-              }
-          }
+      const quotedWord = msg.match(/'([^']+)'/) || msg.match(/"([^"]+)"/);
+      if (quotedWord) {
+        const word = quotedWord[1];
+        const idx = lineText.indexOf(word);
+        if (idx !== -1) {
+          from = ln.from + idx;
+          to = from + word.length;
+        }
+      } else if (msg.toLowerCase().includes('section')) {
+        const bracketMatch = lineText.match(/\[.*?\]/);
+        if (bracketMatch) {
+          from = ln.from + bracketMatch.index;
+          to = from + bracketMatch[0].length;
+        }
+      }
 
-          diagnostics.push({ from, to, severity, message: msg, source: 'ScrollCrafter' });
-          if (severity === 'error') hasErrors = true;
-      });
+      diagnostics.push({ from, to, severity, message: msg, source: 'ScrollCrafter' });
+      if (severity === 'error') hasErrors = true;
+    });
   };
 
   mapDiag(data.errors, 'error');
@@ -380,28 +382,28 @@ const dslLinter = linter(async (view) => {
   lastValidationState = { valid: !hasErrors, hasCriticalErrors: hasErrors, diagnostics, rawData: data };
 
   if (statusEl) {
-      const parent = statusEl.closest('.sc-dsl-editor__status'); // Pobieramy kontener nadrzędny
-      if (hasErrors) {
-          const errorMsg = sprintf(
-              _n('Found %d error.', 'Found %d errors.', data.errors.length, 'scrollcrafter'),
-              data.errors.length
-          );
-          statusEl.textContent = errorMsg;
-          if (iconEl) iconEl.textContent = '✕';
-          if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--error';
-      } else if (data.warnings && data.warnings.length > 0) {
-          const warnMsg = sprintf(
-              _n('Valid (%d warning).', 'Valid (%d warnings).', data.warnings.length, 'scrollcrafter'),
-              data.warnings.length
-          );
-          statusEl.textContent = warnMsg;
-          if (iconEl) iconEl.textContent = '⚠';
-          if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--warning';
-      } else {
-          statusEl.textContent = __('Script is valid.', 'scrollcrafter');
-          if (iconEl) iconEl.textContent = '✔';
-          if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--ok';
-      }
+    const parent = statusEl.closest('.sc-dsl-editor__status'); // Pobieramy kontener nadrzędny
+    if (hasErrors) {
+      const errorMsg = sprintf(
+        _n('Found %d error.', 'Found %d errors.', data.errors.length, 'scrollcrafter'),
+        data.errors.length
+      );
+      statusEl.textContent = errorMsg;
+      if (iconEl) iconEl.textContent = '✕';
+      if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--error';
+    } else if (data.warnings && data.warnings.length > 0) {
+      const warnMsg = sprintf(
+        _n('Valid (%d warning).', 'Valid (%d warnings).', data.warnings.length, 'scrollcrafter'),
+        data.warnings.length
+      );
+      statusEl.textContent = warnMsg;
+      if (iconEl) iconEl.textContent = '⚠';
+      if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--warning';
+    } else {
+      statusEl.textContent = __('Script is valid.', 'scrollcrafter');
+      if (iconEl) iconEl.textContent = '✔';
+      if (parent) parent.className = 'sc-dsl-editor__status sc-dsl-editor__status--ok';
+    }
   }
   return diagnostics;
 }, { delay: 500 });
@@ -425,7 +427,7 @@ function createEditor(parentNode, initialDoc) {
       syntaxHighlighting(dslHighlightStyle),
       autocompletion({ override: [dslCompletionSource], activateOnTyping: true }),
       EditorView.updateListener.of((update) => {
-          if (update.docChanged || update.selectionSet) updateCheatSheetState(update.view);
+        if (update.docChanged || update.selectionSet) updateCheatSheetState(update.view);
       }),
       lintGutter(),
       dslLinter,
@@ -445,7 +447,7 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     modal = document.createElement('div');
     modal.id = MODAL_ID;
     modal.className = 'sc-dsl-editor';
-    
+
     // POPRAWIONA STRUKTURA HTML
     modal.innerHTML = `
       <div class="sc-dsl-editor__backdrop"></div>
@@ -510,61 +512,63 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     const statusIcon = modal.querySelector('.sc-dsl-editor__status-icon');
 
     modal.querySelector('.sc-dsl-editor__title-sub').textContent = `${elementType} (${elementId})`;
-    
+
     statusText.textContent = __('Checking...', 'scrollcrafter');
-    if(statusIcon) statusIcon.textContent = '●';
-    
+    if (statusIcon) statusIcon.textContent = '●';
+
     // Reset klasy statusu
     const statusContainer = modal.querySelector('.sc-dsl-editor__status');
-    if(statusContainer) statusContainer.className = 'sc-dsl-editor__status';
+    if (statusContainer) statusContainer.className = 'sc-dsl-editor__status';
 
     const cmInstance = createEditor(modal.querySelector('#sc-dsl-editor-cm'), currentScript);
     renderCheatSheet(modal.querySelector('#sc-cs-content'), cmInstance);
     updateCheatSheetState(cmInstance);
 
     const close = () => modal.classList.remove('sc-dsl-editor--open');
-    const bindClose = (selector) => { 
-        const el = modal.querySelector(selector);
-        if(el) el.onclick = close; 
+    const bindClose = (selector) => {
+      const el = modal.querySelector(selector);
+      if (el) el.onclick = close;
     };
     bindClose('.sc-dsl-editor__close');
     bindClose('.sc-dsl-editor__cancel');
     bindClose('.sc-dsl-editor__backdrop');
 
     const triggerElementorUpdate = (newCode) => {
-        settings.set('scrollcrafter_script', newCode);
-        const controlTextarea = document.querySelector('.elementor-control-scrollcrafter_script textarea, textarea[data-setting="scrollcrafter_script"]');
-        if (controlTextarea) {
-            controlTextarea.value = newCode;
-            controlTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-            controlTextarea.dispatchEvent(new Event('change', { bubbles: true }));
-        } else {
-            if (window.elementor && elementor.saver) elementor.saver.setFlag('edit'); 
+      settings.set('scrollcrafter_script', newCode);
+      const controlTextarea = document.querySelector('.elementor-control-scrollcrafter_script textarea, textarea[data-setting="scrollcrafter_script"]');
+      if (controlTextarea) {
+        controlTextarea.value = newCode;
+        controlTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+        controlTextarea.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        if (window.$e && window.$e.run) {
+          window.$e.run('document/save/set-is-modified', { status: true });
         }
+      }
     };
 
     const handleApply = () => {
       const currentCode = getEditorDoc();
       if (lastValidationState.hasCriticalErrors) {
-          const firstErr = lastValidationState.diagnostics.find(d => d.severity === 'error');
-          if (firstErr && cmView) {
-              cmView.dispatch({ selection: { anchor: firstErr.from }, scrollIntoView: true });
-              cmView.focus();
-          }
-          const panel = modal.querySelector('.sc-dsl-editor__panel');
-          panel.classList.add('sc-shake');
-          setTimeout(() => panel.classList.remove('sc-shake'), 500);
-          statusText.textContent = __('Fix errors before saving!', 'scrollcrafter');
-          statusText.style.color = '#e06c75';
-          return;
+        const firstErr = lastValidationState.diagnostics.find(d => d.severity === 'error');
+        if (firstErr && cmView) {
+          cmView.dispatch({ selection: { anchor: firstErr.from }, scrollIntoView: true });
+          cmView.focus();
+        }
+        const panel = modal.querySelector('.sc-dsl-editor__panel');
+        panel.classList.add('sc-shake');
+        setTimeout(() => panel.classList.remove('sc-shake'), 500);
+        statusText.textContent = __('Fix errors before saving!', 'scrollcrafter');
+        statusText.style.color = '#e06c75';
+        return;
       }
       const warnings = lastValidationState.diagnostics.filter(d => d.severity === 'warning');
       if (warnings.length > 0) {
-          const proceedMsg = sprintf(
-              __('Your code has %d warning(s). This might cause unexpected behavior. Are you sure you want to save?', 'scrollcrafter'),
-              warnings.length
-          );
-          if (!confirm(proceedMsg)) return;
+        const proceedMsg = sprintf(
+          __('Your code has %d warning(s). This might cause unexpected behavior. Are you sure you want to save?', 'scrollcrafter'),
+          warnings.length
+        );
+        if (!confirm(proceedMsg)) return;
       }
 
       triggerElementorUpdate(currentCode);
@@ -577,8 +581,8 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     };
 
     const applyBtn = modal.querySelector('.sc-dsl-editor__apply-preview');
-    if(applyBtn) applyBtn.onclick = handleApply;
-    
+    if (applyBtn) applyBtn.onclick = handleApply;
+
     modal.classList.add('sc-dsl-editor--open');
   };
 

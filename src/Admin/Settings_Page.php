@@ -97,6 +97,22 @@ class Settings_Page
 			'scrollcrafter',
 			'scrollcrafter_assets_section'
 		);
+
+        add_settings_field(
+			'textplugin_cdn',
+			esc_html__( 'Custom TextPlugin URL', 'scrollcrafter' ),
+			[ $this, 'render_field_textplugin_cdn_url' ],
+			'scrollcrafter',
+			'scrollcrafter_assets_section'
+		);
+
+        add_settings_field(
+			'splittext_cdn',
+			esc_html__( 'Custom SplitText URL', 'scrollcrafter' ),
+			[ $this, 'render_field_splittext_cdn_url' ],
+			'scrollcrafter',
+			'scrollcrafter_assets_section'
+		);
 	}
 
 	public function sanitize_settings( $input ): array
@@ -113,12 +129,25 @@ class Settings_Page
                 $line = trim( $line );
                 if ( empty( $line ) ) continue;
                 
-                $parts = explode( ':', $line );
+                // Format: slug: width [strict]
+                $parts = explode( ':', $line, 2 );
                 if ( count( $parts ) === 2 ) {
                     $key = trim( $parts[0] );
-                    $val = (int) trim( $parts[1] );
+                    $val_raw = trim( $parts[1] );
+                    
+                    $is_strict = false;
+                    if ( stripos( $val_raw, 'strict' ) !== false ) {
+                        $is_strict = true;
+                        $val_raw = str_ireplace( 'strict', '', $val_raw );
+                    }
+                    
+                    $val = (int) $val_raw;
+                    
                     if ( $key && $val > 0 ) {
-                        $bp_array[ $key ] = $val;
+                        $bp_array[ $key ] = [
+                            'width'  => $val,
+                            'strict' => $is_strict
+                        ];
                     }
                 }
             }
@@ -128,7 +157,9 @@ class Settings_Page
 		$allowed_modes = [ 'local', 'cdn_custom', 'cdn_gsap_docs' ];
 		$output['gsap_mode'] = in_array( $input['gsap_mode'] ?? '', $allowed_modes, true ) ? $input['gsap_mode'] : 'local';
 		$output['gsap_cdn_url']      = esc_url_raw( $input['gsap_cdn_url'] ?? '' );
-		$output['scrolltrigger_cdn'] = esc_url_raw( $input['scrolltrigger_cdn'] ?? '' );
+		$output['scrolltrigger_cdn'] = esc_url_raw( $input['scrolltrigger_cdn'] ?? '' ); 
+        $output['textplugin_cdn']    = esc_url_raw( $input['textplugin_cdn'] ?? '' );
+        $output['splittext_cdn']     = esc_url_raw( $input['splittext_cdn'] ?? '' );
 
 		return $output;
 	}
@@ -152,7 +183,7 @@ class Settings_Page
 
     public function render_breakpoints_section_desc(): void
     {
-        echo '<p>' . esc_html__( 'Define custom breakpoints. Format: slug: width (one per line). Example:', 'scrollcrafter' ) . '<br><code>mobile: 768</code><br><code>tablet: 1024</code></p>';
+        echo '<p>' . esc_html__( 'Define custom breakpoints. Format: slug: width [strict]. Example:', 'scrollcrafter' ) . '<br><code>mobile: 768</code><br><code>tablet: 1024 strict</code></p>';
         echo '<p class="description">' . esc_html__( 'If empty, breakpoints from Elementor will be used automatically.', 'scrollcrafter' ) . '</p>';
     }
 
@@ -163,7 +194,13 @@ class Settings_Page
         $text = '';
         if ( is_array( $custom ) ) {
             foreach ( $custom as $k => $v ) {
-                $text .= "$k: $v\n";
+                if (is_array($v)) {
+                   $width = $v['width'];
+                   $strict = !empty($v['strict']) ? ' strict' : '';
+                   $text .= "$k: $width$strict\n";
+                } else {
+                   $text .= "$k: $v\n";
+                }
             }
         }
         ?>
@@ -218,6 +255,24 @@ class Settings_Page
 		$val = $config->get( 'scrolltrigger_cdn' );
 		?>
 		<input type="url" name="<?php echo self::OPTION_NAME; ?>[scrolltrigger_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
+		<?php
+	}
+
+    public function render_field_textplugin_cdn_url(): void
+	{
+		$config = Config::instance();
+		$val = $config->get( 'textplugin_cdn' );
+		?>
+		<input type="url" name="<?php echo self::OPTION_NAME; ?>[textplugin_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
+		<?php
+	}
+
+    public function render_field_splittext_cdn_url(): void
+	{
+		$config = Config::instance();
+		$val = $config->get( 'splittext_cdn' );
+		?>
+		<input type="url" name="<?php echo self::OPTION_NAME; ?>[splittext_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
 		<?php
 	}
 }

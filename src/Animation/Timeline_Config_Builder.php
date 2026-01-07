@@ -11,6 +11,10 @@ class Timeline_Config_Builder
         string $targetSelector,
         string $targetType
     ): array {
+        // Normalize parsed data to strip line numbers
+        $parsed = $this->normalizeParsedData($parsed);
+        $scrollTrigger = $this->normalizeParsedData($scrollTrigger);
+
         $tlData = $parsed['timeline'] ?? [];
         $defaults = $tlData['defaults'] ?? [];
         $timelineVars = [];
@@ -90,6 +94,20 @@ class Timeline_Config_Builder
         ];
     }
 
+    private function normalizeParsedData(array $data): array {
+        $clean = [];
+        foreach ($data as $key => $item) {
+            if (is_array($item) && array_key_exists('value', $item) && array_key_exists('line', $item)) {
+                 $clean[$key] = $item['value'];
+            } elseif (is_array($item)) {
+                 $clean[$key] = $this->normalizeParsedData($item);
+            } else {
+                 $clean[$key] = $item;
+            }
+        }
+        return $clean;
+    }
+
     /**
      * Helper do budowania kroków
      */
@@ -130,7 +148,7 @@ class Timeline_Config_Builder
 
     private function extractParams(array $step): array {
         $params = [];
-        $keys = ['duration', 'delay', 'ease', 'stagger', 'startAt', 'yoyo', 'repeat'];
+        $keys = ['duration', 'delay', 'ease', 'stagger', 'startAt', 'yoyo', 'repeat', 'text', 'split'];
         foreach ($keys as $k) {
             if (isset($step[$k])) {
                 $params[$k] = $step[$k];

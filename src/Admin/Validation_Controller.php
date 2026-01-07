@@ -15,7 +15,7 @@ class Validation_Controller
     private Timeline_Config_Builder $timelineBuilder;
 
     private const ALLOWED_KEYS = [
-        'animation' => ['type', 'method', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'strict', 'repeat', 'yoyo'],
+        'animation' => ['type', 'method', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'strict', 'repeat', 'yoyo', 'split', 'stagger.from', 'stagger.amount'],
         'scroll'    => ['start', 'end', 'scrub', 'once', 'markers', 'toggleactions', 'pin', 'pinspacing', 'snap', 'anticipatepin', 'strict', 'id', 'trigger'],
         'target'    => ['selector', 'type'],
         'step'      => ['type', 'selector', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'startat', 'position', 'label'],
@@ -93,8 +93,9 @@ class Validation_Controller
 
         try {
             $fakeElement = new class() { public function get_id(): string { return 'preview'; } };
-            $targetSelector = $parsed['target']['selector'] ?? '.elementor-element-preview';
-            $targetType     = isset( $parsed['target']['selector'] ) ? 'custom' : 'wrapper';
+            $targetNode = $parsed['target']['selector'] ?? null;
+            $targetSelector = (is_array($targetNode) && isset($targetNode['value'])) ? $targetNode['value'] : '.elementor-element-preview';
+            $targetType     = !empty($targetNode) ? 'custom' : 'wrapper';
             $scrollTrigger  = $this->build_scroll_trigger_config( $parsed['scroll'] ?? [] );
             
             $hasSteps = !empty($parsed['timeline']['steps']);
@@ -133,12 +134,14 @@ class Validation_Controller
     {
         $issues = [];
 
-        $check_keys = function( $data, $sectionName, $allowedKeys ) use ( &$issues, $script ) {
+        $check_keys = function( $data, $sectionName, $allowedKeys ) use ( &$issues ) {
             if ( empty( $data ) ) return;
-            foreach ( $data as $key => $val ) {
+            foreach ( $data as $key => $item ) {
                 $normalizedKey = strtolower($key);
+                $line = $item['line'] ?? 1;
+                $value = $item['value'] ?? null;
+
                 if ( ! in_array( $normalizedKey, $allowedKeys, true ) ) {
-                    $line = $this->find_line_number($script, $key . ':');
                     $message = sprintf(
                         /* translators: %s: The unknown key found. */
                         __("Unknown key '%s' in [%s].", 'scrollcrafter'),
@@ -147,16 +150,25 @@ class Validation_Controller
                     );
                     $issues[] = $this->create_issue( $message, 'warning', $line );
                 }
+                
+                // Simple sane checks
+                if (in_array($normalizedKey, ['duration', 'delay', 'stagger'], true)) {
+                    if (is_numeric($value) && $value < 0) {
+                        $issues[] = $this->create_issue(sprintf(__("Value for '%s' cannot be negative.", 'scrollcrafter'), $key), 'error', $line);
+                    }
+                }
             }
         };
 
-        $check_steps = function( $steps, $contextPrefix = '' ) use ( &$issues, $script ) {
+        $check_steps = function( $steps, $contextPrefix = '' ) use ( &$issues ) {
             if ( empty( $steps ) ) return;
             foreach ( $steps as $index => $step ) {
-                foreach ( $step as $key => $val ) {
+                foreach ( $step as $key => $item ) {
                     $normalizedKey = strtolower($key);
+                     $line = $item['line'] ?? 1;
+                     $value = $item['value'] ?? null;
+
                     if ( ! in_array( $normalizedKey, self::ALLOWED_KEYS['step'], true ) ) {
-                        $line = $this->find_line_number($script, $key . ':');
                         $issues[] = $this->create_issue( 
                             sprintf(
                                 /* translators: 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number */
@@ -168,6 +180,12 @@ class Validation_Controller
                             'warning', 
                             $line 
                         );
+                    }
+                    
+                    if (in_array($normalizedKey, ['duration', 'delay', 'stagger'], true)) {
+                        if (is_numeric($value) && $value < 0) {
+                            $issues[] = $this->create_issue(sprintf(__("Value for '%s' cannot be negative.", 'scrollcrafter'), $key), 'error', $line);
+                        }
                     }
                 }
             }
@@ -203,46 +221,33 @@ class Validation_Controller
     private function build_scroll_trigger_config( array $scroll ): array
     {
         $scrollTrigger = [
-            'start'         => $scroll['start'] ?? 'top 80%',
-            'end'           => $scroll['end'] ?? 'bottom 20%',
-            'toggleActions' => $scroll['toggleActions'] ?? 'play none none reverse',
+            'start'         => $scroll['start']['value'] ?? 'top 80%',
+            'end'           => $scroll['end']['value'] ?? 'bottom 20%',
+            'toggleActions' => $scroll['toggleActions']['value'] ?? 'play none none reverse',
         ];
-        if ( array_key_exists( 'scrub', $scroll ) ) $scrollTrigger['scrub'] = $scroll['scrub'];
-        if ( array_key_exists( 'markers', $scroll ) ) $scrollTrigger['markers'] = (bool) $scroll['markers'];
+        if ( array_key_exists( 'scrub', $scroll ) ) $scrollTrigger['scrub'] = $scroll['scrub']['value'];
+        if ( array_key_exists( 'markers', $scroll ) ) $scrollTrigger['markers'] = (bool) $scroll['markers']['value'];
+        if ( array_key_exists( 'trigger', $scroll ) ) $scrollTrigger['trigger'] = $scroll['trigger']['value'];
         
         return $scrollTrigger;
     }
 
     private function normalize_message( $item, string $severity = 'error' ): array {
-    if ( is_array( $item ) && isset( $item['line'] ) ) {
+        if ( is_array( $item ) && isset( $item['line'] ) ) {
+            return [
+                'message'  => $item['message'],
+                'severity' => $severity,
+                'line'     => (int) $item['line']
+            ];
+        }
+    
         return [
-            'message'  => $item['message'],
+            'message'  => is_string($item) ? $item : 'Unknown issue',
             'severity' => $severity,
-            'line'     => (int) $item['line']
+            'line'     => 1
         ];
     }
 
-    return [
-        'message'  => is_string($item) ? $item : 'Unknown issue',
-        'severity' => $severity,
-        'line'     => 1
-    ];
-}
-
-    private function find_line_number(string $script, string $searchPhrase): int {
-        $lines = explode("\n", $script);
-        foreach ($lines as $index => $line) {
-            $trimLine = trim($line);
-            if (strpos($trimLine, '//') === 0) {
-                continue;
-            }
-            
-            if (strpos($line, $searchPhrase) !== false) {
-                 return $index + 1;
-            }
-        }
-        return 1;
-    }
 
     /**
      * Sprawdza bezpieczeństwo wyrażeń calc()
@@ -251,10 +256,18 @@ class Validation_Controller
     {
         $issues = [];
         
-        $finder = function( $data, $path = '' ) use ( &$finder, &$issues, $script ) {
-            foreach ( $data as $key => $val ) {
+        $finder = function( $data, $path = '', $parentLine = 1 ) use ( &$finder, &$issues ) {
+            foreach ( $data as $key => $item ) {
+                $line = $parentLine;
+                $val = $item;
+                
+                if (is_array($item) && array_key_exists('value', $item) && array_key_exists('line', $item)) {
+                     $val = $item['value'];
+                     $line = $item['line'];
+                }
+                
                 if ( is_array( $val ) ) {
-                    $finder( $val, $path . '.' . $key );
+                    $finder( $val, $path . '.' . $key, $line );
                 } elseif ( is_string( $val ) && stripos( $val, 'calc(' ) !== false ) {
                     if ( preg_match( '/calc\s*\((.*)\)/i', $val, $matches ) ) {
                         $expression = $matches[1];
@@ -262,16 +275,11 @@ class Validation_Controller
                         
                         $vars = ['sw', 'cw', 'ch', 'vw', 'vh', 'center', 'vcenter', 'end'];
                         foreach($vars as $v) {
-                             $cleanExpr = preg_replace("/\\b{$v}\\b/i", '', $cleanExpr);
+                             // Allow variables to be used as limits or limit-like units (e.g. 100sw)
+                             $cleanExpr = preg_replace("/{$v}\\b/i", '', $cleanExpr);
                         }
                         
                         if ( ! preg_match( '/^[0-9\.\+\-\*\/\(\)\s]*$/', $cleanExpr ) ) {
-                             $lines = explode("\n", $script);
-                             $lineNum = 1;
-                             foreach ($lines as $idx => $line) {
-                                 if (strpos($line, $val) !== false) { $lineNum = $idx + 1; break; }
-                             }
-
                              $issues[] = [
                                 'message' => sprintf(
                                     /* translators: %s: The unsafe expression found in calc(). */
@@ -279,7 +287,7 @@ class Validation_Controller
                                     $expression
                                 ),
                                 'severity' => 'error',
-                                'line'     => $lineNum,
+                                'line'     => $line,
                             ];
 
                         }

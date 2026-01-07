@@ -11,6 +11,10 @@ class Tween_Config_Builder
         string $targetSelector,
         string $targetType
     ): array {
+        // Normalize parsed data to strip line numbers
+        $parsed = $this->normalizeParsedData($parsed);
+        $scrollTrigger = $this->normalizeParsedData($scrollTrigger);
+
         $animData = $parsed['animation'] ?? [];
         $finalConfig = $this->buildTweenConfig($animData, $scrollTrigger);
 
@@ -49,6 +53,20 @@ class Tween_Config_Builder
         ];
     }
 
+    private function normalizeParsedData(array $data): array {
+        $clean = [];
+        foreach ($data as $key => $item) {
+            if (is_array($item) && array_key_exists('value', $item) && array_key_exists('line', $item)) {
+                 $clean[$key] = $item['value'];
+            } elseif (is_array($item)) {
+                 $clean[$key] = $this->normalizeParsedData($item);
+            } else {
+                 $clean[$key] = $item;
+            }
+        }
+        return $clean;
+    }
+
     private function mergeAnimData(array $base, array $override): array
     {
         $merged = array_merge($base, $override);
@@ -85,6 +103,7 @@ class Tween_Config_Builder
         if (isset($anim['delay'])) $commonParams['delay'] = (float)$anim['delay'];
         if (isset($anim['ease']))  $commonParams['ease'] = $anim['ease'];
         if (isset($anim['stagger'])) $commonParams['stagger'] = $anim['stagger'];
+        if (isset($anim['text']))    $commonParams['text'] = $anim['text'];
 
         $finalConfig = [];
 
@@ -138,6 +157,10 @@ class Tween_Config_Builder
             }
         }
         
+        if (isset($anim['split'])) {
+            $finalConfig['split'] = $anim['split'];
+        }
+
         return $finalConfig;
     }
 }

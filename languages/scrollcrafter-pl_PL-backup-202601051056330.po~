@@ -10,7 +10,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10 >= 2 && n%10<=4 "
 "&&(n%100<10||n%100 >= 20)? 1 : 2);\n"
 "POT-Creation-Date: 2025-12-27T12:07:27.806Z\n"
-"PO-Revision-Date: 2026-01-05 10:56+0000\n"
+"PO-Revision-Date: 2025-12-30 16:02+0000\n"
 "Last-Translator: \n"
 "Language-Team: Polski\n"
 "X-Generator: Loco https://localise.biz/\n"
@@ -55,7 +55,7 @@ msgstr "Animuj OD tych wartości do obecnych"
 msgid "Animation script"
 msgstr "Skrypt Animacji"
 
-#: assets/src/editor/scrollcrafter-editor.js:576
+#: assets/src/editor/scrollcrafter-editor.js:574
 msgid "Applied!"
 msgstr "Zastosowano!"
 
@@ -232,7 +232,7 @@ msgstr "Zanikanie + ukrycie (autoAlpha)"
 msgid "First Step"
 msgstr "Pierwszy krok"
 
-#: assets/src/editor/scrollcrafter-editor.js:559
+#: assets/src/editor/scrollcrafter-editor.js:557
 msgid "Fix errors before saving!"
 msgstr "Napraw błędy przed zapisaniem!"
 
@@ -649,12 +649,12 @@ msgid "Typing speed multiplier"
 msgstr "Mnożnik prędkości pisania"
 
 # 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number
-#: src/Admin/Validation_Controller.php:174
+#: src/Admin/Validation_Controller.php:163
 msgid "Unknown key '%1\\$s' in [%2\\$sstep.%3\\$d]."
 msgstr "Niepoprawny klucz '%1\\$s' w [%2\\$sstep.%3\\$d]."
 
 # %s: The unknown key found.
-#: src/Admin/Validation_Controller.php:146
+#: src/Admin/Validation_Controller.php:144
 msgid "Unknown key '%s' in [%s]."
 msgstr "Niepoprawny klucz '%s' w [%s]."
 
@@ -664,7 +664,7 @@ msgid "Unknown section header ignored."
 msgstr "Niepoprawny nagłówek sekcji."
 
 # %s: The unsafe expression found in calc().
-#: src/Admin/Validation_Controller.php:283
+#: src/Admin/Validation_Controller.php:278
 msgid ""
 "Unsafe characters in calc(): '%s'. Only math and vars (sw, vw, center...) "
 "are allowed."
@@ -678,11 +678,6 @@ msgid_plural "Valid (%d warnings)."
 msgstr[0] "Poprawny (lecz zawiera %d ostrzeżenie)"
 msgstr[1] "Poprawny (lecz zawiera %d ostrzeżenia)"
 msgstr[2] "Poprawny (lecz zawiera %d ostrzeżeń)"
-
-#: src/Admin/Validation_Controller.php:156
-#: src/Admin/Validation_Controller.php:186
-msgid "Value for '%s' cannot be negative."
-msgstr "Wartość %s nie może być negatywna."
 
 #: assets/src/editor/field-defs.js:205
 msgid "Wait 1s"
@@ -712,7 +707,7 @@ msgstr "Tak"
 msgid "Yes (Default)"
 msgstr "Tak (Domyślnie)"
 
-#: assets/src/editor/scrollcrafter-editor.js:566
+#: assets/src/editor/scrollcrafter-editor.js:564
 msgid ""
 "Your code has %d warning(s). This might cause unexpected behavior. Are you "
 "sure you want to save?"

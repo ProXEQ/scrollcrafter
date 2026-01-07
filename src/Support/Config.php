@@ -175,6 +175,62 @@ class Config
         return esc_url_raw( $this->options['scrolltrigger_cdn'] ?: 'https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js' );
     }
 
+    public function get_textplugin_cdn_url(): string
+    {
+        return esc_url_raw( $this->options['textplugin_cdn'] ?? 'https://cdn.jsdelivr.net/npm/gsap@3/dist/TextPlugin.min.js' );
+    }
+
+    public function get_splittext_cdn_url(): string
+    {
+        // Default empty or placeholder, user must provide for splittext usually, but we have a workaround link
+        return esc_url_raw( $this->options['splittext_cdn'] ?? 'https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js' );
+    }
+
+    /**
+     * Zwraca breakpointy w formacie dla JS: [{key: 'slug', value: 123, strict: bool}]
+     */
+    public function get_frontend_breakpoints(): array
+    {
+        // 1. Custom settings
+        $custom = $this->options['custom_breakpoints'] ?? [];
+        if ( ! empty( $custom ) && is_array( $custom ) ) {
+            $list = [];
+            foreach($custom as $slug => $data) {
+                // Support old format (value only) or new format (array with props)
+                if (is_array($data)) {
+                    $val = $data['width'] ?? 0;
+                    $strict = $data['strict'] ?? false;
+                } else {
+                    $val = (int)$data;
+                    $strict = false;
+                }
+                $list[] = ['key' => $slug, 'value' => $val, 'strict' => $strict];
+            }
+            // Sort by value
+            usort($list, function($a, $b) { return $a['value'] - $b['value']; });
+            return $list;
+        }
+
+        // 2. Elementor defaults
+        if ( did_action( 'elementor/loaded' ) ) {
+            $e_map = $this->get_elementor_breakpoints();
+            if ( ! empty( $e_map ) ) {
+                $list = [];
+                foreach($e_map as $slug => $val) {
+                    $list[] = ['key' => $slug, 'value' => $val, 'strict' => false];
+                }
+                usort($list, function($a, $b) { return $a['value'] - $b['value']; });
+                return $list;
+            }
+        }
+
+        // 3. Defaults
+        return [
+            ['key' => 'mobile', 'value' => 767, 'strict' => false],
+            ['key' => 'tablet', 'value' => 1024, 'strict' => false],
+        ];
+    }
+
     public function is_debug(): bool
     {
         return (bool) ( $this->options['debug_mode'] ?? false );

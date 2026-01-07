@@ -7,7 +7,7 @@ use ScrollCrafter\Support\Logger;
 
 class Asset_Manager
 {
-    private const GSAP_VERSION = '3.13.0';
+    private const GSAP_VERSION = '3.14.1';
 
     public function hooks(): void
     {
@@ -20,27 +20,7 @@ class Asset_Manager
         add_filter( 'load_script_translation_file', [ $this, 'fix_loco_js_translation_path' ], 10, 3 );
     }
 
-    private function get_sorted_breakpoints(): array {
-        if ( ! did_action( 'elementor/loaded' ) ) {
-            return [];
-        }
 
-        $elementor_breakpoints = \Elementor\Plugin::$instance->breakpoints->get_active_breakpoints();
-        $sorted_breakpoints = [];
-        
-        foreach ($elementor_breakpoints as $bp_key => $bp_instance) {
-            $sorted_breakpoints[] = [
-                'key' => $bp_key,
-                'value' => $bp_instance->get_value(),
-            ];
-        }
-
-        usort($sorted_breakpoints, function($a, $b) {
-            return $a['value'] - $b['value'];
-        });
-
-        return $sorted_breakpoints;
-    }
 
     public function register_frontend_assets(): void
     {
@@ -54,19 +34,29 @@ class Asset_Manager
         $mode   = $config->get_gsap_mode();
 
         if ( 'cdn_gsap_docs' === $mode ) {
+            Logger::log( 'Registering ScrollCrafter frontend assets from GSAP CDN', 'assets' );
             wp_register_script('scrollcrafter-gsap', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/gsap.min.js', [], null, true);
             wp_register_script('scrollcrafter-gsap-scrolltrigger', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/ScrollTrigger.min.js', ['scrollcrafter-gsap'], null, true);
+            wp_register_script('scrollcrafter-gsap-text', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/TextPlugin.min.js', ['scrollcrafter-gsap'], null, true);
+            wp_register_script('scrollcrafter-gsap-splittext', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/SplitText.min.js', ['scrollcrafter-gsap'], null, true);
         } elseif ( 'cdn_custom' === $mode ) {
+            Logger::log( 'Registering ScrollCrafter frontend assets from custom CDN', 'assets' );   
             wp_register_script('scrollcrafter-gsap', $config->get_gsap_cdn_url(), [], SCROLLCRAFTER_VERSION, true);
             wp_register_script('scrollcrafter-gsap-scrolltrigger', $config->get_scrolltrigger_cdn_url(), ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
+            wp_register_script('scrollcrafter-gsap-text', $config->get_textplugin_cdn_url(), ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
+            wp_register_script('scrollcrafter-gsap-splittext', $config->get_splittext_cdn_url(), ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
         } else {
+            Logger::log( 'Registering ScrollCrafter frontend assets from local files', 'assets' );   
             wp_register_script('scrollcrafter-gsap', SCROLLCRAFTER_URL . 'assets/vendor/gsap/gsap.min.js', [], SCROLLCRAFTER_VERSION, true);
             wp_register_script('scrollcrafter-gsap-scrolltrigger', SCROLLCRAFTER_URL . 'assets/vendor/gsap/ScrollTrigger.min.js', ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
+            wp_register_script('scrollcrafter-gsap-text', SCROLLCRAFTER_URL . 'assets/vendor/gsap/TextPlugin.min.js', ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
+            wp_register_script('scrollcrafter-gsap-splittext', SCROLLCRAFTER_URL . 'assets/vendor/gsap/SplitText.min.js', ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
         }
+
         wp_register_script(
             'scrollcrafter-frontend',
             SCROLLCRAFTER_URL . 'assets/js/frontend.bundle.js',
-            [ 'scrollcrafter-gsap-scrolltrigger', 'wp-i18n' ],
+            [ 'scrollcrafter-gsap-scrolltrigger', 'scrollcrafter-gsap-text', 'scrollcrafter-gsap-splittext', 'wp-i18n' ],
             SCROLLCRAFTER_VERSION,
             true
         );
@@ -78,7 +68,7 @@ class Asset_Manager
             'ScrollCrafterConfig',
             [   
                 'debug'       => $config->is_debug(),
-                'breakpoints' => $this->get_sorted_breakpoints()
+                'breakpoints' => $config->get_frontend_breakpoints()
             ]
         );
     }
@@ -90,6 +80,8 @@ class Asset_Manager
         }
         wp_enqueue_script( 'scrollcrafter-gsap' );
         wp_enqueue_script( 'scrollcrafter-gsap-scrolltrigger' );
+        wp_enqueue_script( 'scrollcrafter-gsap-text' );
+        wp_enqueue_script( 'scrollcrafter-gsap-splittext' );
         wp_enqueue_script( 'scrollcrafter-frontend' );
     }
 
@@ -97,12 +89,14 @@ class Asset_Manager
     {
         wp_enqueue_script( 'scrollcrafter-gsap' );
         wp_enqueue_script( 'scrollcrafter-gsap-scrolltrigger' );
+        wp_enqueue_script( 'scrollcrafter-gsap-text' );
+        wp_enqueue_script( 'scrollcrafter-gsap-splittext' );
         wp_enqueue_script( 'scrollcrafter-frontend' );
 
         wp_enqueue_script(
             'scrollcrafter-editor',
             SCROLLCRAFTER_URL . 'assets/js/scrollcrafter-editor.js',
-            [ 'jquery', 'elementor-editor', 'wp-i18n' ],
+            [ 'jquery', 'elementor-editor', 'wp-i18n' ], // Editor doesn't necessarily need animation plugins loaded, but good for preview if we add it later
             SCROLLCRAFTER_VERSION,
             true
         );
@@ -115,7 +109,7 @@ class Asset_Manager
             'ScrollCrafterConfig',
             [
                 'debug'       => $config->is_debug(),
-                'breakpoints' => $this->get_sorted_breakpoints(),
+                'breakpoints' => $config->get_frontend_breakpoints(),
             ]
         );
         

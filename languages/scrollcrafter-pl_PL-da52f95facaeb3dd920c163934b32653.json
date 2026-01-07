@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2025-12-29 14:43+0000",
+    "translation-revision-date": "2026-01-05 10:56+0000",
     "generator": "Loco https://localise.biz/",
     "source": "assets/src/editor/field-defs.js",
     "domain": "scrollcrafter",
@@ -10,152 +10,296 @@
                 "lang": "pl_PL",
                 "plural-forms": "nplurals=3; plural=(n==1 ? 0 : n%10 >= 2 && n%10<=4 &&(n%100<10||n%100 >= 20)? 1 : 2);"
             },
-            "1s smooth lag": [
-                "P\u0142ynne przej\u015bcie 1s"
+            "[trigger_pos] [viewport_pos]": [
+                "[trigger_pos] [viewport_pos]"
             ],
-            "align right": [
-                "Do prawej"
+            "Add marker to timeline": [
+                "Dodaj znacznik do osi czasu"
             ],
-            "Always restart": [
-                "Zawsze restartuj"
+            "Always start from 0": [
+                "Zawsze startuj od 0"
             ],
-            "Animate from state": [
-                "Animuj od stanu"
+            "Animate FROM state": [
+                "Animuj OD stanu (from)"
             ],
-            "Animate to state": [
-                "Animuj do stanu"
+            "Animate FROM these values to current": [
+                "Animuj OD tych warto\u015bci do obecnych"
             ],
-            "blur effect": [
-                "efekt rozmazania"
+            "Animate TO state (default)": [
+                "Animuj DO stanu (to)"
             ],
-            "bool": [
-                "zmienna"
+            "Animate TO these values from current": [
+                "Animuj OD tych warto\u015bci do obecnych"
             ],
-            "bool/lag": [
-                "zmienna/lag"
+            "As soon as element enters viewport": [
+                "Gdy element wejdzie w obszar widzenia"
             ],
-            "bool/selector": [
-                "zmienna/selektor"
+            "Blur effect": [
+                "Efekt rozmycia (Blur)"
             ],
-            "Bouncy": [
-                "Bouncy"
+            "Bouncing effect": [
+                "Efekt podskoczenia"
             ],
-            "change color": [
-                "zmie\u0144 kolor"
+            "Change to Red": [
+                "Zmiana koloru t\u0142a na czerwony"
+            ],
+            "Circular curve": [
+                "Krzywa ko\u0142owa (Circular)"
             ],
             "Control start & end": [
                 "Kontroluj start oraz koniec"
             ],
-            "count": [
-                "odliczanie"
+            "Default (Reverses on up-scroll)": [
+                "Domy\u015blne (Cofa przy przewijaniu w g\u00f3r\u0119)"
             ],
-            "count (-1 = infinite)": [
-                "odliczanie (-1 = niesko\u0144czono\u015b\u0107)"
+            "Define BOTH start and end values": [
+                "Zdefiniuj OBA: start i koniec (fromTo)"
             ],
-            "CSS selector": [
-                "Selektor CSS"
+            "Delay between items (sec)": [
+                "Op\u00f3\u017anienie mi\u0119dzy elementami"
             ],
-            "debug": [
-                "debug"
+            "Delay between repeats": [
+                "Op\u00f3\u017anienie mi\u0119dzy powt\u00f3rzeniami"
             ],
-            "Default": [
-                "Domy\u015blnie"
+            "Delay inside step": [
+                "Op\u00f3\u017anienie wewn\u0105trz kroku"
             ],
-            "ease": [
-                "wyg\u0142adzanie"
+            "Direct sync (no smoothing)": [
+                "Bezpo\u015brednia synchronizacja (brak wyg\u0142adzania)"
             ],
-            "Exponential": [
-                "Gwa\u0142townie"
+            "Duration in seconds": [
+                "Czas trwania w sekundach"
+            ],
+            "Element selector (default: self)": [
+                "Selektor elementu (domy\u015blnie: ten widget)"
+            ],
+            "End properties": [
+                "W\u0142a\u015bciwo\u015bci ko\u0144cowe"
+            ],
+            "End properties (e.g. opacity=1)": [
+                "W\u0142a\u015bciwo\u015bci ko\u0144cowe (np. opacity=1)"
+            ],
+            "Events: Enter Leave EnterBack LeaveBack": [
+                "Zdarzenia: Wej\u015bcie Wyj\u015bcie Powr\u00f3t Cofni\u0119cie"
+            ],
+            "Fade in (1)": [
+                "Pojawienie si\u0119 (Fade in)"
+            ],
+            "Fade in + show (visibility)": [
+                "Pojawienie si\u0119 + widoczno\u015b\u0107 (autoAlpha)"
+            ],
+            "Fade out (0)": [
+                "Zanikanie (Fade out)"
+            ],
+            "Fade out + hide (visibility)": [
+                "Zanikanie + ukrycie (autoAlpha)"
             ],
             "First Step": [
                 "Pierwszy krok"
             ],
-            "full scroll left": [
-                "Ca\u0142kowite przewini\u0119cie w lewo"
+            "Full spin": [
+                "Pe\u0142ny obr\u00f3t (360deg)"
             ],
-            "grow": [
-                "grow"
+            "Global duration": [
+                "Globalny czas trwania"
             ],
-            "hide": [
-                "ukrycie"
+            "Global ease": [
+                "Globalne wyg\u0142adzenie (leasing)"
             ],
-            "hide + visibility:hidden": [
-                "ukrycie"
+            "Global stagger": [
+                "Globalne op\u00f3\u017anienie kaskadowe (stagger)"
             ],
-            "Linear": [
-                "Linearne"
+            "Infinite": [
+                "Niesko\u0144czono\u015b\u0107"
             ],
-            "method": [
-                "metoda"
+            "Instant change": [
+                "Natychmiastowa zmiana"
             ],
-            "move 50% of container width": [
-                "Przesu\u0144 o 50% wzgl\u0119dem szeroko\u015bci kontenera"
+            "Kill after playing": [
+                "Usu\u0144 po odtworzeniu (Kill)"
             ],
-            "move down 50px": [
-                "Przesu\u0144 w d\u00f3\u0142 o 50px"
+            "Label name for navigation": [
+                "Nazwa etykiety"
             ],
-            "move left 100px": [
-                "Przesu\u0144 w lewo o 100px"
+            "Letters": [
+                "Litery"
             ],
-            "move right 100px": [
-                "przesu\u0144 w prawo o 100px"
+            "Linear (no ease)": [
+                "Liniowy (brak wyg\u0142adzania)"
             ],
-            "move up 100% of container height": [
-                "przesu\u0144 w g\u00f3r\u0119 o 100% wysoko\u015bci obiektu."
+            "Link animation to scrollbar": [
+                "Powi\u0105\u017c animacj\u0119 z paskiem przewijania"
             ],
-            "move up 50px": [
-                "przesu\u0144 w g\u00f3r\u0119 o 50px"
+            "Motion curve": [
+                "Krzywa ruchu"
+            ],
+            "Move left 50% of self": [
+                "Przesu\u0144 w lewo o 50% w\u0142asnej szer."
+            ],
+            "Move up 50% of self": [
+                "rzesu\u0144 w g\u00f3r\u0119 o 50% w\u0142asnej wys."
+            ],
+            "New text content": [
+                "Nowa tre\u015b\u0107 tekstu"
             ],
             "Next Step...": [
                 "Nast\u0119pny krok..."
             ],
-            "number": [
-                "liczba"
+            "No (Overlay)": [
+                "Nie (Nak\u0142adka/Overlay)"
             ],
-            "number/array": [
-                "liczba/lista"
+            "Once": [
+                "Tylko raz"
             ],
-            "onEnter onLeave onEnterBack onLeaveBack": [
-                "onEnter onLeave onEnterBack onLeaveBack"
+            "Overlap 0.5s": [
+                "Na\u0142\u00f3\u017c 0.5s"
             ],
-            "Play only once": [
-                "Odtw\u00f3rz tylko raz"
+            "Override Target": [
+                "Nadpisz cel"
             ],
-            "Scope: current widget children. Use \".class\" or \"tag\".": [
-                "Zakres: obecne dzieci wid\u017cet\u00f3w. U\u017cyj \".class\" lub \"tag\"."
+            "Overshoot/Elastic": [
+                "Przestrzeganie/Elastyczno\u015b\u0107 (Elastic)"
             ],
-            "scroll & center": [
-                "scroll i \u015brodek"
+            "Pin another element": [
+                "Przyklej inny element"
             ],
-            "scroll 500px from start": [
-                "scroll 500px od pkt. startu"
+            "Pin smoothing (1)": [
+                "Wyg\u0142adzanie przyklejenia (1)"
+            ],
+            "Pivot point: top center": [
+                "Punkt obrotu: g\u00f3ra \u015brodek"
+            ],
+            "Repeat count": [
+                "Liczba powt\u00f3rze\u0144"
+            ],
+            "Repeat entire timeline": [
+                "Powtarzaj ca\u0142\u0105 o\u015b czasu"
+            ],
+            "Replayable": [
+                "Powtarzalne"
+            ],
+            "Reserve space for pin?": [
+                "Rezerwowa\u0107 miejsce pod przyklejenie?"
+            ],
+            "Return to start?": [
+                "Powr\u00f3t do stanu pocz\u0105tkowego?"
+            ],
+            "Rotate 45deg": [
+                "Obr\u00f3\u0107 o 45deg"
+            ],
+            "Scale down to 0": [
+                "Zmniejsz do 0"
+            ],
+            "Scale up to 1.5": [
+                "Powi\u0119ksz do 1.5x"
+            ],
+            "Scope: Targets are relative to the widget. Use \"h2\" or \".my-class\".": [
+                "Zakres: Selektory s\u0105 relatywne do widgetu. U\u017cyj \u201ch2\u201d lub \u201c.my-class\u201d."
             ],
             "ScrollTrigger Config": [
                 "Konfiguracja ScrollTriggera"
             ],
-            "seconds": [
-                "sekund"
+            "Set values immediately (no duration)": [
+                "Ustaw warto\u015bci natychmiast (bez czasu trwania)"
             ],
-            "seconds (in step)": [
-                "sekund (w kroku)"
+            "Sharp acceleration": [
+                "Ostre przyspieszenie"
             ],
-            "seconds/object": [
-                "sekund/obiekt"
+            "Show debug markers": [
+                "Poka\u017c znaczniki debugowania"
             ],
-            "selector (default: self)": [
-                "selektor (Domy\u015blnie: ten)"
+            "Single Tween": [
+                "Pojedyncza animacja"
+            ],
+            "Snap to progress": [
+                "Przeci\u0105gaj do post\u0119pu (Snap)"
+            ],
+            "Soft sync (1s lag)": [
+                "Mi\u0119kka synchronizacja (op\u00f3\u017anienie 1s)"
+            ],
+            "Split text into...": [
+                "Rozbij tekst na\u2026"
+            ],
+            "Standard smooth": [
+                "Standardowe wyg\u0142adzanie"
             ],
             "Start after previous": [
                 "Wystartuj po poprzednim"
             ],
-            "Sync with scroll": [
-                "Zsynchronizuj z przewijaniem"
+            "Start delay (seconds)": [
+                "Op\u00f3\u017anienie startu (sekundy)"
             ],
-            "timing function": [
-                "czasowa funkcja"
+            "Start order": [
+                "Kolejno\u015b\u0107 startu"
+            ],
+            "Start properties": [
+                "W\u0142a\u015bciwo\u015bci pocz\u0105tkowe"
+            ],
+            "Start properties (e.g. opacity=0)": [
+                "W\u0142a\u015bciwo\u015bci pocz\u0105tkowe (np. opacity=0)"
+            ],
+            "Start with previous": [
+                "Startuj z poprzedzaj\u0105cym"
+            ],
+            "Step duration (sec)": [
+                "Czas trwania kroku (sek)"
+            ],
+            "Step ease": [
+                "Wyg\u0142adzenie kroku"
+            ],
+            "Step Method": [
+                "Metoda kroku"
+            ],
+            "Stepped (5 frames)": [
+                "Skokowy (5 klatek)"
+            ],
+            "Stick element during scroll?": [
+                "Przyklei\u0107 element podczas przewijania? (Pin)"
+            ],
+            "Subtle ease out": [
+                "Delikatne spowolnienie na ko\u0144cu"
+            ],
+            "Target a specific child just for this step (e.g. \".icon\")": [
+                "Wybierz element podrz\u0119dny tylko dla tego kroku (np. \u201c.icon\u201d)"
+            ],
+            "Target child elements": [
+                "Celuj w elementy podrz\u0119dne"
+            ],
+            "Timeline Defaults": [
+                "Domy\u015blne osi czasu"
+            ],
+            "To-Fro loop": [
+                "P\u0119tla Tam-i-Z powrotem (Yolo)"
+            ],
+            "Total time to split among items": [
+                "Ca\u0142kowity czas do podzia\u0142u na elementy"
+            ],
+            "Typewriter cursor or char": [
+                "Kursor maszyny do pisania lub znak"
+            ],
+            "Typing speed multiplier": [
+                "Mno\u017cnik pr\u0119dko\u015bci pisania"
             ],
             "Wait 1s": [
                 "Poczekaj 1 sekund\u0119"
+            ],
+            "When bottom of element hits center": [
+                "Gdy d\u00f3\u0142 elementu dotrze do \u015brodka"
+            ],
+            "When element fully leaves viewport": [
+                "Gdy element ca\u0142kowicie opu\u015bci ekran"
+            ],
+            "When top of element hits 80% viewport": [
+                "Gdy g\u00f3ra elementu dotrze do 80% ekranu"
+            ],
+            "When top of element hits center of viewport": [
+                "Gdy g\u00f3ra elementu dotrze do \u015brodka ekranu"
+            ],
+            "Yes (Default)": [
+                "Tak (Domy\u015blnie)"
+            ],
+            "Yoyo entire timeline": [
+                "Efekt Yolo dla ca\u0142ej osi czasu"
             ]
         }
     }

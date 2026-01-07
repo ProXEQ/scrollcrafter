@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2025-12-29 14:43+0000",
+    "translation-revision-date": "2026-01-05 10:56+0000",
     "generator": "Loco https://localise.biz/",
     "source": "assets/src/editor/scrollcrafter-editor.js",
     "domain": "scrollcrafter",
@@ -38,6 +38,9 @@
             ],
             "Script is valid.": [
                 "Skrypt jest poprawny."
+            ],
+            "Start with [animation]...": [
+                "Zacznij od //"
             ],
             "Valid (%d warning).": [
                 "Poprawny (lecz zawiera %d ostrze\u017cenie)",

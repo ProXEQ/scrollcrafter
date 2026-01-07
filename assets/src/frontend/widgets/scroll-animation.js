@@ -6,61 +6,67 @@ import { getGsap, getScrollTrigger } from '../core/gsap-loader';
  * Obsługuje: sw (scrollWidth), cw (clientWidth), vw (viewportWidth), center, end
  */
 function parseSmartValue(val, contextNode) {
-    if (typeof val !== 'string') return val;
+  if (typeof val !== 'string') return val;
 
-    if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
-    if (val === 'calc_scroll_width') val = 'calc(sw)';
-    if (val === 'calc_100vh') val = 'calc(vh)';
+  if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
+  if (val === 'calc_scroll_width') val = 'calc(sw)';
+  if (val === 'calc_100vh') val = 'calc(vh)';
 
-    if (val.match(/^calc\s*\((.*)\)$/i)) {
-        const expression = val.match(/^calc\s*\((.*)\)$/i)[1];
+  if (val.match(/^calc\s*\((.*)\)$/i)) {
+    let expression = val.match(/^calc\s*\((.*)\)$/i)[1];
 
-        return () => {
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-            const cw = contextNode.clientWidth || 0;
-            const ch = contextNode.clientHeight || 0;
-            
-            const totalScrollW = contextNode.scrollWidth - cw;
-            const sw = totalScrollW > 0 ? totalScrollW : 0;
+    // Support unit-like syntax: 100sw -> 100 * sw
+    // Only for dimensions (sw, cw, ch, vw, vh), not for keywords like center/end
+    expression = expression.replace(/(\d)\s*(sw|cw|ch|vw|vh)\b/gi, '$1 * $2');
 
-            const center = (vw - cw) / 2;
-            const vcenter = (vh - ch) / 2;
-            const end = vw - cw;
-            
-            const varsMap = {
-                sw: sw, cw: cw, ch: ch, vw: vw, vh: vh,
-                center: center, vcenter: vcenter, end: end
-            };
+    return (index, target) => {
+      const el = target || contextNode;
 
-            let cleanExpr = expression;
-            Object.keys(varsMap).forEach(key => {
-                const regex = new RegExp(`\\b${key}\\b`, 'gi');
-                cleanExpr = cleanExpr.replace(regex, '');
-            });
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const cw = el.clientWidth || 0;
+      const ch = el.clientHeight || 0;
 
-            if (!/^[0-9\.\+\-\*\/\(\)\s]*$/.test(cleanExpr)) {
-                console.warn('[ScrollCrafter] Unsafe calc expression:', expression);
-                return 0;
-            }
+      const totalScrollW = el.scrollWidth - cw;
+      const sw = totalScrollW > 0 ? totalScrollW : 0;
 
-            let finalExpr = expression;
-            const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
+      const center = (vw - cw) / 2;
+      const vcenter = (vh - ch) / 2;
+      const end = vw - cw;
 
-            sortedKeys.forEach(key => {
-                const regex = new RegExp(`\\b${key}\\b`, 'gi');
-                finalExpr = finalExpr.replace(regex, varsMap[key]);
-            });
+      const varsMap = {
+        sw: sw, cw: cw, ch: ch, vw: vw, vh: vh,
+        center: center, vcenter: vcenter, end: end
+      };
 
-            try {
-                return new Function('return ' + finalExpr)();
-            } catch (e) {
-                console.error('[ScrollCrafter] Calc error:', e);
-                return 0;
-            }
-        };
-    }
-    return val;
+      let cleanExpr = expression;
+      Object.keys(varsMap).forEach(key => {
+        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+        cleanExpr = cleanExpr.replace(regex, '');
+      });
+
+      if (!/^[0-9\.\+\-\*\/\(\)\s]*$/.test(cleanExpr)) {
+        console.warn('[ScrollCrafter] Unsafe calc expression:', expression);
+        return 0;
+      }
+
+      let finalExpr = expression;
+      const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
+
+      sortedKeys.forEach(key => {
+        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+        finalExpr = finalExpr.replace(regex, varsMap[key]);
+      });
+
+      try {
+        return new Function('return ' + finalExpr)();
+      } catch (e) {
+        console.error('[ScrollCrafter] Calc error:', e);
+        return 0;
+      }
+    };
+  }
+  return val;
 }
 
 /**
@@ -84,27 +90,27 @@ function parseMacros(vars, contextNode) {
  * Helper: Buduje Media Query
  */
 function buildMediaQuery(targetSlug, isStrict, sortedBreakpoints) {
-    if (!sortedBreakpoints || !Array.isArray(sortedBreakpoints)) return null;
+  if (!sortedBreakpoints || !Array.isArray(sortedBreakpoints)) return null;
 
-    const currentIndex = sortedBreakpoints.findIndex(bp => bp.key === targetSlug);
-    if (currentIndex === -1) return null;
+  const currentIndex = sortedBreakpoints.findIndex(bp => bp.key === targetSlug);
+  if (currentIndex === -1) return null;
 
-    const currentBp = sortedBreakpoints[currentIndex];
-    const maxQuery = `(max-width: ${currentBp.value}px)`;
+  const currentBp = sortedBreakpoints[currentIndex];
+  const maxQuery = `(max-width: ${currentBp.value}px)`;
 
-    if (!isStrict) {
-        return maxQuery;
-    }
+  if (!isStrict) {
+    return maxQuery;
+  }
 
-    let minQuery = '';
-    if (currentIndex > 0) {
-        const prevBp = sortedBreakpoints[currentIndex - 1];
-        const minVal = prevBp.value + 1;
-        minQuery = `(min-width: ${minVal}px) and `;
-    } else {
-        return maxQuery;
-    }
-    return `${minQuery}${maxQuery}`;
+  let minQuery = '';
+  if (currentIndex > 0) {
+    const prevBp = sortedBreakpoints[currentIndex - 1];
+    const minVal = prevBp.value + 1;
+    minQuery = `(min-width: ${minVal}px) and `;
+  } else {
+    return maxQuery;
+  }
+  return `${minQuery}${maxQuery}`;
 }
 
 registerWidget('scroll_animation', (node, config) => {
@@ -135,7 +141,7 @@ registerWidget('scroll_animation', (node, config) => {
   }
 
   const createTween = (cfg, contextNode) => {
-    const targetConfig = cfg.target || config.target || {}; 
+    const targetConfig = cfg.target || config.target || {};
     let elements = [];
 
     if (targetConfig.type === 'wrapper') {
@@ -143,7 +149,7 @@ registerWidget('scroll_animation', (node, config) => {
     } else if (targetConfig.selector) {
       elements = contextNode.querySelectorAll(targetConfig.selector);
     } else {
-        elements = [contextNode];
+      elements = [contextNode];
     }
 
     if (!elements.length) {
@@ -154,10 +160,40 @@ registerWidget('scroll_animation', (node, config) => {
     const animConfig = cfg.animation || {};
     const method = animConfig.method || 'from';
 
-    const calcContext = elements[0]; 
+    const calcContext = elements[0];
+
+    // --- SplitText Support ---
+    if (animConfig.split && window.SplitText) {
+      try {
+        const split = new SplitText(elements, { type: animConfig.split });
+        // Priority: chars > words > lines
+        if (split.chars && split.chars.length) elements = split.chars;
+        else if (split.words && split.words.length) elements = split.words;
+        else if (split.lines && split.lines.length) elements = split.lines;
+
+        // Fix: Elements must be inline-block for rotation to work
+        if (elements.length) {
+          gsap.set(elements, { display: 'inline-block' });
+        }
+      } catch (e) {
+        console.warn(`${logPrefix} SplitText error:`, e);
+      }
+    }
 
     const vars = parseMacros({ ...animConfig.vars }, calcContext);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
+
+    // --- Merge Advanced Props (from Parser dot-notation) ---
+    // TextPlugin
+    if (animConfig.text) {
+      vars.text = animConfig.text;
+      // TextPlugin usually requires empty element text initially if method is 'from', 
+      // but here we trust the user config or GSAP defaults.
+    }
+    // Advanced Stagger (Object)
+    if (animConfig.stagger && typeof animConfig.stagger === 'object') {
+      vars.stagger = animConfig.stagger;
+    }
 
     if (vars.scrollTrigger) {
       vars.scrollTrigger.trigger = contextNode;
@@ -173,40 +209,63 @@ registerWidget('scroll_animation', (node, config) => {
     } else if (typeof gsap[method] === 'function') {
       return gsap[method](elements, vars);
     }
-    
+
     if (debug) console.warn(`${logPrefix} Unknown GSAP method:`, method);
     return null;
   };
 
   const mm = gsap.matchMedia();
-
-  mm.add("(min-width: 0px)", () => {
-    if (config.animation) {
-       logConfig('Global config', config);
-       createTween(config, node);
-    }
-  });
-
   const sysBreakpoints = window.ScrollCrafterConfig?.breakpoints || [];
 
-  if (config.media) {
-    Object.keys(config.media).forEach((mediaSlug) => {
-      const mediaAnim = config.media[mediaSlug];
-      const isStrict = !!(mediaAnim.strict || (mediaAnim.animation && mediaAnim.animation.strict));
+  // Ensure sorted by value
+  const sortedBps = [...sysBreakpoints].sort((a, b) => a.value - b.value);
 
-      const query = buildMediaQuery(mediaSlug, isStrict, sysBreakpoints);
+  let prevMax = 0;
+  const rangeConfig = [];
 
-      if (query) {
-        mm.add(query, (context) => {
-          const merged = {
-            ...config,
-            animation: mediaAnim,
-          };
-          logConfig(`Media override: ${mediaSlug} (strict: ${isStrict})`, merged);
-          createTween(merged, node);
-        });
+  // Build ranges for defined breakpoints
+  sortedBps.forEach(bp => {
+    const min = prevMax + 1;
+    const max = bp.value;
+    prevMax = max;
+
+    const query = min === 1
+      ? `(max-width: ${max}px)`
+      : `(min-width: ${min}px) and (max-width: ${max}px)`;
+
+    rangeConfig.push({ slug: bp.key, query });
+  });
+
+  // Add Desktop/Default (above last breakpoint)
+  rangeConfig.push({
+    slug: '_default_desktop',
+    query: `(min-width: ${prevMax + 1}px)`
+  });
+
+  // Register Contexts
+  rangeConfig.forEach(range => {
+    mm.add(range.query, () => {
+      let activeConfig = config.animation; // Default to global/base
+
+      // Check for override
+      if (range.slug !== '_default_desktop' && config.media && config.media[range.slug]) {
+        activeConfig = config.media[range.slug];
+        logConfig(`Active: ${range.slug} (Override)`, { ...config, animation: activeConfig });
       } else {
-        if (debug) console.warn(`${logPrefix} Unknown or invalid breakpoint slug:`, mediaSlug);
+        logConfig(`Active: ${range.slug} (Global)`, config);
+      }
+
+      if (activeConfig) {
+        createTween({ ...config, animation: activeConfig }, node);
+      }
+    });
+  });
+
+  if (debug && config.media) {
+    const knownSlugs = new Set(sortedBps.map(b => b.key));
+    Object.keys(config.media).forEach(k => {
+      if (!knownSlugs.has(k)) {
+        console.warn(`${logPrefix} Unknown breakpoint slug used:`, k);
       }
     });
   }

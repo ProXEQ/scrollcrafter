@@ -7,97 +7,68 @@ import { getGsap, getScrollTrigger } from '../core/gsap-loader';
  * @param {boolean} isStrict - czy włączono tryb strict
  * @param {Array} sortedBreakpoints - tablica z Configu [{key:'mobile', value:767}, ...]
  */
-function buildMediaQuery(targetSlug, isStrict, sortedBreakpoints) {
-    if (!sortedBreakpoints || !Array.isArray(sortedBreakpoints)) return null;
-
-    const currentIndex = sortedBreakpoints.findIndex(bp => bp.key === targetSlug);
-    if (currentIndex === -1) return null; 
-
-    const currentBp = sortedBreakpoints[currentIndex];
-    const maxQuery = `(max-width: ${currentBp.value}px)`;
-
-    if (!isStrict) {
-        return maxQuery;
-    }
-
-    let minQuery = '';
-    if (currentIndex > 0) {
-        const prevBp = sortedBreakpoints[currentIndex - 1];
-        const minVal = prevBp.value + 1;
-        minQuery = `(min-width: ${minVal}px) and `;
-    }
-    return `${minQuery}${maxQuery}`;
-}
-
 /**
  * Helper: Bezpieczny parser wyrażeń matematycznych (Rozszerzony)
  */
 function parseSmartValue(val, contextNode) {
-    if (typeof val !== 'string') return val;
+  if (typeof val !== 'string') return val;
 
-    if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
-    if (val === 'calc_scroll_width') val = 'calc(sw)';
-    if (val === 'calc_100vh') val = 'calc(vh)';
+  if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
+  if (val === 'calc_scroll_width') val = 'calc(sw)';
+  if (val === 'calc_100vh') val = 'calc(vh)';
 
-    if (val.match(/^calc\s*\((.*)\)$/i)) {
-        const expression = val.match(/^calc\s*\((.*)\)$/i)[1];
+  if (val.match(/^calc\s*\((.*)\)$/i)) {
+    let expression = val.match(/^calc\s*\((.*)\)$/i)[1];
 
-        return () => {
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-            const cw = contextNode.clientWidth || 0;
-            const ch = contextNode.clientHeight || 0;
-            
-            const totalScrollW = contextNode.scrollWidth - cw;
-            const sw = totalScrollW > 0 ? totalScrollW : 0;
+    // Support unit-like syntax: 100sw -> 100 * sw
+    expression = expression.replace(/(\d)\s*(sw|cw|ch|vw|vh)\b/gi, '$1 * $2');
 
-            
-            const center = (vw - cw) / 2;
+    return (index, target) => {
+      const el = target || contextNode;
 
-            const end = vw - cw;
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const cw = el.clientWidth || 0;
+      const ch = el.clientHeight || 0;
 
-            const vcenter = (vh - ch) / 2;
-            
-            const varsMap = {
-                sw: sw,
-                cw: cw,
-                ch: ch,
-                vw: vw,
-                vh: vh,
-                center: center,
-                vcenter: vcenter,
-                end: end
-            };
+      const totalScrollW = el.scrollWidth - cw;
+      const sw = totalScrollW > 0 ? totalScrollW : 0;
 
-            let cleanExpr = expression;
-            Object.keys(varsMap).forEach(key => {
-                const regex = new RegExp(`\\b${key}\\b`, 'gi');
-                cleanExpr = cleanExpr.replace(regex, '');
-            });
+      const center = (vw - cw) / 2;
+      const end = vw - cw;
+      const vcenter = (vh - ch) / 2;
 
-            if (!/^[0-9\.\+\-\*\/\(\)\s]*$/.test(cleanExpr)) {
-                console.warn('[ScrollCrafter] Unsafe characters in calc expression:', expression);
-                return 0;
-            }
+      const varsMap = { sw, cw, ch, vw, vh, center, vcenter, end };
 
-            let finalExpr = expression;
-            const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
+      let cleanExpr = expression;
+      Object.keys(varsMap).forEach(key => {
+        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+        cleanExpr = cleanExpr.replace(regex, '');
+      });
 
-            sortedKeys.forEach(key => {
-                const regex = new RegExp(`\\b${key}\\b`, 'gi');
-                finalExpr = finalExpr.replace(regex, varsMap[key]);
-            });
+      if (!/^[0-9\.\+\-\*\/\(\)\s]*$/.test(cleanExpr)) {
+        console.warn('[ScrollCrafter] Unsafe characters in calc expression:', expression);
+        return 0;
+      }
 
-            try {
-                return new Function('return ' + finalExpr)();
-            } catch (e) {
-                console.error('[ScrollCrafter] Calc error:', e);
-                return 0;
-            }
-        };
-    }
+      let finalExpr = expression;
+      const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
 
-    return val;
+      sortedKeys.forEach(key => {
+        const regex = new RegExp(`\\b${key}\\b`, 'gi');
+        finalExpr = finalExpr.replace(regex, varsMap[key]);
+      });
+
+      try {
+        return new Function('return ' + finalExpr)();
+      } catch (e) {
+        console.error('[ScrollCrafter] Calc error:', e);
+        return 0;
+      }
+    };
+  }
+
+  return val;
 }
 
 function parseMacros(vars, contextNode) {
@@ -113,7 +84,6 @@ function parseMacros(vars, contextNode) {
   });
   return out;
 }
-
 
 function getPinElement(node) {
   return node;
@@ -140,6 +110,11 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
 
   if (!st.trigger) st.trigger = pinElem;
   if (st.pin === true) st.pin = pinElem;
+
+  // Fix Elementor Jump: Disable CSS transitions on pinned element to prevent conflicts
+  if (st.pin) {
+    gsap.set(st.pin, { transition: "none" });
+  }
   if (typeof st.invalidateOnRefresh === 'undefined') st.invalidateOnRefresh = true;
   if (typeof st.anticipatePin === 'undefined') st.anticipatePin = 0.5;
   if (globalConfig.id && !st.id) st.id = `sc-${globalConfig.id}`;
@@ -185,8 +160,14 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
 
 registerWidget('scroll_timeline', (node, config) => {
   const debug = !!window.ScrollCrafterConfig?.debug;
-  const sysBreakpoints = window.ScrollCrafterConfig?.breakpoints || [];
   const logPrefix = `[ScrollCrafter][timeline:${config.id || 'tl'}]`;
+
+  const logConfig = (label, cfg) => {
+    if (!debug) return;
+    console.group(`${logPrefix} ${label}`);
+    console.log('Details:', cfg);
+    console.groupEnd();
+  };
 
   let gsap;
   try {
@@ -198,28 +179,74 @@ registerWidget('scroll_timeline', (node, config) => {
   }
 
   const mm = gsap.matchMedia();
+  const sysBreakpoints = window.ScrollCrafterConfig?.breakpoints || [];
 
-  mm.add("(min-width: 0px)", () => {
-     if (config.steps && config.steps.length > 0) {
-         createTimeline(node, config, config, debug, logPrefix, gsap);
-     }
+  // Ensure sorted by value
+  const sortedBps = [...sysBreakpoints].sort((a, b) => a.value - b.value);
+
+  let prevMax = 0;
+  const rangeConfig = [];
+
+  // Build ranges for defined breakpoints
+  sortedBps.forEach(bp => {
+    const min = prevMax + 1;
+    const max = bp.value;
+    prevMax = max;
+
+    const query = min === 1
+      ? `(max-width: ${max}px)`
+      : `(min-width: ${min}px) and (max-width: ${max}px)`;
+
+    rangeConfig.push({ slug: bp.key, query });
   });
 
-  if (config.media) {
-      Object.keys(config.media).forEach((mediaSlug) => {
-          const mediaConfig = config.media[mediaSlug];
-          
-          const isStrict = !!mediaConfig.strict;
+  // Add Desktop/Default (above last breakpoint)
+  rangeConfig.push({
+    slug: '_default_desktop',
+    query: `(min-width: ${prevMax + 1}px)`
+  });
 
-          const query = buildMediaQuery(mediaSlug, isStrict, sysBreakpoints);
+  // Register Contexts
+  rangeConfig.forEach(range => {
+    mm.add(range.query, () => {
+      let activeConfig = config; // Default to global config struct (which has steps)
+      // For timeline, config IS the container of steps.
+      // Media overrides usually provide different 'steps' or 'timelineVars'.
 
-          if (query) {
-              mm.add(query, () => {
-                  createTimeline(node, mediaConfig, config, debug, logPrefix + `[${mediaSlug}]`, gsap);
-              });
-          } else {
-             if (debug) console.warn(`${logPrefix} Unknown breakpoint slug: ${mediaSlug}`);
-          }
-      });
+      let isOverride = false;
+      if (range.slug !== '_default_desktop' && config.media && config.media[range.slug]) {
+        // Merge override logic for timeline is complex (handled in PHP builder mostly?)
+        // PHP builder returns a processed `config` where `media` contains FULL config objects for that media?
+        // Let's check Timeline_Config_Builder.
+        // It returns 'media' => [ slug => mediaConfig ].
+        // So we should use that.
+
+        if (config.media[range.slug]) {
+          activeConfig = config.media[range.slug];
+          isOverride = true;
+        }
+      }
+
+      // Validation: Ensure activeConfig has steps
+      if (activeConfig && activeConfig.steps && activeConfig.steps.length > 0) {
+        if (isOverride) {
+          logConfig(`Active: ${range.slug} (Override)`, activeConfig);
+          // Pass 'config' as global context if needed? createTimeline uses activeConfig as configData, and config as globalConfig
+          createTimeline(node, activeConfig, config, debug, logPrefix + `[${range.slug}]`, gsap);
+        } else {
+          logConfig(`Active: ${range.slug} (Global)`, activeConfig);
+          createTimeline(node, activeConfig, config, debug, logPrefix, gsap);
+        }
+      }
+    });
+  });
+
+  if (debug && config.media) {
+    const knownSlugs = new Set(sortedBps.map(b => b.key));
+    Object.keys(config.media).forEach(k => {
+      if (!knownSlugs.has(k)) {
+        console.warn(`${logPrefix} Unknown breakpoint slug used:`, k);
+      }
+    });
   }
 });

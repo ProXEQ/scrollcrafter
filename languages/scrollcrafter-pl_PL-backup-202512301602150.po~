@@ -10,7 +10,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10 >= 2 && n%10<=4 "
 "&&(n%100<10||n%100 >= 20)? 1 : 2);\n"
 "POT-Creation-Date: 2025-12-27T12:07:27.806Z\n"
-"PO-Revision-Date: 2026-01-05 10:56+0000\n"
+"PO-Revision-Date: 2025-12-30 16:01+0000\n"
 "Last-Translator: \n"
 "Language-Team: Polski\n"
 "X-Generator: Loco https://localise.biz/\n"
@@ -55,7 +55,7 @@ msgstr "Animuj OD tych wartości do obecnych"
 msgid "Animation script"
 msgstr "Skrypt Animacji"
 
-#: assets/src/editor/scrollcrafter-editor.js:576
+#: assets/src/editor/scrollcrafter-editor.js:574
 msgid "Applied!"
 msgstr "Zastosowano!"
 
@@ -232,7 +232,7 @@ msgstr "Zanikanie + ukrycie (autoAlpha)"
 msgid "First Step"
 msgstr "Pierwszy krok"
 
-#: assets/src/editor/scrollcrafter-editor.js:559
+#: assets/src/editor/scrollcrafter-editor.js:557
 msgid "Fix errors before saving!"
 msgstr "Napraw błędy przed zapisaniem!"
 
@@ -264,9 +264,10 @@ msgid "Global stagger"
 msgstr "Globalne opóźnienie kaskadowe (stagger)"
 
 #: assets/src/editor/field-defs.js:64 assets/src/editor/field-defs.js:196
+#, fuzzy
 #| msgid "[rows, cols] or \"auto\""
 msgid "Grid [rows, cols] or \"auto\""
-msgstr ""
+msgstr "[rows, cols] lub \"auto\""
 
 #: src/Admin/Settings_Page.php:72
 msgid "GSAP & Assets"
@@ -291,9 +292,10 @@ msgid "If empty, breakpoints from Elementor will be used automatically."
 msgstr "Jeśli brak, plugin użyje domyślnych breakpointów Elementora."
 
 #: assets/src/editor/field-defs.js:212
+#, fuzzy
 #| msgid "immediate setup vars"
 msgid "Immediate setup vars"
-msgstr ""
+msgstr "zmienne natychmiastowej konfiguracji"
 
 #: assets/src/editor/field-defs.js:77
 msgid "Infinite"
@@ -324,9 +326,10 @@ msgid "Link animation to scrollbar"
 msgstr "Powiąż animację z paskiem przewijania"
 
 #: assets/src/editor/field-defs.js:37
+#, fuzzy
 #| msgid "method"
 msgid "Method"
-msgstr ""
+msgstr "metoda"
 
 #: src/Animation/Script_Parser.php:80
 msgid "Missing colon separator (:)."
@@ -337,28 +340,32 @@ msgid "Motion curve"
 msgstr "Krzywa ruchu"
 
 #: assets/src/editor/field-defs.js:10
+#, fuzzy
 #| msgid "move down 50px"
 msgid "Move down 100px"
-msgstr ""
+msgstr "Przesuń w dół o 50px"
 
 #: assets/src/editor/field-defs.js:9
+#, fuzzy
 #| msgid "move left 100px"
 msgid "Move left 100px"
-msgstr ""
+msgstr "Przesuń w lewo o 100px"
 
 #: assets/src/editor/field-defs.js:12
 msgid "Move left 50% of self"
 msgstr "Przesuń w lewo o 50% własnej szer."
 
 #: assets/src/editor/field-defs.js:8
+#, fuzzy
 #| msgid "move right 100px"
 msgid "Move right 100px"
-msgstr ""
+msgstr "przesuń w prawo o 100px"
 
 #: assets/src/editor/field-defs.js:11
+#, fuzzy
 #| msgid "move up 50px"
 msgid "Move up 100px"
-msgstr ""
+msgstr "przesuń w górę o 50px"
 
 #: assets/src/editor/field-defs.js:13
 msgid "Move up 50% of self"
@@ -397,9 +404,10 @@ msgid "Override Target"
 msgstr "Nadpisz cel"
 
 #: assets/src/editor/field-defs.js:182
+#, fuzzy
 #| msgid "override target"
 msgid "Override target"
-msgstr ""
+msgstr "nadpisz cel"
 
 #: assets/src/editor/field-defs.js:27
 msgid "Overshoot/Elastic"
@@ -414,9 +422,10 @@ msgid "Pin smoothing (1)"
 msgstr "Wygładzanie przyklejenia (1)"
 
 #: assets/src/editor/field-defs.js:117
+#, fuzzy
 #| msgid "Pin trigger element"
 msgid "Pin the trigger element"
-msgstr ""
+msgstr "Przypnij element wyzwalający"
 
 #: assets/src/editor/field-defs.js:20
 msgid "Pivot point: top center"
@@ -428,9 +437,10 @@ msgid "PixelMobs, ProXEQ"
 msgstr "PixelMobs, ProXEQ"
 
 #: assets/src/editor/field-defs.js:130
+#, fuzzy
 #| msgid "Play only once"
 msgid "Play only once?"
-msgstr ""
+msgstr "Odtwórz tylko raz"
 
 # %d: Line number in the script
 #: src/Animation/Script_Parser.php:144
@@ -483,9 +493,10 @@ msgid "Script is valid."
 msgstr "Skrypt jest poprawny."
 
 #: assets/src/editor/field-defs.js:102
+#, fuzzy
 #| msgid "scroll 500px from start"
 msgid "Scroll 500px from start"
-msgstr ""
+msgstr "scroll 500px od pkt. startu"
 
 #: src/Elementor/Controls/Animation_Injector.php:56
 msgid "ScrollCrafter Animations"
@@ -628,9 +639,10 @@ msgid "Timeline Defaults"
 msgstr "Domyślne osi czasu"
 
 #: assets/src/editor/field-defs.js:200
+#, fuzzy
 #| msgid "timeline placement"
 msgid "Timeline placement"
-msgstr ""
+msgstr "położenie na osi czasu"
 
 #: assets/src/editor/field-defs.js:81
 msgid "To-Fro loop"
@@ -649,12 +661,12 @@ msgid "Typing speed multiplier"
 msgstr "Mnożnik prędkości pisania"
 
 # 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number
-#: src/Admin/Validation_Controller.php:174
+#: src/Admin/Validation_Controller.php:163
 msgid "Unknown key '%1\\$s' in [%2\\$sstep.%3\\$d]."
 msgstr "Niepoprawny klucz '%1\\$s' w [%2\\$sstep.%3\\$d]."
 
 # %s: The unknown key found.
-#: src/Admin/Validation_Controller.php:146
+#: src/Admin/Validation_Controller.php:144
 msgid "Unknown key '%s' in [%s]."
 msgstr "Niepoprawny klucz '%s' w [%s]."
 
@@ -664,7 +676,7 @@ msgid "Unknown section header ignored."
 msgstr "Niepoprawny nagłówek sekcji."
 
 # %s: The unsafe expression found in calc().
-#: src/Admin/Validation_Controller.php:283
+#: src/Admin/Validation_Controller.php:278
 msgid ""
 "Unsafe characters in calc(): '%s'. Only math and vars (sw, vw, center...) "
 "are allowed."
@@ -678,11 +690,6 @@ msgid_plural "Valid (%d warnings)."
 msgstr[0] "Poprawny (lecz zawiera %d ostrzeżenie)"
 msgstr[1] "Poprawny (lecz zawiera %d ostrzeżenia)"
 msgstr[2] "Poprawny (lecz zawiera %d ostrzeżeń)"
-
-#: src/Admin/Validation_Controller.php:156
-#: src/Admin/Validation_Controller.php:186
-msgid "Value for '%s' cannot be negative."
-msgstr "Wartość %s nie może być negatywna."
 
 #: assets/src/editor/field-defs.js:205
 msgid "Wait 1s"
@@ -712,7 +719,7 @@ msgstr "Tak"
 msgid "Yes (Default)"
 msgstr "Tak (Domyślnie)"
 
-#: assets/src/editor/scrollcrafter-editor.js:566
+#: assets/src/editor/scrollcrafter-editor.js:564
 msgid ""
 "Your code has %d warning(s). This might cause unexpected behavior. Are you "
 "sure you want to save?"

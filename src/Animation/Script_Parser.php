@@ -90,7 +90,7 @@ class Script_Parser
             }
 
             if (!$currentMedia && str_contains($rawKey, '.')) {
-                 if ($this->handleDotNotation($result, $rawKey, $rawValue)) {
+                 if ($this->handleDotNotation($result, $rawKey, $rawValue, $lineNum)) {
                      continue;
                  }
             }
@@ -106,37 +106,37 @@ class Script_Parser
                     if (!isset($result['media'][$currentMedia]['timeline']['steps'][$idx])) {
                         $result['media'][$currentMedia]['timeline']['steps'][$idx] = [];
                     }
-                    $this->assignStepKey($result['media'][$currentMedia]['timeline']['steps'][$idx], $key, $value);
+                    $this->assignStepKey($result['media'][$currentMedia]['timeline']['steps'][$idx], $key, $value, $lineNum);
                 } 
                 elseif ($currentSection === self::SECTION_TIMELINE) {
-                     $this->assignSimpleKey($result['media'][$currentMedia]['timeline']['defaults'], $key, $value);
+                     $this->assignSimpleKey($result['media'][$currentMedia]['timeline']['defaults'], $key, $value, $lineNum);
                 }
                 else {
                     $targetArray = &$result['media'][$currentMedia][$currentSection];
                     
                     if ($currentSection === self::SECTION_ANIM) {
-                        $this->assignAnimationKey($targetArray, $key, $value);
+                        $this->assignAnimationKey($targetArray, $key, $value, $lineNum);
                     } elseif ($currentSection === self::SECTION_SCROLL) {
-                        $this->assignScrollKey($targetArray, $key, $value);
+                        $this->assignScrollKey($targetArray, $key, $value, $lineNum);
                     } elseif ($currentSection === self::SECTION_TARGET) {
-                        $this->assignTargetKey($targetArray, $key, $value);
+                        $this->assignTargetKey($targetArray, $key, $value, $lineNum);
                     }
                 }
 
             } else {
                 
                 if ($currentSection === self::SECTION_ANIM) {
-                    $this->assignAnimationKey($result['animation'], $key, $value);
+                    $this->assignAnimationKey($result['animation'], $key, $value, $lineNum);
                 } elseif ($currentSection === self::SECTION_SCROLL) {
-                    $this->assignScrollKey($result['scroll'], $key, $value);
+                    $this->assignScrollKey($result['scroll'], $key, $value, $lineNum);
                 } elseif ($currentSection === self::SECTION_TARGET) {
-                    $this->assignTargetKey($result['target'], $key, $value);
+                    $this->assignTargetKey($result['target'], $key, $value, $lineNum);
                 } elseif (is_array($currentSection) && ($currentSection['type'] ?? '') === 'step') {
                     $idx = $currentSection['index'];
                     if (!isset($result['timeline']['steps'][$idx])) {
                         $result['timeline']['steps'][$idx] = [];
                     }
-                    $this->assignStepKey($result['timeline']['steps'][$idx], $key, $value);
+                    $this->assignStepKey($result['timeline']['steps'][$idx], $key, $value, $lineNum);
                 } else {
                     if ($currentSection === self::SECTION_TIMELINE) {
                         /* translators: %d: Line number in the script */
@@ -169,12 +169,12 @@ class Script_Parser
         }
     }
     
-    private function assignSimpleKey(array &$arr, string $key, string $value): void {
+    private function assignSimpleKey(array &$arr, string $key, string $value, int $line): void {
+        $val = $value;
         if (in_array($key, ['duration', 'delay', 'stagger'])) {
-            $arr[$key] = (float)$value;
-        } else {
-            $arr[$key] = $value;
+            $val = (float)$value;
         }
+        $arr[$key] = ['value' => $val, 'line' => $line];
     }
 
 
@@ -219,91 +219,135 @@ class Script_Parser
         return false;
     }
 
-    private function handleDotNotation(array &$result, string $rawKey, string $value): bool
+    private function handleDotNotation(array &$result, string $rawKey, string $value, int $line): bool
     {
         $parts = explode('.', strtolower($rawKey));
         if (count($parts) === 3 && $parts[0] === 'timeline' && $parts[1] === 'defaults') {
             $prop = $parts[2];
             $numericProps = ['duration', 'delay', 'stagger'];
+            $finalVal = $value;
             if (in_array($prop, $numericProps, true)) {
-                $result['timeline']['defaults'][$prop] = (float)$value;
-            } else {
-                $result['timeline']['defaults'][$prop] = $value;
+                $finalVal = (float)$value;
             }
+            $result['timeline']['defaults'][$prop] = ['value' => $finalVal, 'line' => $line];
             return true;
         }
         return false;
     }
 
-        private function assignAnimationKey(array &$anim, string $key, string $value): void
+    private function assignAnimationKey(array &$anim, string $key, string $value, int $line): void
     {
+        // Handle dot notation
+        if (str_contains($key, '.')) {
+            [$main, $sub] = explode('.', $key, 2);
+            if ($main === 'stagger') {
+                 if (!isset($anim['stagger']) || !is_array($anim['stagger'])) $anim['stagger'] = [];
+                 $anim['stagger'][$sub] = ['value' => $this->parseSmartValue($value), 'line' => $line];
+                 return;
+            }
+            if ($main === 'text') {
+                 if (!isset($anim['text']) || !is_array($anim['text'])) $anim['text'] = [];
+                 $anim['text'][$sub] = ['value' => $this->parseSmartValue($value), 'line' => $line];
+                 return;
+            }
+        }
+
         switch ($key) {
             case 'type': 
             case 'method':
-                $anim['type'] = $value; 
+                $anim['type'] = ['value' => $value, 'line' => $line]; 
                 break;
-                
+            
+            case 'split': // New: SplitText
+                 $anim['split'] = ['value' => $value, 'line' => $line];
+                 break;
+
             case 'from': 
             case 'to': 
-                $anim[$key] = $this->parseVarsList($value); 
+                $anim[$key] = ['value' => $this->parseVarsList($value), 'line' => $line]; 
                 break;
                 
             case 'duration': 
             case 'delay': 
+                $anim[$key] = ['value' => (float) $value, 'line' => $line]; 
+                break;
+
             case 'stagger': 
-                $anim[$key] = (float) $value; 
+                $anim[$key] = ['value' => (float) $value, 'line' => $line]; 
                 break;
                 
             case 'ease': 
-                $anim['ease'] = $value; 
+                $anim['ease'] = ['value' => $value, 'line' => $line]; 
                 break;
             
-            case 'strict': $anim['strict'] = $this->parseBool($value); break;
-            case 'repeat': $anim['repeat'] = (int)$value; break;
-            case 'yoyo':   $anim['yoyo'] = $this->parseBool($value); break;
+            case 'strict': $anim['strict'] = ['value' => $this->parseBool($value), 'line' => $line]; break;
+            case 'repeat': $anim['repeat'] = ['value' => (int)$value, 'line' => $line]; break;
+            case 'yoyo':   $anim['yoyo'] = ['value' => $this->parseBool($value), 'line' => $line]; break;
 
             default:
                 break;
         }
     }
 
-    private function assignScrollKey(array &$scroll, string $key, string $value): void
+    private function assignScrollKey(array &$scroll, string $key, string $value, int $line): void
     {
         $map = [ 'toggleactions' => 'toggleActions', 'pinspacing' => 'pinSpacing', 'anticipatepin' => 'anticipatePin' ];
         $realKey = $map[$key] ?? $key;
+        $parsedVal = $value;
 
         if (in_array($key, ['scrub', 'snap'], true)) {
-             $scroll[$realKey] = $this->parseBoolOrNumberOrString($value);
+             $parsedVal = $this->parseBoolOrNumberOrString($value);
         } elseif (in_array($key, ['once', 'pin', 'pinspacing', 'markers'], true)) {
-             $scroll[$realKey] = $this->parseBool($value);
+             $parsedVal = $this->parseBool($value);
         } elseif ($key === 'anticipatepin') {
-             $scroll[$realKey] = (float) $value;
+             $parsedVal = (float) $value;
              
         } elseif ($key === 'strict') {
-             $scroll['strict'] = $this->parseBool($value);
+             $parsedVal = $this->parseBool($value);
         
-        } else {
-             $scroll[$realKey] = $value;
         }
+        
+        $scroll[$realKey] = ['value' => $parsedVal, 'line' => $line];
     }
 
 
-    private function assignStepKey(array &$step, string $key, string $value): void
+    private function assignStepKey(array &$step, string $key, string $value, int $line): void
     {
+        // Handle dot notation for steps locally
+        if (str_contains($key, '.')) {
+            [$main, $sub] = explode('.', $key, 2);
+            if ($main === 'stagger') {
+                 if (!isset($step['stagger']) || !is_array($step['stagger'])) $step['stagger'] = [];
+                 $step['stagger'][$sub] = ['value' => $this->parseSmartValue($value), 'line' => $line];
+                 return;
+            }
+            if ($main === 'text') {
+                 if (!isset($step['text']) || !is_array($step['text'])) $step['text'] = [];
+                 $step['text'][$sub] = ['value' => $this->parseSmartValue($value), 'line' => $line];
+                 return;
+            }
+        }
+
         switch ($key) {
-            case 'type': $step['type'] = $value; break;
-            case 'selector': $step['selector'] = $value; break;
-            case 'from': case 'to': case 'startat': $step[$key === 'startat' ? 'startAt' : $key] = $this->parseVarsList($value); break;
-            case 'duration': case 'delay': case 'stagger': $step[$key] = (float) $value; break;
-            case 'position': $step['position'] = $value; break;
-            case 'ease': $step['ease'] = $value; break;
-            case 'label': $step['label'] = $value; break; 
+            case 'type': $step['type'] = ['value' => $value, 'line' => $line]; break;
+            case 'selector': $step['selector'] = ['value' => $value, 'line' => $line]; break;
+            case 'split': $step['split'] = ['value' => $value, 'line' => $line]; break;
+            case 'from': case 'to': case 'startat': $step[$key === 'startat' ? 'startAt' : $key] = ['value' => $this->parseVarsList($value), 'line' => $line]; break;
+            case 'duration': case 'delay': 
+                 $step[$key] = ['value' => (float) $value, 'line' => $line]; 
+                 break;
+            case 'stagger': 
+                 $step[$key] = ['value' => (float) $value, 'line' => $line]; 
+                 break;
+            case 'position': $step['position'] = ['value' => $value, 'line' => $line]; break;
+            case 'ease': $step['ease'] = ['value' => $value, 'line' => $line]; break;
+            case 'label': $step['label'] = ['value' => $value, 'line' => $line]; break; 
         }
     }
 
-    private function assignTargetKey(array &$target, string $key, string $value): void
+    private function assignTargetKey(array &$target, string $key, string $value, int $line): void
     {
-        if ($key === 'selector') $target['selector'] = $value;
+        if ($key === 'selector') $target['selector'] = ['value' => $value, 'line' => $line];
     }
 
     private function parseVarsList(string $value): array

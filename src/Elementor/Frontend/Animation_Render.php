@@ -46,6 +46,8 @@ class Animation_Render
 
         try {
             $parsed = $this->parser->parse( $script );
+            // Normalize parsed data to flat values for the renderer logic
+            $parsed = $this->normalizeParsedData( $parsed );
         } catch ( \Throwable $e ) {
             if ( Config::instance()->is_debug() ) {
                 Logger::log_exception( $e, 'animation_parsing' );
@@ -79,6 +81,20 @@ class Animation_Render
             'data-scrollcrafter-config',
             esc_attr( wp_json_encode( $config ) )
         );
+    }
+
+    private function normalizeParsedData(array $data): array {
+        $clean = [];
+        foreach ($data as $key => $item) {
+            if (is_array($item) && array_key_exists('value', $item) && array_key_exists('line', $item)) {
+                 $clean[$key] = $item['value'];
+            } elseif (is_array($item)) {
+                 $clean[$key] = $this->normalizeParsedData($item);
+            } else {
+                 $clean[$key] = $item;
+            }
+        }
+        return $clean;
     }
 
     private function build_scroll_trigger_config( array $scroll, string $widget_id ): array
