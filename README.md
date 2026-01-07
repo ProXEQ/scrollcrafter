@@ -1,91 +1,155 @@
-# ScrollCrafter – Scroll Animations DSL for Elementor
+# ScrollCrafter – The Ultimate GSAP Scroll Animation DSL for Elementor
 
-ScrollCrafter adds a dedicated DSL editor to Elementor that lets you define advanced scroll-based animations powered by GSAP and ScrollTrigger using a readable, text-based syntax. 
+ScrollCrafter transforms Elementor into a powerhouse of motion design. It introduces a dedicated **DSL (Domain Specific Language)** editor that lets you construct advanced, production-grade scroll animations powered by GSAP and ScrollTrigger using a clean, readable, and type-safe syntax.
 
-## Features
+Say goodbye to messy JavaScript snippets and "spaghetti code" in your Elementor widgets. ScrollCrafter gives you IDE-like superpowers directly inside the builder.
 
-- Visual DSL editor modal integrated into Elementor panel for any widget, section or container. 
-- CodeMirror 6–based editor with syntax highlighting, autocomplete for sections/fields/values and inline linting. 
-- Declarative scroll configuration mapped to GSAP ScrollTrigger (start, end, scrub, once, snap, markers, pin, etc.). 
-- Timeline + step support for more complex animation sequences. 
-- Server-side validation endpoint to catch DSL errors before they hit the front-end. 
-- Designed to be safe for production – no direct eval of user code, DSL is parsed and translated to config. 
+## 🚀 Key Features
 
-## Why ScrollCrafter?
+### ⚡ Power & Performance
+-   **Smart Asset Loading**: Automatically detects usage and only loads GSAP/ScrollCrafter scripts on pages that actually use them. Saves ~150KB on non-animated pages.
+-   **Defer & Async**: All frontend scripts are deferred to ensure non-blocking rendering (Core Web Vitals friendly).
+-   **Production Safe**: No `eval()`. Your DSL code is safely parsed on the server, validated, and converted into optimized JSON configuration.
 
-Hand-writing ScrollTrigger configs in JavaScript inside Elementor can get messy and error-prone.   
-ScrollCrafter gives you a compact DSL with editor ergonomics similar to an IDE: autocomplete, docs hints, and validation, while still generating plain GSAP configs under the hood. 
+### 🛠 The DSL Editor
+-   **Integrated Modal**: Distinct, distraction-free coding environment invoked directly from any Elementor widget, column, or container.
+-   **Intelligent Autocomplete**: Context-aware suggestions for sections (`[animation]`, `[scroll]`), properties (`duration`, `scrub`), and even values (`top center`, `play none...`).
+-   **Inline Validation**: Real-time error checking with precise line reporting. Typos and invalid types are flagged instantly.
+-   **Keyboard Shortcuts**:
+    -   `ESC`: Safely close (with confirmation to prevent accidental loss).
+    -   `CMD/CTRL + S`: Quick Save & Apply.
 
-## Requirements
+### 🎨 Animation Capabilities
+-   **GSAP Powered**: Full access to the industry-standard GSAP 3 core and ScrollTrigger.
+-   **Responsive Breakpoints**: Define strict, non-overlapping responsive logic (e.g., `[animation @mobile]`).
+-   **Timeline Support**: create complex sequences with `[timeline]` and `[step.N]` for multi-stage animations.
+-   **Advanced Calc**: Native support for unit-mixed math like `x=calc(100vw - 50%)` or `x=calc(vw - cw)` for horizontal scrolling.
+-   **Text Effects**: Built-in support for `SplitText` and `TextPlugin` (requires GSAP customization).
 
-- WordPress: `X.Y` or higher (fill in actual minimum). 
-- PHP: `8.1` or higher (fill in actual minimum). 
-- Elementor: `X.Y` or higher (fill in actual minimum). 
-- GSAP + ScrollTrigger loaded on the front-end (either by the theme or a performance plugin). 
+---
 
-## Installation
+## 📦 Installation
 
-1. Download the plugin ZIP or clone this repository into `wp-content/plugins/scrollcrafter`. 
-2. Activate “ScrollCrafter” from the WordPress → Plugins screen. 
-3. Make sure GSAP and ScrollTrigger are enqueued on the front-end of your site. 
-4. Open any Elementor page, select an element and use the ScrollCrafter control to open the DSL editor. 
+1.  Download the plugin ZIP.
+2.  Go to **WordPress Dashboard → Plugins → Add New → Upload Plugin**.
+3.  Upload and activate **ScrollCrafter**.
+4.  (Optional) Go to **Settings → ScrollCrafter** to configure custom Breakpoints or GSAP CDN links.
 
-## Basic Usage
+---
 
-1. Open the ScrollCrafter DSL editor from the Elementor panel for a selected element. 
-2. Start by defining a target and animation section: 
+## 📖 DSL Syntax Guide
 
+ScrollCrafter uses a Config-like syntax divided into **Sections** denoted by brackets `[]`.
 
-4. Use `/` inside a section to get autocomplete for the next available fields; type values and let inline validation highlight any issues. 
+### 1. `[target]`
+Defines *what* you are animating. By default, it animates the widget you are editing.
+```ini
+[target]
+# Use any CSS selector. 
+# 'selector' is optional if you want to animate the widget wrapper itself.
+selector: .my-custom-class
+```
 
-## DSL Overview
+### 2. `[animation]`
+Defines a simple "Tween" (single animation).
+```ini
+[animation]
+type: from          # from, to, fromTo
+from: opacity=0, y=50
+duration: 1
+ease: power2.out
+stagger: 0.1        # Stagger if multiple elements match target
+delay: 0.5
+```
 
-### Sections
+### 3. `[scroll]`
+Connects your animation to the scrollbar (ScrollTrigger).
+```ini
+[scroll]
+trigger: .section-container  # Optional trigger element
+start: top 80%               # When top of element hits 80% viewport height
+end: bottom 20%
+scrub: 1                     # Smooth scrubbing (1s lag)
+pin: true                    # Pin element during scroll
+markers: true                # Debug markers
+```
 
-- `[target]` – selects which element(s) will be animated using a CSS selector. 
-- `[animation]` – describes a single tween (from/to/fromTo, duration, delay, ease, stagger). 
-- `[scroll]` – maps animation to ScrollTrigger options (start, end, scrub, once, pin, markers, snap, etc.). 
-- `[timeline]` – defines default timeline options and acts as a container for `step.*` sections. 
-- `[step.N]` – individual steps in a timeline, using the same fields as `[animation]`. 
+### 4. `[timeline]` & `[step.N]`
+For complex sequences. Steps execute one after another.
+```ini
+[timeline]
+timeline.defaults.ease: none
 
-### Scroll fields (mapped to ScrollTrigger)
+[scroll]
+pin: true
+scrub: 1
+end: +=2000
 
-- `start:` – when the animation should start relative to viewport (e.g. `top 80%`). 
-- `end:` – when the animation should end (e.g. `bottom 20%`). 
-- `scrub:` – syncs animation progress with scroll (boolean or number for smoothing). 
-- `once:` – whether the animation should only run once. 
-- `pin:` / `pinSpacing:` – pin the element while the trigger is active. 
-- `markers:` – enable debug markers. 
-- `snap:` – snap scroll to positions (e.g. `0.1` or special modes). 
+[step.1]
+selector: .box-1
+type: to
+to: x=500
 
-### Animation fields (mapped to GSAP tween)
+[step.2]
+selector: .box-2
+type: from
+from: scale=0
+position: <                  # Run at same time as previous step
+```
 
-- `type:` – `from`, `to` or `fromTo`. 
-- `from:` / `to:` – comma-separated property list, e.g. `y=50, opacity=0`. 
-- `duration:` – tween duration in seconds. 
-- `delay:` – start delay in seconds. 
-- `ease:` – any GSAP ease name (e.g. `power2.out`, `back.out`). 
-- `stagger:` – delay between items when target matches multiple elements. 
+### 5. Responsive Overrides (`@slug`)
+Override settings for specific breakpoints. You must define these breakpoints in **Settings → ScrollCrafter**.
+```ini
+[animation]
+from: x=500
 
-## Validation & Linting
+[animation @mobile]
+from: x=0, y=100  # On mobile, slide up instead of left
+```
 
-All scripts are POSTed to the `/scrollcrafter/v1/validate` REST endpoint, which parses the DSL, builds the GSAP/ScrollTrigger configs and returns any errors or warnings.   
-The CodeMirror editor consumes this response to show inline lint markers and error messages while you type. 
+---
 
-## Roadmap
+## ⚙️ Configuration
 
-- Hover tooltips with inline GSAP documentation for each field.
-- More built‑in value presets (e.g. advanced `snap` and `toggleActions` templates). 
-- Export/import of DSL snippets and reusable presets per site. 
+Go to **Settings → ScrollCrafter** to manage global options.
 
-## Contributing
+### Breakpoints
+Define your responsive breakpoints. ScrollCrafter uses a **Strict Range** system to prevent conflicts (e.g., Mobile style bleeding into Tablet).
+Example:
+-   `mobile`: 767px
+-   `tablet`: 1024px
 
-1. Fork the repository and create a feature branch.
-2. Run the development environment (fill in steps: `npm install`, `npm run build`, etc.). 
-3. Submit a pull request with a clear description and screenshots where appropriate. 
+### GSAP Loading
+Choose how GSAP is loaded:
+1.  **Local (Default)**: Uses bundled GSAP files (safe, GDPR compliant).
+2.  **CDN (GSAP Public)**: Loads from jsDelivr.
+3.  **Custom CDN**: Provide your own links (e.g., for GSAP Business/Club plugins like SplitText).
 
-## License
+---
 
-ScrollCrafter is released under the GPL‑2.0+ license, the same as WordPress itself. 
+## 🛠 Troubleshooting
 
+**"Animation jumps when pinning ends"**
+This is often caused by Elementor's default CSS transitions conflicting with GSAP.
+*Fix:* ScrollCrafter automatically forces `transition: none` on pinned elements to prevent this.
 
+**"Horizontal scroll doesn't move"**
+Ensure you have `scrub: 1` (or true) in your `[scroll]` section. Without scrub, the animation plays once instantly.
+
+**"Editor validates but nothing happens"**
+Check the browser console (F12). Ensure the target element actually exists on the page.
+
+---
+
+## 📝 Changelog
+
+### 1.1.0
+-   **New**: Smart Asset Loading - assets only load on pages where ScrollCrafter is used. 
+-   **New**: `defer` attribute added to all scripts for faster page loads.
+-   **New**: Strict Breakpoint Logic - better isolation of responsive rules in JS.
+-   **New**: Keyboard Shortcuts (`ESC` to cancel, `CMD+S` to save).
+-   **Impr**: `calc()` engine now supports unit-like syntax (e.g., `100sw`) and dynamic context (fixes `vw - cw` issues).
+-   **Fix**: Resolved "Jumping Pin" issue with Elementor transitions.
+
+### 1.0.0
+-   Initial release with DSL Editor, Validator, and Elementor Integration.
