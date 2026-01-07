@@ -35458,7 +35458,30 @@ from: opacity=1
       const cmInstance = createEditor(modal.querySelector("#sc-dsl-editor-cm"), currentScript);
       renderCheatSheet(modal.querySelector("#sc-cs-content"), cmInstance);
       updateCheatSheetState(cmInstance);
-      const close = () => modal.classList.remove("sc-dsl-editor--open");
+      const handleGlobalKey = (e) => {
+        if (e.key === "Escape") {
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          if (e.repeat) return;
+          setTimeout(() => {
+            if (confirm(__2("Are you sure you want to discard changes and close?", "scrollcrafter"))) {
+              close();
+            }
+          }, 10);
+        }
+        if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          handleApply();
+        }
+      };
+      const close = () => {
+        modal.classList.remove("sc-dsl-editor--open");
+        window.removeEventListener("keydown", handleGlobalKey, { capture: true });
+      };
+      window.addEventListener("keydown", handleGlobalKey, { capture: true });
       const bindClose = (selector) => {
         const el = modal.querySelector(selector);
         if (el) el.onclick = close;

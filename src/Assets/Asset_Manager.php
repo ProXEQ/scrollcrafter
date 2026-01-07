@@ -18,9 +18,8 @@ class Asset_Manager
         add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'enqueue_editor_assets' ] );
     
         add_filter( 'load_script_translation_file', [ $this, 'fix_loco_js_translation_path' ], 10, 3 );
+        add_filter( 'script_loader_tag', [ $this, 'add_defer_attribute' ], 10, 2 );
     }
-
-
 
     public function register_frontend_assets(): void
     {
@@ -75,7 +74,7 @@ class Asset_Manager
 
     public function enqueue_frontend_assets(): void
     {
-        if ( is_admin() ) {
+        if ( is_admin() || ! $this->should_load_assets() ) {
             return;
         }
         wp_enqueue_script( 'scrollcrafter-gsap' );
@@ -83,6 +82,45 @@ class Asset_Manager
         wp_enqueue_script( 'scrollcrafter-gsap-text' );
         wp_enqueue_script( 'scrollcrafter-gsap-splittext' );
         wp_enqueue_script( 'scrollcrafter-frontend' );
+    }
+
+    private function should_load_assets(): bool
+    {
+        // 1. Always load in Elementor Editor / Preview
+        if ( \Elementor\Plugin::$instance->preview->is_preview_mode() ) {
+            return true;
+        }
+
+        // 2. Only check on Singular (posts/pages) for now
+        if ( ! is_singular() ) {
+             return false; 
+        }
+
+        global $post;
+        if ( ! $post instanceof \WP_Post ) {
+            return false;
+        }
+
+        // 3. Check Elementor Data in Meta (Smart Scanning)
+        $elementor_data = get_post_meta( $post->ID, '_elementor_data', true );
+
+        if ( is_string($elementor_data) && (
+             false !== strpos( $elementor_data, 'scrollcrafter_enable' ) ||
+             false !== strpos( $elementor_data, 'scrollcrafter_script' ) 
+           ) ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function add_defer_attribute( $tag, $handle ) {
+        if ( 0 === strpos( $handle, 'scrollcrafter-' ) ) {
+            if ( false === strpos( $tag, 'defer' ) ) {
+                return str_replace( ' src', ' defer src', $tag );
+            }
+        }
+        return $tag;
     }
 
     public function enqueue_editor_assets(): void

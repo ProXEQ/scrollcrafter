@@ -524,7 +524,39 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     renderCheatSheet(modal.querySelector('#sc-cs-content'), cmInstance);
     updateCheatSheetState(cmInstance);
 
-    const close = () => modal.classList.remove('sc-dsl-editor--open');
+    const handleGlobalKey = (e) => {
+      // ESC: Block Elementor from closing context, ask user
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        e.preventDefault();
+
+        if (e.repeat) return;
+
+        // Use timeout to decouple dialog from key event
+        setTimeout(() => {
+          if (confirm(__('Are you sure you want to discard changes and close?', 'scrollcrafter'))) {
+            close();
+          }
+        }, 10);
+      }
+      // CMD/CTRL + S: Save
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        handleApply();
+      }
+    };
+
+    const close = () => {
+      modal.classList.remove('sc-dsl-editor--open');
+      window.removeEventListener('keydown', handleGlobalKey, { capture: true });
+    };
+
+    // Add listener with capture to intercept before Elementor
+    window.addEventListener('keydown', handleGlobalKey, { capture: true });
+
     const bindClose = (selector) => {
       const el = modal.querySelector(selector);
       if (el) el.onclick = close;
