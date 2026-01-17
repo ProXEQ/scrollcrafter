@@ -48,9 +48,6 @@ node_modules export-ignore
 # src contains the core PHP logic
 # src export-ignore <- Removed
 
-# Root Admin directory (redundant if src/Admin is used)
-Admin/ export-ignore
-
 # Build sources can be ignored if we ship built assets
 assets/src export-ignore
 
