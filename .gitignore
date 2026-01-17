@@ -1,0 +1,41 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+package-lock.json
+
+# Build and assets
+# assets/js contains the built files. 
+# We usually track them if they are required for the plugin to work without build step on server,
+# but since user wants a "production build", we track .bundle.js files.
+# We ignore maps in production.
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project
+.env
+audit.log
+*.zip
+
+# Root Admin directory (if redundant)
+# Admin/
+
+# GSAP / Vendor (if you want to keep them tracked, don't ignore)
+# assets/vendor/
+
+# WordPress standard
+wp-config.php
+wp-content/uploads/
+wp-content/upgrade/
+wp-content/backup-db/
+error_log

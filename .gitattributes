@@ -43,12 +43,22 @@ composer.json export-ignore
 composer.lock export-ignore
 README.md export-ignore
 node_modules export-ignore
-src export-ignore
-# Jeśli src zawiera źródła PHP, to NIE ignoruj src.
-# Ale u Ciebie src zawiera logikę pluginu, więc MUSI być w paczce.
-# assets/src zawiera źródła JS/CSS - to można zignorować, bo mamy build w assets/js.
+
+# Essential directories for the plugin MUST NOT be ignored
+# src contains the core PHP logic
+# src export-ignore <- Removed
+
+# Root Admin directory (redundant if src/Admin is used)
+Admin/ export-ignore
+
+# Build sources can be ignored if we ship built assets
 assets/src export-ignore
+
+# Logs and system files
+audit.log export-ignore
+.DS_Store export-ignore
 
 # Tests
 tests export-ignore
 phpunit.xml export-ignore
+jest.config.js export-ignore

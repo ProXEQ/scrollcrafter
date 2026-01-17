@@ -21,10 +21,49 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'SCROLLCRAFTER_FILE', __FILE__ );
 define( 'SCROLLCRAFTER_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SCROLLCRAFTER_URL', plugin_dir_url( __FILE__ ) );
-define( 'SCROLLCRAFTER_VERSION', '1.0.0' );
+define( 'SCROLLCRAFTER_VERSION', '1.1.0' );
 define( 'SCROLLCRAFTER_MIN_WP_VERSION', '5.8' );
 define( 'SCROLLCRAFTER_MIN_PHP_VERSION', '7.4' );
 define( 'SCROLLCRAFTER_MIN_ELEMENTOR', '3.10.0' );
+
+/**
+ * Create a helper function for easy SDK access.
+ */
+function scrollcrafter_fs() {
+    global $scrollcrafter_fs;
+
+    if ( ! isset( $scrollcrafter_fs ) ) {
+        // Include Freemius SDK.
+        $fs_path = dirname(__FILE__) . '/freemius/start.php';
+        
+        // Safety check: only load if SDK exists
+        if ( ! file_exists( $fs_path ) ) {
+            return null;
+        }
+
+        require_once $fs_path;
+
+        $scrollcrafter_fs = fs_dynamic_init( array(
+            'id'                  => 'YOUR_PLUGIN_ID',
+            'slug'                => 'scrollcrafter',
+            'type'                => 'plugin',
+            'public_key'          => 'YOUR_PUBLIC_KEY',
+            'is_premium'          => true, // Use true for premium version
+            'has_addons'          => false,
+            'has_paid_plans'      => true,
+            'menu'                => array(
+                'slug'           => 'scrollcrafter',
+                'first-path'     => 'admin.php?page=scrollcrafter',
+                'support'        => false,
+            ),
+        ) );
+    }
+
+    return $scrollcrafter_fs;
+}
+
+// Init Freemius.
+scrollcrafter_fs();
 
 /**
  * Funkcja do ładowania pluginu i obsługi zależności.
