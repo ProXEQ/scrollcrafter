@@ -3,9 +3,9 @@
  * Plugin Name:       ScrollCrafter for Elementor
  * Plugin URI:        https://pixelmobs.com/scrollcrafter
  * Description:       Create advanced scroll-based animations visually with Elementor and GSAP.
- * Version:           1.0.0
- * Requires at least: 5.8
- * Requires PHP:      7.4
+ * Version:           1.1.3
+ * Requires at least: 6.0
+ * Requires PHP:      8.1
  * Author:            PixelMobs, ProXEQ
  * Author URI:        https://pixelmobs.com
  * Text Domain:       scrollcrafter
@@ -21,10 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'SCROLLCRAFTER_FILE', __FILE__ );
 define( 'SCROLLCRAFTER_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SCROLLCRAFTER_URL', plugin_dir_url( __FILE__ ) );
-define( 'SCROLLCRAFTER_VERSION', '1.1.0' );
-define( 'SCROLLCRAFTER_MIN_WP_VERSION', '5.8' );
-define( 'SCROLLCRAFTER_MIN_PHP_VERSION', '7.4' );
-define( 'SCROLLCRAFTER_MIN_ELEMENTOR', '3.10.0' );
+define( 'SCROLLCRAFTER_VERSION', '1.1.3' );
+define( 'SCROLLCRAFTER_MIN_WP_VERSION', '6.0' );
+define( 'SCROLLCRAFTER_MIN_PHP_VERSION', '8.1' );
+define( 'SCROLLCRAFTER_MIN_ELEMENTOR', '3.30.0' );
+define( 'SCROLLCRAFTER_PUBLIC_KEY', 'YOUR_PUBLIC_KEY' );
+define( 'SCROLLCRAFTER_PLUGIN_ID', 'YOUR_PLUGIN_ID' );
 
 /**
  * Create a helper function for easy SDK access.
@@ -44,10 +46,10 @@ function scrollcrafter_fs() {
         require_once $fs_path;
 
         $scrollcrafter_fs = fs_dynamic_init( array(
-            'id'                  => 'YOUR_PLUGIN_ID',
+            'id'                  => SCROLLCRAFTER_PLUGIN_ID,
             'slug'                => 'scrollcrafter',
             'type'                => 'plugin',
-            'public_key'          => 'YOUR_PUBLIC_KEY',
+            'public_key'          => SCROLLCRAFTER_PUBLIC_KEY,
             'is_premium'          => true, // Use true for premium version
             'has_addons'          => false,
             'has_paid_plans'      => true,

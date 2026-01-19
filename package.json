@@ -1,12 +1,13 @@
 {
   "name": "scrollcrafter",
-  "version": "1.1.0",
+  "version": "1.1.3",
   "description": "ScrollCrafter for Elementor - GSAP scroll animations",
   "author": "PixelMobs <connect@pixelmobs.com>",
   "scripts": {
     "build": "node esbuild.config.mjs",
     "build:production": "NODE_ENV=production node esbuild.config.mjs",
     "build:watch": "node esbuild.config.mjs --watch",
+    "version:sync": "node scripts/version-sync.mjs",
     "test": "jest",
     "i18n": "npx @wp-blocks/make-pot . languages --domain=plugin --include=\"scrollcrafter.php,src/**/*.php,assets/src/**/*.js\" --exclude=\"node_modules,vendor,dist\""
   },
