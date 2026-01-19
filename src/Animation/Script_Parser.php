@@ -368,6 +368,15 @@ class Script_Parser
 
     private function parseSmartValue(string $v)
     {
+        // Try to handle locale-specific decimals (e.g. 0,5 -> 0.5)
+        // Only if it doesn't contain multiple commas (not a list)
+        if (str_contains($v, ',') && !str_contains($v, '=') && substr_count($v, ',') === 1) {
+            $normalized = str_replace(',', '.', $v);
+            if (is_numeric($normalized)) {
+                return (float)$normalized;
+            }
+        }
+
         if (is_numeric($v)) return (float)$v;
         if ($this->isBoolString($v)) return $this->parseBool($v);
         return $v; 

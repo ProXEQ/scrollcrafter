@@ -183,18 +183,6 @@ registerWidget('scroll_animation', (node, config) => {
     const vars = parseMacros({ ...animConfig.vars }, calcContext);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
 
-    // --- Merge Advanced Props (from Parser dot-notation) ---
-    // TextPlugin
-    if (animConfig.text) {
-      vars.text = animConfig.text;
-      // TextPlugin usually requires empty element text initially if method is 'from', 
-      // but here we trust the user config or GSAP defaults.
-    }
-    // Advanced Stagger (Object)
-    if (animConfig.stagger && typeof animConfig.stagger === 'object') {
-      vars.stagger = animConfig.stagger;
-    }
-
     if (vars.scrollTrigger) {
       vars.scrollTrigger.trigger = contextNode;
       if (config.id) vars.scrollTrigger.id = 'sc-' + config.id;
@@ -202,6 +190,12 @@ registerWidget('scroll_animation', (node, config) => {
     if (vars2 && vars2.scrollTrigger) {
       vars2.scrollTrigger.trigger = contextNode;
       if (config.id) vars2.scrollTrigger.id = 'sc-' + config.id;
+    }
+
+    if (debug) {
+      console.log(`${logPrefix} CreateTween: method=${method}, elements=${elements.length}`, elements);
+      console.log(`${logPrefix} Vars:`, vars);
+      if (vars2) console.log(`${logPrefix} Vars2 (To):`, vars2);
     }
 
     if (method === 'fromTo' && vars2) {

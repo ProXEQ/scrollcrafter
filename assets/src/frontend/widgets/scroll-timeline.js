@@ -146,6 +146,26 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     const vars = parseMacros(step.vars || {}, pinElem);
     const vars2 = step.vars2 ? parseMacros(step.vars2, pinElem) : null;
 
+    // --- SplitText Support (Timeline) ---
+    if (step.split && window.SplitText) {
+      try {
+        const split = new SplitText(targets, { type: step.split });
+        if (split.chars && split.chars.length) targets = split.chars;
+        else if (split.words && split.words.length) targets = split.words;
+        else if (split.lines && split.lines.length) targets = split.lines;
+
+        if (targets.length) {
+          gsap.set(targets, { display: 'inline-block' });
+        }
+      } catch (e) {
+        if (debug) console.warn(`${logPrefix} SplitText error:`, e);
+      }
+    }
+
+    if (debug) {
+      console.log(`${logPrefix} Step ${index + 1}: method=${method}, targets=${targets.length}`, targets);
+    }
+
     try {
       if (method === 'fromTo' && vars2) tl.fromTo(targets, vars, vars2, position);
       else if (typeof tl[method] === 'function') tl[method](targets, vars, position);
