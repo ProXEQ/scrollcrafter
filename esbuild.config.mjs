@@ -23,6 +23,11 @@ const configs = [
     entryPoints: ['assets/src/editor/scrollcrafter-editor.js'],
     outfile: 'assets/js/scrollcrafter-editor.js',
   },
+  {
+    ...shared,
+    entryPoints: ['assets/src/editor/scrollcrafter-editor.css'],
+    outfile: 'assets/css/scrollcrafter-editor.css',
+  },
 ];
 
 if (isWatch) {

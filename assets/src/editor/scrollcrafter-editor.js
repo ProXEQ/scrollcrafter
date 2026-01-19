@@ -11,7 +11,15 @@ import { FIELD_DEFS, SECTION_HEADERS } from './field-defs';
 const { __, _n, sprintf } = wp.i18n;
 
 const DEBUG = !!window.ScrollCrafterConfig?.debug;
-const log = (...args) => DEBUG && console.log('[SC Editor]', ...args);
+const log = (...args) => {
+  if (DEBUG) console.log('[SC Editor]', ...args);
+  // Always log registration and critical triggers even in non-debug for troubleshooting
+  if (args[0] && (args[0].includes('Init') || args[0].includes('Triggered'))) {
+    console.log('[SC Editor-Critical]', ...args);
+  }
+};
+
+log('Script loaded. Waiting for elementor/init...');
 
 const BREAKPOINTS = window.ScrollCrafterConfig?.breakpoints || [];
 const BREAKPOINT_SLUGS = Array.isArray(BREAKPOINTS)
@@ -497,6 +505,7 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
   };
 
   const openEditorForCurrentElement = () => {
+    log('Triggered: openEditorForCurrentElement');
     const panelView = elementor.getPanelView();
     const currentPageView = panelView ? panelView.currentPageView : null;
     if (!currentPageView || !currentPageView.model) return;
@@ -619,8 +628,12 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
   };
 
   $(window).on('elementor/init', () => {
+    log('Event: elementor/init fired');
     if (elementor.channels && elementor.channels.editor) {
+      log('Init: Registering scrollcrafter:open_editor listener');
       elementor.channels.editor.on('scrollcrafter:open_editor', openEditorForCurrentElement);
+    } else {
+      console.error('[SC Editor] Critical: elementor.channels.editor not found!');
     }
   });
 })(jQuery);

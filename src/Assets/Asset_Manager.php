@@ -153,7 +153,7 @@ class Asset_Manager
         
         wp_enqueue_style(
             'scrollcrafter-editor',
-            SCROLLCRAFTER_URL . 'assets/src/editor/scrollcrafter-editor.css',
+            SCROLLCRAFTER_URL . 'assets/css/scrollcrafter-editor.css',
             [],
             SCROLLCRAFTER_VERSION
         );

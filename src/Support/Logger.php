@@ -15,13 +15,15 @@ class Logger
      */
     public static function is_enabled(): bool
     {
+        if ( defined( 'SCROLLCRAFTER_FORCE_LOG' ) && SCROLLCRAFTER_FORCE_LOG ) {
+            return true;
+        }
+
         if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
-            error_log( '[ScrollCrafter][Logger] WP_DEBUG is not enabled. Logging is disabled.' );
             return false;
         }
 
         if ( defined( 'WP_DEBUG_LOG' ) && ! WP_DEBUG_LOG ) {
-            error_log( '[ScrollCrafter][Logger] WP_DEBUG_LOG is not enabled. Logging is disabled.' );
             return false;
         }
 
@@ -29,7 +31,6 @@ class Logger
             return Config::instance()->is_debug();
         }
 
-        error_log( '[ScrollCrafter][Logger] Config class not found. Falling back to logging enabled.' );
         return true;
     }
 
