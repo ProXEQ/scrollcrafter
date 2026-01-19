@@ -183,6 +183,15 @@ registerWidget('scroll_animation', (node, config) => {
     const vars = parseMacros({ ...animConfig.vars }, calcContext);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
 
+    // Fix: Disable CSS transitions to prevent conflict with GSAP
+    gsap.set(elements, {
+      transition: "none",
+      // Force individual transforms to 'none' if they exist to prevent conflicts with 'transform' property
+      translate: "none",
+      rotate: "none",
+      scale: "none"
+    });
+
     if (vars.scrollTrigger) {
       vars.scrollTrigger.trigger = contextNode;
       if (config.id) vars.scrollTrigger.id = 'sc-' + config.id;
@@ -194,6 +203,7 @@ registerWidget('scroll_animation', (node, config) => {
 
     if (debug) {
       console.log(`${logPrefix} CreateTween: method=${method}, elements=${elements.length}`, elements);
+      console.log(`${logPrefix} Stagger Value:`, vars.stagger ?? animConfig.stagger ?? 'none');
       console.log(`${logPrefix} Vars:`, vars);
       if (vars2) console.log(`${logPrefix} Vars2 (To):`, vars2);
     }

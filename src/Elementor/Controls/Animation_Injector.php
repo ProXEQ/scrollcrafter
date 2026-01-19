@@ -10,35 +10,43 @@ class Animation_Injector
 {
     public function hooks(): void
     {
+        // Containers (New)
         add_action(
             'elementor/element/container/_section_responsive/after_section_end',
-            [ $this, 'add_section_for_container' ],
+            [ $this, 'add_section_for_element' ],
             10,
             2
         );
 
+        // All Widgets
         add_action(
-            'elementor/element/common-optimized/_section_responsive/after_section_end',
-            [ $this, 'add_section_for_common' ],
+            'elementor/element/common/_section_responsive/after_section_end',
+            [ $this, 'add_section_for_element' ],
+            10,
+            2
+        );
+
+        // Sections (Legacy)
+        add_action(
+            'elementor/element/section/_section_responsive/after_section_end',
+            [ $this, 'add_section_for_element' ],
+            10,
+            2
+        );
+
+        // Columns (Legacy)
+        add_action(
+            'elementor/element/column/_section_responsive/after_section_end',
+            [ $this, 'add_section_for_element' ],
             10,
             2
         );
     }
 
-    public function add_section_for_container( Element_Base $element, array $args ): void
-{
-    Logger::log(
-        'add_section_for_container called for: ' . $element->get_name(),
-        'elementor'
-    );
-
-    $this->add_scrollcrafter_section( $element );
-}
-
-    public function add_section_for_common( Element_Base $element, array $args ): void
+    public function add_section_for_element( Element_Base $element, array $args ): void
     {
         Logger::log(
-            'add_section_for_common called for: ' . $element->get_name(),
+            'add_section_for_element called for: ' . $element->get_name(),
             'elementor'
         );
 
