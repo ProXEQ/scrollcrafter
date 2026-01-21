@@ -105,7 +105,7 @@ class Animation_Render
             'end'           => 'bottom 20%',
             'toggleActions' => 'play none none reverse',
             'scrub'         => false,
-            'markers'       => Config::instance()->is_debug(),
+            'markers'       => false, // Never enable by default - controlled explicitly via DSL or editor toggle
             'id'            => 'sc-' . $widget_id,
         ];
 
@@ -120,8 +120,11 @@ class Animation_Render
             }
         }
 
-        if ( isset( $scroll['markers'] ) ) {
-            $config['markers'] = (bool) $scroll['markers'];
+        // Markers only for logged-in users (security: don't expose to public)
+        if ( isset( $scroll['markers'] ) && $scroll['markers'] && is_user_logged_in() ) {
+            $config['markers'] = true;
+        } else {
+            $config['markers'] = false;
         }
 
         return $config;

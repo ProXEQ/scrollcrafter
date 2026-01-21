@@ -4,7 +4,7 @@ Donate link: https://pixelmobs.com/donate
 Tags: elementor, animation, scroll, gsap, scrolltrigger, motion
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,6 +63,25 @@ Example DSL:
 
 == Changelog ==
 
+= 1.1.4 =
+*   **New**: Preview button in Code Editor modal for instant animation preview.
+*   **New**: Markers toggle (Ctrl+K) - shows GSAP markers during preview only.
+*   **New**: Loading overlay during preview initialization.
+*   **Security**: Markers require logged-in WordPress user.
+*   **Improvement**: Fixed Ghost Mode visibility.
+*   **Fix**: SplitText re-initialization and ScrollTrigger cleanup improvements.
+
+= 1.1.3 =
+*   **New**: Automated GitHub release workflow.
+*   **Improvement**: Security improvements and code cleanup.
+
+= 1.1.2 =
+*   **Fix**: Bug fixes and general code cleanup.
+
+= 1.1.1 =
+*   **New**: SplitText support for text animations.
+*   **New**: Pro version foundation.
+
 = 1.1.0 =
 *   **New**: Smart Asset Loading - assets only load on pages where ScrollCrafter is used. 
 *   **New**: `defer` attribute added to frontend scripts.
@@ -75,6 +94,9 @@ Example DSL:
 *   Initial release with DSL Editor and Validation.
 
 == Upgrade Notice ==
+
+= 1.1.4 =
+Editor Preview improvements with visual loading feedback and markers toggle. Security enhancement for markers.
 
 = 1.1.0 =
 Major performance update. Includes Smart Asset Loading and Defer attributes. Highly recommended update.

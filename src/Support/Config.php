@@ -68,7 +68,8 @@ class Config
             'gsap_cdn_url'       => 'https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js',
             'scrolltrigger_cdn'  => 'https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js',
             'debug_mode'         => false,
-            'custom_breakpoints' => [], 
+            'custom_breakpoints' => [],
+            'enable_editor_animations' => false,
         ];
     }
 

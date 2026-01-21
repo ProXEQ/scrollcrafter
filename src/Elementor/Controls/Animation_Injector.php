@@ -45,11 +45,6 @@ class Animation_Injector
 
     public function add_section_for_element( Element_Base $element, array $args ): void
     {
-        Logger::log(
-            'add_section_for_element called for: ' . $element->get_name(),
-            'elementor'
-        );
-
         $this->add_scrollcrafter_section( $element );
     }
 
@@ -96,7 +91,7 @@ class Animation_Injector
             'scrollcrafter_open_editor',
             [
                 'type'        => Controls_Manager::BUTTON,
-                'text'        => esc_html__( 'Open DSL Editor', 'scrollcrafter' ),
+                'text'        => esc_html__( 'Open Editor', 'scrollcrafter' ),
                 'button_type' => 'default',
                 'event'       => 'scrollcrafter:open_editor',
                 'separator'   => 'before',

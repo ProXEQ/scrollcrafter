@@ -163,20 +163,40 @@ registerWidget('scroll_animation', (node, config) => {
     const calcContext = elements[0];
 
     // --- SplitText Support ---
-    if (animConfig.split && window.SplitText) {
-      try {
-        const split = new SplitText(elements, { type: animConfig.split });
-        // Priority: chars > words > lines
-        if (split.chars && split.chars.length) elements = split.chars;
-        else if (split.words && split.words.length) elements = split.words;
-        else if (split.lines && split.lines.length) elements = split.lines;
+    if (animConfig.split) {
+      if (debug) console.log(`${logPrefix} SplitText requested: ${animConfig.split}, SplitText available: ${typeof window.SplitText}`);
 
-        // Fix: Elements must be inline-block for rotation to work
-        if (elements.length) {
-          gsap.set(elements, { display: 'inline-block' });
+      if (window.SplitText) {
+        try {
+          // Check if elements already have split data and revert first
+          elements.forEach(el => {
+            if (el._splitText) {
+              if (debug) console.log(`${logPrefix} Reverting existing SplitText`);
+              el._splitText.revert();
+            }
+          });
+
+          const split = new SplitText(elements, { type: animConfig.split });
+
+          // Store reference for cleanup
+          elements.forEach(el => { el._splitText = split; });
+
+          // Priority: chars > words > lines
+          if (split.chars && split.chars.length) elements = split.chars;
+          else if (split.words && split.words.length) elements = split.words;
+          else if (split.lines && split.lines.length) elements = split.lines;
+
+          if (debug) console.log(`${logPrefix} SplitText created, elements count: ${elements.length}`);
+
+          // Fix: Elements must be inline-block for rotation to work
+          if (elements.length) {
+            gsap.set(elements, { display: 'inline-block' });
+          }
+        } catch (e) {
+          console.warn(`${logPrefix} SplitText error:`, e);
         }
-      } catch (e) {
-        console.warn(`${logPrefix} SplitText error:`, e);
+      } else {
+        console.warn(`${logPrefix} SplitText not available! Make sure GSAP SplitText is loaded.`);
       }
     }
 
@@ -247,6 +267,8 @@ registerWidget('scroll_animation', (node, config) => {
   });
 
   // Register Contexts
+  const tweens = [];
+
   rangeConfig.forEach(range => {
     mm.add(range.query, () => {
       let activeConfig = config.animation; // Default to global/base
@@ -260,17 +282,49 @@ registerWidget('scroll_animation', (node, config) => {
       }
 
       if (activeConfig) {
-        createTween({ ...config, animation: activeConfig }, node);
+        const tween = createTween({ ...config, animation: activeConfig }, node);
+        if (tween) tweens.push(tween);
+
+        // Force play if this is a manual preview
+        const isManualPreview = (window.ScrollCrafterForcePreview === config.id) ||
+          (window.parent && window.parent.ScrollCrafterForcePreview === config.id) ||
+          (node.getAttribute('data-sc-preview') === 'yes');
+
+        if (isManualPreview && tween) {
+          if (debug) console.log(`${logPrefix} Manual preview detected, force playing animation`);
+
+          if (tween.scrollTrigger) {
+            const st = tween.scrollTrigger;
+            // For Pin/Scrub, animate progress to show effect without breaking structure
+            if (st.pin || (st.vars && st.vars.scrub)) {
+              if (debug) console.log(`${logPrefix} Pin/Scrub detected, animating progress`);
+              gsap.fromTo(st, { progress: 0 }, {
+                progress: 1,
+                duration: 1.5,
+                ease: "power1.inOut"
+              });
+            } else {
+              st.disable();
+              tween.restart(true);
+            }
+          } else {
+            // For non-ScrollTrigger animations
+            tween.restart(true);
+          }
+        }
       }
     });
   });
 
-  if (debug && config.media) {
-    const knownSlugs = new Set(sortedBps.map(b => b.key));
-    Object.keys(config.media).forEach(k => {
-      if (!knownSlugs.has(k)) {
-        console.warn(`${logPrefix} Unknown breakpoint slug used:`, k);
+  return () => {
+    if (debug) console.log(`${logPrefix} Cleaning up...`);
+    mm.revert(); // Revert matchMedia
+    tweens.forEach(t => {
+      if (t.scrollTrigger) {
+        // Very important for Pin: kill(true) removes the spacer and reverts DOM
+        t.scrollTrigger.kill(true);
       }
+      t.kill();
     });
-  }
+  };
 });

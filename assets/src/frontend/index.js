@@ -18,27 +18,113 @@ if (document.readyState === 'loading') {
 
 window.addEventListener('elementor/popup/show', (event) => {
   initWidgetsInScope(event.target);
-  
+
   const ScrollTrigger = getScrollTrigger();
   if (ScrollTrigger) ScrollTrigger.refresh();
 });
 
-window.addEventListener('elementor/frontend/init', () => {
-  if (!window.elementorFrontend) return;
+const registerHooks = () => {
+  let attempts = 0;
+  const maxAttempts = 50; // 5 seconds
 
-  elementorFrontend.hooks.addAction('frontend/element_ready/global', ($scope) => {
-    const node = $scope[0]; 
-
-    if (elementorFrontend.isEditMode()) {
-      const widgetId = node.getAttribute('data-id');
-      if (widgetId) {
-        killTriggerByWidgetId(widgetId);
+  const tryRegister = () => {
+    if (!window.elementorFrontend || !window.elementorFrontend.hooks) {
+      attempts++;
+      if (attempts < maxAttempts) {
+        if (attempts % 10 === 0 && window.ScrollCrafterConfig?.debug) {
+          console.log(`[ScrollCrafter] Still waiting for elementorFrontend hooks (attempt ${attempts})...`);
+        }
+        setTimeout(tryRegister, 100);
+      } else {
+        console.warn('[ScrollCrafter] Elementor hooks not found after 5s. Animations might not initialize.');
       }
+      return;
     }
 
-    initWidgetsInScope(node);
-  });
-});
+    if (window.ScrollCrafterConfig?.debug) {
+      console.log('[ScrollCrafter] Elementor hooks found. Registering...');
+    }
+
+    elementorFrontend.hooks.addAction('frontend/element_ready/global', ($scope) => {
+      const node = $scope[0];
+      if (!node) return;
+
+      if (elementorFrontend.isEditMode()) {
+        const widgetId = node.getAttribute('data-id');
+        if (widgetId) {
+          killTriggerByWidgetId(widgetId);
+        }
+
+        // Check for force preview in multiple locations for cross-frame reliability
+        const getForcePreviewFlag = (id) => {
+          try {
+            // Check local
+            if (window.ScrollCrafterForcePreview === id) return true;
+            // Check parent (editor window)
+            if (window.parent && window.parent.ScrollCrafterForcePreview === id) return true;
+            // Check top (main editor window)
+            if (window.top && window.top.ScrollCrafterForcePreview === id) return true;
+            // Check sessionStorage (if origins match)
+            if (sessionStorage.getItem('sc_force_preview') === id) return true;
+          } catch (e) { }
+          return false;
+        };
+
+        // Check global config for live animations
+        const allowLive = !!(window.ScrollCrafterConfig?.enableEditorAnimations);
+        const isManualPreview = node.getAttribute('data-sc-preview') === 'yes' || getForcePreviewFlag(widgetId);
+
+        if (isManualPreview && window.ScrollCrafterConfig?.debug) {
+          console.log('[ScrollCrafter] Preview init:', { widgetId, allowLive, isManualPreview });
+        }
+
+        if (!allowLive && !isManualPreview) {
+          // Silent skip - no log spam for normal editor browsing
+          return;
+        }
+
+        // Reset force preview flags for next render if it matched
+        if (isManualPreview) {
+          console.log('[ScrollCrafter] Preview active, cleaning up flags');
+          setTimeout(() => {
+            if (window.ScrollCrafterForcePreview === widgetId) window.ScrollCrafterForcePreview = false;
+            if (window.parent && window.parent.ScrollCrafterForcePreview === widgetId) window.parent.ScrollCrafterForcePreview = false;
+            if (window.top && window.top.ScrollCrafterForcePreview === widgetId) window.top.ScrollCrafterForcePreview = false;
+            sessionStorage.removeItem('sc_force_preview');
+          }, 100);
+        }
+      }
+
+      // Normal init (always force in edit mode to ensure fresh logic runs)
+      if (window.ScrollCrafterConfig?.debug) {
+        console.log('[ScrollCrafter] Triggering initWidgetsInScope for node');
+      }
+      initWidgetsInScope(node, elementorFrontend.isEditMode());
+
+      if (elementorFrontend.isEditMode()) {
+        setTimeout(() => {
+          const ScrollTrigger = getScrollTrigger();
+          if (ScrollTrigger) {
+            if (window.ScrollCrafterConfig?.debug) console.log('[ScrollCrafter] Editor Refresh ScrollTrigger');
+            ScrollTrigger.refresh();
+          }
+        }, 200);
+      }
+    });
+
+    if (window.ScrollCrafterConfig?.debug) {
+      console.log('[ScrollCrafter] Elementor hooks registered successfully');
+    }
+  };
+
+  tryRegister();
+};
+
+// Start registration process
+registerHooks();
+
+// Also listen for the event as a backup if it haven't fired yet
+window.addEventListener('elementor/frontend/init', registerHooks);
 
 /**
  * Usuwa ScrollTrigger powiązany z danym widgetem (jeśli istnieje).
@@ -57,7 +143,7 @@ function killTriggerByWidgetId(widgetId) {
       }
       st.kill(true);
     }
-    
+
   } catch (e) {
     console.warn('[ScrollCrafter] Error killing trigger:', e);
   }

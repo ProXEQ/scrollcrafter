@@ -45,8 +45,10 @@ class Validation_Controller
                     return current_user_can( 'edit_posts' );
                 },
                 'args'                => [
-                    'script' => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ],
-                    'mode'   => [ 'type' => 'string', 'default' => 'auto' ],
+                    'script'    => [ 'required' => true, 'type' => 'string', 'sanitize_callback' => 'wp_kses_post' ],
+                    'mode'      => [ 'type' => 'string', 'default' => 'auto' ],
+                    'widget_id' => [ 'type' => 'string', 'default' => 'preview' ],
+                    'markers'   => [ 'type' => 'boolean', 'default' => false ],
                 ],
             ]
         );
@@ -54,8 +56,10 @@ class Validation_Controller
 
     public function handle_validate( WP_REST_Request $request ): WP_REST_Response
     {
-        $script = (string) $request->get_param( 'script' );
-        $mode   = (string) $request->get_param( 'mode' );
+        $script      = (string) $request->get_param( 'script' );
+        $mode        = (string) $request->get_param( 'mode' );
+        $widget_id   = (string) $request->get_param( 'widget_id' );
+        $show_markers = (bool) $request->get_param( 'markers' );
 
         if ( '' === trim( $script ) ) {
             return $this->response_with_error(__('The script is empty.', 'scrollcrafter'), 'empty_script');
@@ -63,7 +67,6 @@ class Validation_Controller
 
         try {
             $parsed = $this->parser->parse( $script );
-            error_log('[SC Parser] Parsed: ' . print_r($parsed, true));
         } catch ( \Throwable $e ) {
             return $this->response_with_error( $e->getMessage(), 'PARSER_EXCEPTION', $e->getLine() > 0 ? $e->getLine() : 1 );
         }
@@ -92,11 +95,18 @@ class Validation_Controller
         }
 
         try {
-            $fakeElement = new class() { public function get_id(): string { return 'preview'; } };
+            // Fake element with the requested ID
+            $fakeElement = new class($widget_id) { 
+                private string $id;
+                public function __construct($id) { $this->id = $id; }
+                public function get_id(): string { return $this->id; } 
+                public function get_settings_for_display() { return []; }
+            };
+
             $targetNode = $parsed['target']['selector'] ?? null;
-            $targetSelector = (is_array($targetNode) && isset($targetNode['value'])) ? $targetNode['value'] : '.elementor-element-preview';
+            $targetSelector = (is_array($targetNode) && isset($targetNode['value'])) ? $targetNode['value'] : ('.elementor-element-' . $widget_id);
             $targetType     = !empty($targetNode) ? 'custom' : 'wrapper';
-            $scrollTrigger  = $this->build_scroll_trigger_config( $parsed['scroll'] ?? [] );
+            $scrollTrigger  = $this->build_scroll_trigger_config( $parsed['scroll'] ?? [], $widget_id, $show_markers );
             
             $hasSteps = !empty($parsed['timeline']['steps']);
             if (!$hasSteps && !empty($parsed['media'])) {
@@ -218,15 +228,22 @@ class Validation_Controller
         ], 200);
     }
     
-    private function build_scroll_trigger_config( array $scroll ): array
+    private function build_scroll_trigger_config( array $scroll, string $widget_id, bool $force_markers = false ): array
     {
         $scrollTrigger = [
             'start'         => $scroll['start']['value'] ?? 'top 80%',
             'end'           => $scroll['end']['value'] ?? 'bottom 20%',
             'toggleActions' => $scroll['toggleActions']['value'] ?? 'play none none reverse',
+            'id'            => 'sc-' . $widget_id,
         ];
         if ( array_key_exists( 'scrub', $scroll ) ) $scrollTrigger['scrub'] = $scroll['scrub']['value'];
-        if ( array_key_exists( 'markers', $scroll ) ) $scrollTrigger['markers'] = (bool) $scroll['markers']['value'];
+        
+        // Markers: from DSL script OR from editor toggle - only for logged-in users
+        $markers_requested = $force_markers || ( array_key_exists( 'markers', $scroll ) && $scroll['markers']['value'] );
+        if ( $markers_requested && is_user_logged_in() ) {
+            $scrollTrigger['markers'] = true;
+        }
+        
         if ( array_key_exists( 'trigger', $scroll ) ) $scrollTrigger['trigger'] = $scroll['trigger']['value'];
         
         return $scrollTrigger;

@@ -113,6 +113,14 @@ class Settings_Page
 			'scrollcrafter',
 			'scrollcrafter_assets_section'
 		);
+
+        add_settings_field(
+            'enable_editor_animations',
+            esc_html__( 'Enable Editor Animations', 'scrollcrafter' ),
+            [ $this, 'render_field_enable_editor_animations' ],
+            'scrollcrafter',
+            'scrollcrafter_assets_section'
+        );
 	}
 
 	public function sanitize_settings( $input ): array
@@ -160,6 +168,7 @@ class Settings_Page
 		$output['scrolltrigger_cdn'] = esc_url_raw( $input['scrolltrigger_cdn'] ?? '' ); 
         $output['textplugin_cdn']    = esc_url_raw( $input['textplugin_cdn'] ?? '' );
         $output['splittext_cdn']     = esc_url_raw( $input['splittext_cdn'] ?? '' );
+        $output['enable_editor_animations'] = isset( $input['enable_editor_animations'] ) && '1' === $input['enable_editor_animations'];
 
 		return $output;
 	}
@@ -275,4 +284,14 @@ class Settings_Page
 		<input type="url" name="<?php echo self::OPTION_NAME; ?>[splittext_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
 		<?php
 	}
+
+    public function render_field_enable_editor_animations(): void
+    {
+        $config = Config::instance();
+        $val = $config->get( 'enable_editor_animations' );
+        ?>
+        <input type="checkbox" name="<?php echo self::OPTION_NAME; ?>[enable_editor_animations]" value="1" <?php checked( 1, $val ); ?> />
+        <?php echo esc_html__( 'Live animations inside Elementor Editor (might affect performance)', 'scrollcrafter' ); ?>
+        <?php
+    }
 }

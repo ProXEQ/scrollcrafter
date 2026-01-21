@@ -45,8 +45,8 @@ ScrollCrafter uses a Config-like syntax divided into **Sections** denoted by bra
 Defines *what* you are animating. By default, it animates the widget you are editing.
 ```ini
 [target]
-# Use any CSS selector. 
-# 'selector' is optional if you want to animate the widget wrapper itself.
+// Use any CSS selector. 
+// 'selector' is optional if you want to animate the widget wrapper itself.
 selector: .my-custom-class
 ```
 
@@ -54,24 +54,36 @@ selector: .my-custom-class
 Defines a simple "Tween" (single animation).
 ```ini
 [animation]
-type: from          # from, to, fromTo
+type: from          // from, to, fromTo
 from: opacity=0, y=50
 duration: 1
 ease: power2.out
-stagger: 0.1        # Stagger if multiple elements match target
+stagger: 0.1        // Stagger if multiple elements match target
 delay: 0.5
+```
+
+#### SplitText Animation
+Animate text by splitting into words, characters, or lines:
+```ini
+[animation]
+split: words        // words, chars, lines
+from: opacity=0, y=100
+stagger.amount: 1
+stagger.from: start // start, end, center, random
+duration: 1
+ease: back.out(1.7)
 ```
 
 ### 3. `[scroll]`
 Connects your animation to the scrollbar (ScrollTrigger).
 ```ini
 [scroll]
-trigger: .section-container  # Optional trigger element
-start: top 80%               # When top of element hits 80% viewport height
+trigger: .section-container  // Optional trigger element
+start: top 80%               // When top of element hits 80% viewport height
 end: bottom 20%
-scrub: 1                     # Smooth scrubbing (1s lag)
-pin: true                    # Pin element during scroll
-markers: true                # Debug markers
+scrub: 1                     // Smooth scrubbing (1s lag)
+pin: true                    // Pin element during scroll
+markers: true                // Debug markers (only for logged-in users)
 ```
 
 ### 4. `[timeline]` & `[step.N]`
@@ -94,7 +106,7 @@ to: x=500
 selector: .box-2
 type: from
 from: scale=0
-position: <                  # Run at same time as previous step
+position: <                  // Run at same time as previous step
 ```
 
 ### 5. Responsive Overrides (`@slug`)
@@ -104,7 +116,7 @@ Override settings for specific breakpoints. You must define these breakpoints in
 from: x=500
 
 [animation @mobile]
-from: x=0, y=100  # On mobile, slide up instead of left
+from: x=0, y=100  // On mobile, slide up instead of left
 ```
 
 ---
@@ -142,6 +154,30 @@ Check the browser console (F12). Ensure the target element actually exists on th
 ---
 
 ## 📝 Changelog
+
+### 1.1.4
+-   **New**: "▶ Preview" button in Code Editor modal for instant animation preview.
+-   **New**: "📍 Markers" toggle (Ctrl+K) - shows GSAP markers during preview only.
+-   **New**: Loading overlay "Preparing animation..." during preview initialization.
+-   **Security**: Markers now require logged-in WordPress user.
+-   **Impr**: Fixed Ghost Mode (👁) - backdrop-filter no longer blocks visibility.
+-   **Impr**: Added 150ms debounce to prevent multiple rapid animation inits.
+-   **Impr**: Reduced console log spam in editor mode.
+-   **Fix**: SplitText re-initialization with proper revert logic.
+-   **Fix**: Improved preview cleanup for ScrollTrigger pin/scrub animations.
+
+### 1.1.3
+-   **New**: Automated GitHub release workflow for custom ZIP packaging.
+-   **New**: Version sync tooling for consistent version management.
+-   **Impr**: Security improvements and code cleanup.
+-   **Impr**: Removed verbose PHP debug logs.
+
+### 1.1.2
+-   **Fix**: Bug fixes and general code cleanup.
+
+### 1.1.1
+-   **New**: SplitText support for text animations (words, chars, lines).
+-   **New**: Pro version foundation and licensing infrastructure.
 
 ### 1.1.0
 -   **New**: Smart Asset Loading - assets only load on pages where ScrollCrafter is used. 

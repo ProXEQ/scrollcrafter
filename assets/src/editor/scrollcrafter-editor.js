@@ -65,7 +65,7 @@ const dslLanguage = StreamLanguage.define({
   startState() { return {}; },
   token(stream) {
     if (stream.eatSpace()) return null;
-    if (stream.peek() === '//') { stream.skipToEnd(); return 'comment'; }
+    if (stream.match(/^\/\//)) { stream.skipToEnd(); return 'comment'; }
     if (stream.peek() === '[') {
       stream.next();
       while (!stream.eol()) { const ch = stream.next(); if (ch === ']') break; }
@@ -462,12 +462,17 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       <div class="sc-dsl-editor__panel">
         
         <!-- HEADER -->
-        <div class="sc-dsl-editor__header">
+          <div class="sc-dsl-editor__header">
           <div class="sc-dsl-editor__title">
             <span class="sc-dsl-editor__title-main">ScrollCrafter DSL</span>
             <span class="sc-dsl-editor__title-sub"></span>
           </div>
-          <button type="button" class="sc-dsl-editor__close">&times;</button>
+          <div class="sc-dsl-editor__header-actions">
+              <button type="button" class="sc-dsl-editor__btn-icon sc-dsl-editor__markers-toggle" title="${__('Show GSAP Markers (Ctrl+K)', 'scrollcrafter')}">📍</button>
+              <button type="button" class="sc-dsl-editor__btn-icon sc-dsl-editor__ghost-toggle" title="${__('Ghost Mode (Ctrl+G)', 'scrollcrafter')}">👁</button>
+              <button type="button" class="sc-dsl-editor__btn-icon sc-dsl-editor__minimize" title="${__('Minimize (Ctrl+M)', 'scrollcrafter')}">－</button>
+              <button type="button" class="sc-dsl-editor__close" title="${__('Close', 'scrollcrafter')}">&times;</button>
+          </div>
         </div>
         
         <!-- BODY: EDYTOR + SIDEBAR -->
@@ -494,7 +499,8 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
           </div>
           <div class="sc-dsl-editor__actions">
               <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">${__('Cancel', 'scrollcrafter')}</button>
-              <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply-preview">${__('Apply & Preview', 'scrollcrafter')}</button>
+              <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--preview sc-dsl-editor__preview">${__('▶ Preview', 'scrollcrafter')}</button>
+              <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply">${__('Apply', 'scrollcrafter')}</button>
           </div>
         </div>
 
@@ -534,27 +540,44 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     updateCheatSheetState(cmInstance);
 
     const handleGlobalKey = (e) => {
-      // ESC: Block Elementor from closing context, ask user
+      // ESC handling
       if (e.key === 'Escape') {
+        e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        e.preventDefault();
 
-        if (e.repeat) return;
+        if (modal.classList.contains('sc-dsl-editor--ghost')) {
+          modal.classList.remove('sc-dsl-editor--ghost');
+          return;
+        }
+        if (modal.classList.contains('sc-dsl-editor--minimized')) {
+          modal.classList.remove('sc-dsl-editor--minimized');
+          return;
+        }
 
-        // Use timeout to decouple dialog from key event
-        setTimeout(() => {
-          if (confirm(__('Are you sure you want to discard changes and close?', 'scrollcrafter'))) {
-            close();
-          }
-        }, 10);
+        if (confirm(__('Are you sure you want to discard changes and close?', 'scrollcrafter'))) {
+          close();
+        }
       }
-      // CMD/CTRL + S: Save
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        handleApply();
+
+      // Keyboard Shortcuts (Ctrl/Cmd + ...)
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'g' || e.key === 'G') {
+          e.preventDefault();
+          toggleGhost();
+        }
+        if (e.key === 'm' || e.key === 'M') {
+          e.preventDefault();
+          toggleMinimize();
+        }
+        if (e.key === 's' || e.key === 'S') {
+          e.preventDefault();
+          handleApply();
+        }
+        if (e.key === 'k' || e.key === 'K') {
+          e.preventDefault();
+          toggleMarkers();
+        }
       }
     };
 
@@ -563,16 +586,10 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       window.removeEventListener('keydown', handleGlobalKey, { capture: true });
     };
 
-    // Add listener with capture to intercept before Elementor
-    window.addEventListener('keydown', handleGlobalKey, { capture: true });
-
     const bindClose = (selector) => {
       const el = modal.querySelector(selector);
       if (el) el.onclick = close;
     };
-    bindClose('.sc-dsl-editor__close');
-    bindClose('.sc-dsl-editor__cancel');
-    bindClose('.sc-dsl-editor__backdrop');
 
     const triggerElementorUpdate = (newCode) => {
       settings.set('scrollcrafter_script', newCode);
@@ -588,30 +605,63 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       }
     };
 
+    const toggleGhost = () => {
+      modal.classList.toggle('sc-dsl-editor--ghost');
+      const isGhost = modal.classList.contains('sc-dsl-editor--ghost');
+      statusText.textContent = isGhost ? __('Ghost Mode Active (Scroll now!)', 'scrollcrafter') : __('Ready', 'scrollcrafter');
+    };
+
+    const toggleMarkers = () => {
+      modal.classList.toggle('sc-dsl-editor--markers');
+      const isMarkers = modal.classList.contains('sc-dsl-editor--markers');
+      window.ScrollCrafterShowMarkers = isMarkers;
+
+      // Update button visual state
+      const markersBtn = modal.querySelector('.sc-dsl-editor__markers-toggle');
+      if (markersBtn) {
+        markersBtn.classList.toggle('sc-btn--active', isMarkers);
+      }
+
+      statusText.textContent = isMarkers ? __('Markers enabled for preview', 'scrollcrafter') : __('Ready', 'scrollcrafter');
+    };
+
+    const toggleMinimize = () => {
+      modal.classList.toggle('sc-dsl-editor--minimized');
+    };
+
+    const handlePreview = async () => {
+      if (lastValidationState.hasCriticalErrors) {
+        showShake();
+        return;
+      }
+
+      // First apply the current code
+      const currentCode = getEditorDoc();
+      triggerElementorUpdate(currentCode);
+
+      // Close modal smoothly
+      modal.classList.remove('sc-dsl-editor--open');
+
+      // Wait for modal to close, then trigger preview
+      setTimeout(async () => {
+        await handlePreviewOutside();
+      }, 300);
+    };
+
+    const showShake = () => {
+      const panel = modal.querySelector('.sc-dsl-editor__panel');
+      panel.classList.add('sc-shake');
+      setTimeout(() => panel.classList.remove('sc-shake'), 500);
+      statusText.textContent = __('Fix errors before preview!', 'scrollcrafter');
+      statusText.style.color = '#e06c75';
+    };
+
     const handleApply = () => {
       const currentCode = getEditorDoc();
       if (lastValidationState.hasCriticalErrors) {
-        const firstErr = lastValidationState.diagnostics.find(d => d.severity === 'error');
-        if (firstErr && cmView) {
-          cmView.dispatch({ selection: { anchor: firstErr.from }, scrollIntoView: true });
-          cmView.focus();
-        }
-        const panel = modal.querySelector('.sc-dsl-editor__panel');
-        panel.classList.add('sc-shake');
-        setTimeout(() => panel.classList.remove('sc-shake'), 500);
-        statusText.textContent = __('Fix errors before saving!', 'scrollcrafter');
-        statusText.style.color = '#e06c75';
+        showShake();
         return;
       }
-      const warnings = lastValidationState.diagnostics.filter(d => d.severity === 'warning');
-      if (warnings.length > 0) {
-        const proceedMsg = sprintf(
-          __('Your code has %d warning(s). This might cause unexpected behavior. Are you sure you want to save?', 'scrollcrafter'),
-          warnings.length
-        );
-        if (!confirm(proceedMsg)) return;
-      }
-
       triggerElementorUpdate(currentCode);
       if (model.trigger) model.trigger('change', model);
       if (currentPageView.render) currentPageView.render();
@@ -621,19 +671,164 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       setTimeout(close, 500);
     };
 
-    const applyBtn = modal.querySelector('.sc-dsl-editor__apply-preview');
+    // Events
+    window.addEventListener('keydown', handleGlobalKey, { capture: true });
+
+    bindClose('.sc-dsl-editor__close');
+    bindClose('.sc-dsl-editor__cancel');
+    bindClose('.sc-dsl-editor__backdrop');
+
+    const applyBtn = modal.querySelector('.sc-dsl-editor__apply');
     if (applyBtn) applyBtn.onclick = handleApply;
 
+    const previewBtn = modal.querySelector('.sc-dsl-editor__preview');
+    if (previewBtn) previewBtn.onclick = handlePreview;
+
+    const ghostBtn = modal.querySelector('.sc-dsl-editor__ghost-toggle');
+    if (ghostBtn) ghostBtn.onclick = toggleGhost;
+
+    const markersBtn = modal.querySelector('.sc-dsl-editor__markers-toggle');
+    if (markersBtn) markersBtn.onclick = toggleMarkers;
+
+    const minimizeBtn = modal.querySelector('.sc-dsl-editor__minimize');
+    if (minimizeBtn) minimizeBtn.onclick = toggleMinimize;
+
     modal.classList.add('sc-dsl-editor--open');
+  };
+
+  const handlePreviewOutside = async () => {
+    log('Triggered: handlePreviewOutside');
+    const panelView = elementor.getPanelView();
+    const currentPageView = panelView ? panelView.currentPageView : null;
+    if (!currentPageView || !currentPageView.model) {
+      log('Error: currentPageView or model not found in handlePreviewOutside');
+      return;
+    }
+
+    const widgetId = currentPageView.model.id;
+    const script = currentPageView.model.get('settings').get('scrollcrafter_script');
+
+    log('Fetching config and triggering preview for widget:', widgetId);
+
+    try {
+      // 1. Set global flag locally
+      window.ScrollCrafterForcePreview = widgetId;
+      sessionStorage.setItem('sc_force_preview', widgetId);
+
+      // 2. Get iframe and widget reference early for loading state
+      const previewIframe = elementor.$preview[0];
+      const previewWindow = previewIframe?.contentWindow;
+      const $widget = previewWindow?.jQuery('[data-id="' + widgetId + '"]');
+
+      // 3. Show loading overlay on target widget
+      if ($widget && $widget.length) {
+        const loadingOverlay = `
+          <div class="sc-preview-loading" style="
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(2px);
+            border-radius: 8px;
+          ">
+            <div style="
+              color: #fff;
+              font-size: 14px;
+              font-family: system-ui, sans-serif;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            ">
+              <span style="animation: sc-spin 1s linear infinite; display: inline-block;">⏳</span>
+              Preparing animation...
+            </div>
+          </div>
+          <style>
+            @keyframes sc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          </style>
+        `;
+        $widget.css('position', 'relative');
+        $widget.append(loadingOverlay);
+      }
+
+      // 4. Fetch parsed config from REST API
+      const restUrl = window.ScrollCrafterConfig?.rest_url || (window.location.origin + '/wp-json/');
+      const showMarkers = !!window.ScrollCrafterShowMarkers;
+      const response = await fetch(restUrl + 'scrollcrafter/v1/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-WP-Nonce': window.ScrollCrafterConfig?.rest_nonce || window.elementorConfig?.rest?.nonce || ''
+        },
+        body: JSON.stringify({
+          script: script,
+          widget_id: widgetId,
+          mode: 'auto',
+          markers: showMarkers
+        })
+      });
+
+      const result = await response.json();
+
+      // 5. Remove loading overlay
+      if ($widget && $widget.length) {
+        $widget.find('.sc-preview-loading').remove();
+      }
+
+      if (!result.ok || !result.config) {
+        log('Error fetching config for preview:', result);
+        return;
+      }
+
+      // 6. Inject config with delay to ensure DOM is ready
+      if (previewWindow && previewWindow.elementorFrontend && $widget && $widget.length) {
+        log('Injecting fresh config into iframe widget...');
+        $widget.attr('data-scrollcrafter-config', JSON.stringify(result.config));
+
+        // Debounce: wait for DOM to settle before triggering animation
+        await new Promise(resolve => setTimeout(resolve, 150));
+
+        log('Triggering runReadyTrigger...');
+        previewWindow.elementorFrontend.elementsHandler.runReadyTrigger($widget);
+      } else {
+        log('Widget not found in iframe view.');
+      }
+    } catch (e) {
+      log('Error in live preview trigger:', e);
+    }
   };
 
   $(window).on('elementor/init', () => {
     log('Event: elementor/init fired');
     if (elementor.channels && elementor.channels.editor) {
-      log('Init: Registering scrollcrafter:open_editor listener');
-      elementor.channels.editor.on('scrollcrafter:open_editor', openEditorForCurrentElement);
+      // Inject AI badge into label
+      elementor.hooks.addAction('panel/open_editor/widget/common', (panel, model, view) => {
+        const checkBadge = () => {
+          const label = panel.$el.find('.elementor-control-scrollcrafter_script .elementor-control-title');
+          if (label.length && !label.find('.sc-ai-badge').length) {
+            label.append('<span class="sc-ai-badge"><i class="eicon-star"></i> Edytuj ze SI</span>');
+          }
+        };
+        setTimeout(checkBadge, 100);
+        setTimeout(checkBadge, 500);
+      });
+
+
+      log('Init: Registering scrollcrafter listeners');
+      elementor.channels.editor.on('scrollcrafter:open_editor', (view) => {
+        log('Event: scrollcrafter:open_editor received');
+        openEditorForCurrentElement();
+      });
+      elementor.channels.editor.on('scrollcrafter:preview', (view) => {
+        log('Event: scrollcrafter:preview received');
+        handlePreviewOutside();
+      });
     } else {
       console.error('[SC Editor] Critical: elementor.channels.editor not found!');
     }
   });
+
 })(jQuery);

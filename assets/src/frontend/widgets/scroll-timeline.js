@@ -227,6 +227,8 @@ registerWidget('scroll_timeline', (node, config) => {
   });
 
   // Register Contexts
+  const timelines = [];
+
   rangeConfig.forEach(range => {
     mm.add(range.query, () => {
       let activeConfig = config; // Default to global config struct (which has steps)
@@ -235,12 +237,6 @@ registerWidget('scroll_timeline', (node, config) => {
 
       let isOverride = false;
       if (range.slug !== '_default_desktop' && config.media && config.media[range.slug]) {
-        // Merge override logic for timeline is complex (handled in PHP builder mostly?)
-        // PHP builder returns a processed `config` where `media` contains FULL config objects for that media?
-        // Let's check Timeline_Config_Builder.
-        // It returns 'media' => [ slug => mediaConfig ].
-        // So we should use that.
-
         if (config.media[range.slug]) {
           activeConfig = config.media[range.slug];
           isOverride = true;
@@ -249,24 +245,53 @@ registerWidget('scroll_timeline', (node, config) => {
 
       // Validation: Ensure activeConfig has steps
       if (activeConfig && activeConfig.steps && activeConfig.steps.length > 0) {
+        let tl;
         if (isOverride) {
           logConfig(`Active: ${range.slug} (Override)`, activeConfig);
-          // Pass 'config' as global context if needed? createTimeline uses activeConfig as configData, and config as globalConfig
-          createTimeline(node, activeConfig, config, debug, logPrefix + `[${range.slug}]`, gsap);
+          tl = createTimeline(node, activeConfig, config, debug, logPrefix + `[${range.slug}]`, gsap);
         } else {
           logConfig(`Active: ${range.slug} (Global)`, activeConfig);
-          createTimeline(node, activeConfig, config, debug, logPrefix, gsap);
+          tl = createTimeline(node, activeConfig, config, debug, logPrefix, gsap);
+        }
+
+        if (tl) timelines.push(tl);
+
+        // --- Preview Logic ---
+        const isManualPreview = (window.ScrollCrafterForcePreview === config.id) ||
+          (window.parent && window.parent.ScrollCrafterForcePreview === config.id) ||
+          (node.getAttribute('data-sc-preview') === 'yes');
+
+        if (isManualPreview && tl) {
+          if (debug) console.log(`${logPrefix} Manual preview detected, force playing timeline`);
+          if (tl.scrollTrigger) {
+            const st = tl.scrollTrigger;
+            if (st.pin || (st.vars && st.vars.scrub)) {
+              if (debug) console.log(`${logPrefix} Pin/Scrub detected, animating progress`);
+              gsap.fromTo(st, { progress: 0 }, {
+                progress: 1,
+                duration: 1.5,
+                ease: "power1.inOut"
+              });
+            } else {
+              st.disable();
+              tl.restart(true);
+            }
+          } else {
+            tl.restart(true);
+          }
         }
       }
     });
   });
 
-  if (debug && config.media) {
-    const knownSlugs = new Set(sortedBps.map(b => b.key));
-    Object.keys(config.media).forEach(k => {
-      if (!knownSlugs.has(k)) {
-        console.warn(`${logPrefix} Unknown breakpoint slug used:`, k);
+  return () => {
+    if (debug) console.log(`${logPrefix} Cleaning up...`);
+    mm.revert();
+    timelines.forEach(t => {
+      if (t.scrollTrigger) {
+        t.scrollTrigger.kill(true); // Reverts pin-spacer etc.
       }
+      t.kill();
     });
-  }
+  };
 });
