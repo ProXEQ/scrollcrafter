@@ -801,34 +801,53 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     }
   };
 
-  $(window).on('elementor/init', () => {
-    log('Event: elementor/init fired');
-    if (elementor.channels && elementor.channels.editor) {
-      // Inject AI badge into label
-      elementor.hooks.addAction('panel/open_editor/widget/common', (panel, model, view) => {
-        const checkBadge = () => {
-          const label = panel.$el.find('.elementor-control-scrollcrafter_script .elementor-control-title');
-          if (label.length && !label.find('.sc-ai-badge').length) {
-            label.append('<span class="sc-ai-badge"><i class="eicon-star"></i> Edytuj ze SI</span>');
-          }
-        };
-        setTimeout(checkBadge, 100);
-        setTimeout(checkBadge, 500);
-      });
-
-
-      log('Init: Registering scrollcrafter listeners');
-      elementor.channels.editor.on('scrollcrafter:open_editor', (view) => {
-        log('Event: scrollcrafter:open_editor received');
-        openEditorForCurrentElement();
-      });
-      elementor.channels.editor.on('scrollcrafter:preview', (view) => {
-        log('Event: scrollcrafter:preview received');
-        handlePreviewOutside();
-      });
-    } else {
+  /**
+   * Register ScrollCrafter editor listeners.
+   * This function is called either immediately (if Elementor is already initialized)
+   * or when the 'elementor/init' event fires.
+   */
+  function registerScrollCrafterListeners() {
+    if (typeof elementor === 'undefined' || !elementor.channels || !elementor.channels.editor) {
       console.error('[SC Editor] Critical: elementor.channels.editor not found!');
+      return;
     }
-  });
+
+    log('Init: Registering scrollcrafter listeners');
+
+    // Inject AI badge into label
+    elementor.hooks.addAction('panel/open_editor/widget/common', (panel, model, view) => {
+      const checkBadge = () => {
+        const label = panel.$el.find('.elementor-control-scrollcrafter_script .elementor-control-title');
+        if (label.length && !label.find('.sc-ai-badge').length) {
+          label.append('<span class="sc-ai-badge"><i class="eicon-star"></i> Edytuj ze SI</span>');
+        }
+      };
+      setTimeout(checkBadge, 100);
+      setTimeout(checkBadge, 500);
+    });
+
+    elementor.channels.editor.on('scrollcrafter:open_editor', (view) => {
+      log('Event: scrollcrafter:open_editor received');
+      openEditorForCurrentElement();
+    });
+    elementor.channels.editor.on('scrollcrafter:preview', (view) => {
+      log('Event: scrollcrafter:preview received');
+      handlePreviewOutside();
+    });
+
+    log('ScrollCrafter listeners registered successfully');
+  }
+
+  // Check if Elementor is already initialized (script loaded after init event)
+  if (typeof elementor !== 'undefined' && elementor.channels && elementor.channels.editor) {
+    log('Elementor already initialized, registering listeners immediately');
+    registerScrollCrafterListeners();
+  } else {
+    // Fallback: wait for the event (edge case, e.g., if script is loaded very early)
+    $(window).on('elementor/init', () => {
+      log('Event: elementor/init fired');
+      registerScrollCrafterListeners();
+    });
+  }
 
 })(jQuery);
