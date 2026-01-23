@@ -68,8 +68,15 @@ jobs:
           version: ${{ steps.get_version.outputs.VERSION }}
           release_mode: released
         env:
+          # buttonizer/freemius-deploy expected names:
           PUBLIC_KEY: 'pk_e06556e20e23f076049b8455ed7a6'
           DEV_ID: ${{ secrets.FREEMIUS_DEVELOPER_ID }}
           SECRET_KEY: ${{ secrets.FREEMIUS_API_KEY }}
           PLUGIN_SLUG: 'scrollcrafter'
-          PLUGIN_ID: '22819'
+          PLUGIN_ID: 22819
+          # Some systems expect these:
+          DEVELOPER_ID: ${{ secrets.FREEMIUS_DEVELOPER_ID }}
+          API_KEY: ${{ secrets.FREEMIUS_API_KEY }}
+          FS_DEVELOPER_ID: ${{ secrets.FREEMIUS_DEVELOPER_ID }}
+          FS_API_KEY: ${{ secrets.FREEMIUS_API_KEY }}
+          FS_PLUGIN_ID: 22819
