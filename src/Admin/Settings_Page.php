@@ -160,7 +160,15 @@ class Settings_Page
                 }
             }
         }
-        $output['custom_breakpoints'] = $bp_array;
+        
+        // @fs-pro-start
+        // Restriction: Only Pro users can save custom breakpoints.
+        if ( sc_is_pro() ) {
+            $output['custom_breakpoints'] = $bp_array;
+        } else {
+            $output['custom_breakpoints'] = [];
+        }
+        // @fs-pro-end
 
 		$allowed_modes = [ 'local', 'cdn_custom', 'cdn_gsap_docs' ];
 		$output['gsap_mode'] = in_array( $input['gsap_mode'] ?? '', $allowed_modes, true ) ? $input['gsap_mode'] : 'local';
@@ -199,6 +207,7 @@ class Settings_Page
     public function render_field_custom_breakpoints(): void
     {
         $config = Config::instance();
+        $is_pro = sc_is_pro();
         $custom = $config->get( 'custom_breakpoints', [] );
         $text = '';
         if ( is_array( $custom ) ) {
@@ -212,8 +221,19 @@ class Settings_Page
                 }
             }
         }
+
+        if ( ! $is_pro ) {
+            ?>
+            <div style="background: #fff8e5; border-left: 4px solid #ffb900; padding: 12px; margin-bottom: 10px; max-width: 500px;">
+                <strong>💎 Pro Feature</strong><br>
+                <?php echo esc_html__( 'Custom breakpoints are only available in the Pro version. Elementor breakpoints will be used automatically in the Free version.', 'scrollcrafter' ); ?>
+                <br><br>
+                <a href="<?php echo scr_fs()->get_upgrade_url(); ?>" class="button button-primary"><?php echo esc_html__( 'Upgrade to Pro', 'scrollcrafter' ); ?></a>
+            </div>
+            <?php
+        }
         ?>
-        <textarea name="<?php echo self::OPTION_NAME; ?>[custom_breakpoints]" rows="5" cols="40" class="regular-text code"><?php echo esc_textarea( $text ); ?></textarea>
+        <textarea name="<?php echo self::OPTION_NAME; ?>[custom_breakpoints]" rows="5" cols="40" class="regular-text code" <?php disabled( ! $is_pro ); ?> placeholder="<?php echo esc_attr__( "mobile: 768\ntablet: 1024 strict", 'scrollcrafter' ); ?>"><?php echo esc_textarea( $text ); ?></textarea>
         <?php
     }
 

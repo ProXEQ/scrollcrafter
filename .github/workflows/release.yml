@@ -35,8 +35,8 @@ jobs:
           # Create temporary folder
           mkdir -p scrollcrafter-for-elementor
           
-          # Copy essential files
-          cp -r assets languages src README.md readme.txt scrollcrafter.php scrollcrafter-for-elementor/
+          # Copy essential files (including freemius SDK)
+          cp -r assets languages src freemius README.md readme.txt scrollcrafter.php scrollcrafter-for-elementor/
           
           # Clean up source maps from assets/js
           find scrollcrafter-for-elementor/assets/js -name "*.map" -type f -delete
@@ -55,3 +55,13 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy on Freemius
+        uses: freemius/deploy-action@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          developer_id: ${{ secrets.FREEMIUS_DEVELOPER_ID }}
+          plugin_id: '22819'
+          api_key: ${{ secrets.FREEMIUS_API_KEY }}
+          zip_path: scrollcrafter-for-elementor.zip
+          is_premium: true

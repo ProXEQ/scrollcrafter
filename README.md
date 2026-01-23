@@ -155,6 +155,10 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.1.5
+-   **New**: Official Freemius integration for licensing and seamless updates.
+-   **Impr**: Prepared foundation for Pro version features.
+
 ### 1.1.4
 -   **New**: "▶ Preview" button in Code Editor modal for instant animation preview.
 -   **New**: "📍 Markers" toggle (Ctrl+K) - shows GSAP markers during preview only.

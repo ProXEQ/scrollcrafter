@@ -4,7 +4,7 @@ Donate link: https://pixelmobs.com/donate
 Tags: elementor, animation, scroll, gsap, scrolltrigger, motion
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,6 +62,10 @@ Example DSL:
 3. Lint markers showing DSL validation errors.
 
 == Changelog ==
+
+= 1.1.5 =
+*   **New**: Official Freemius integration for licensing and seamless updates.
+*   **Improvement**: Prepared foundation for Pro version features.
 
 = 1.1.4 =
 *   **New**: Preview button in Code Editor modal for instant animation preview.
