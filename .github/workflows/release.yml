@@ -69,7 +69,7 @@ jobs:
           version: ${{ steps.get_version.outputs.VERSION }}
           release_mode: released
         env:
-          PUBLIC_KEY: 'pk_e06556e20e23f076049b8455ed7a6'
+          PUBLIC_KEY: 'pk_e96a49f6f8c95b647d30f1534cef1'
           DEV_ID: ${{ secrets.FREEMIUS_DEVELOPER_ID }}
           SECRET_KEY: ${{ secrets.FREEMIUS_API_KEY }}
           PLUGIN_SLUG: 'scrollcrafter'
