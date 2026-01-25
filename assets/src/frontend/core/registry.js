@@ -62,6 +62,7 @@ export function initWidgetsInScope(root = document, force = false) {
 
       // Execute registration - it MUST return a cleanup function (or attach it to node)
       const cleanup = registry[type](node, config);
+
       if (typeof cleanup === 'function') {
         node.__sc_cleanup = cleanup;
       }

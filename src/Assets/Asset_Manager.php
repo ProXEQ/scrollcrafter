@@ -19,6 +19,7 @@ class Asset_Manager
     
         add_filter( 'load_script_translation_file', [ $this, 'fix_loco_js_translation_path' ], 10, 3 );
         add_filter( 'script_loader_tag', [ $this, 'add_defer_attribute' ], 10, 2 );
+        add_filter( 'wp_resource_hints', [ $this, 'add_resource_hints' ], 10, 2 );
     }
 
     public function register_frontend_assets(): void
@@ -26,8 +27,6 @@ class Asset_Manager
         if ( wp_script_is( 'scrollcrafter-gsap', 'registered' ) ) {
             return;
         }
-
-
 
         $config = Config::instance();
         $mode   = $config->get_gsap_mode();
@@ -52,7 +51,7 @@ class Asset_Manager
         wp_register_script(
             'scrollcrafter-frontend',
             SCROLLCRAFTER_URL . 'assets/js/frontend.bundle.js',
-            [ 'scrollcrafter-gsap-scrolltrigger', 'scrollcrafter-gsap-text', 'scrollcrafter-gsap-splittext', 'wp-i18n' ],
+            [ 'scrollcrafter-gsap-scrolltrigger', 'wp-i18n' ],
             SCROLLCRAFTER_VERSION,
             true
         );
@@ -72,31 +71,48 @@ class Asset_Manager
 
     public function enqueue_frontend_assets(): void
     {
-        if ( is_admin() || ! $this->should_load_assets() ) {
+        if ( is_admin() ) {
             return;
         }
+
+        $analysis = $this->analyze_page_requirements();
+        if ( ! $analysis['should_load'] ) {
+            return;
+        }
+
         wp_enqueue_script( 'scrollcrafter-gsap' );
         wp_enqueue_script( 'scrollcrafter-gsap-scrolltrigger' );
-        wp_enqueue_script( 'scrollcrafter-gsap-text' );
-        wp_enqueue_script( 'scrollcrafter-gsap-splittext' );
+        
+        if ( $analysis['needs_text'] ) {
+            wp_enqueue_script( 'scrollcrafter-gsap-text' );
+        }
+        if ( $analysis['needs_split'] ) {
+            wp_enqueue_script( 'scrollcrafter-gsap-splittext' );
+        }
+
         wp_enqueue_script( 'scrollcrafter-frontend' );
     }
 
-    private function should_load_assets(): bool
+    private function analyze_page_requirements(): array
     {
+        $res = [ 'should_load' => false, 'needs_text' => false, 'needs_split' => false ];
+
         // 1. Always load in Elementor Editor / Preview
         if ( \Elementor\Plugin::$instance->preview->is_preview_mode() || \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
-            return true;
+            $res['should_load'] = true;
+            $res['needs_text']  = true;
+            $res['needs_split'] = true;
+            return $res;
         }
 
         // 2. Only check on Singular (posts/pages) for now
         if ( ! is_singular() ) {
-             return false; 
+             return $res; 
         }
 
         global $post;
         if ( ! $post instanceof \WP_Post ) {
-            return false;
+            return $res;
         }
 
         // 3. Check Elementor Data in Meta (Smart Scanning)
@@ -106,10 +122,12 @@ class Asset_Manager
              false !== strpos( $elementor_data, 'scrollcrafter_enable' ) ||
              false !== strpos( $elementor_data, 'scrollcrafter_script' ) 
            ) ) {
-            return true;
+            $res['should_load'] = true;
+            $res['needs_split'] = ( false !== strpos( $elementor_data, 'split:' ) || false !== strpos( $elementor_data, 'SplitText' ) );
+            $res['needs_text']  = ( false !== strpos( $elementor_data, 'text:' ) || false !== strpos( $elementor_data, 'TextPlugin' ) );
         }
 
-        return false;
+        return $res;
     }
 
     public function add_defer_attribute( $tag, $handle ) {
@@ -178,8 +196,35 @@ public function fix_loco_js_translation_path( $file, $handle, $domain ) {
             return $new_path;
         }
     }
-
     return $file;
 }
+
+    public function add_resource_hints( $hints, $relation_type ) {
+        if ( 'preload' === $relation_type && ! is_admin() ) {
+            $analysis = $this->analyze_page_requirements();
+            if ( $analysis['should_load'] ) {
+                $config = Config::instance();
+                $mode   = $config->get_gsap_mode();
+                $url    = '';
+
+                if ( 'cdn_gsap_docs' === $mode ) {
+                    $url = 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/gsap.min.js';
+                } elseif ( 'cdn_custom' === $mode ) {
+                    $url = $config->get_gsap_cdn_url();
+                } else {
+                    $url = SCROLLCRAFTER_URL . 'assets/vendor/gsap/gsap.min.js';
+                }
+
+                if ( $url ) {
+                    $hints[] = [
+                        'href'        => $url,
+                        'as'          => 'script',
+                        'crossorigin' => 'anonymous',
+                    ];
+                }
+            }
+        }
+        return $hints;
+    }
 
 }

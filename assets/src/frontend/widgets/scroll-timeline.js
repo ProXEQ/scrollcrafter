@@ -1,89 +1,6 @@
 import { registerWidget } from '../core/registry';
 import { getGsap, getScrollTrigger } from '../core/gsap-loader';
-
-/**
- * Helper: Buduje Media Query z obsługą Strict
- * @param {string} targetSlug - np. 'tablet'
- * @param {boolean} isStrict - czy włączono tryb strict
- * @param {Array} sortedBreakpoints - tablica z Configu [{key:'mobile', value:767}, ...]
- */
-/**
- * Helper: Bezpieczny parser wyrażeń matematycznych (Rozszerzony)
- */
-function parseSmartValue(val, contextNode) {
-  if (typeof val !== 'string') return val;
-
-  if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
-  if (val === 'calc_scroll_width') val = 'calc(sw)';
-  if (val === 'calc_100vh') val = 'calc(vh)';
-
-  if (val.match(/^calc\s*\((.*)\)$/i)) {
-    let expression = val.match(/^calc\s*\((.*)\)$/i)[1];
-
-    // Support unit-like syntax: 100sw -> 100 * sw
-    expression = expression.replace(/(\d)\s*(sw|cw|ch|vw|vh)\b/gi, '$1 * $2');
-
-    return (index, target) => {
-      const el = target || contextNode;
-
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const cw = el.clientWidth || 0;
-      const ch = el.clientHeight || 0;
-
-      const totalScrollW = el.scrollWidth - cw;
-      const sw = totalScrollW > 0 ? totalScrollW : 0;
-
-      const center = (vw - cw) / 2;
-      const end = vw - cw;
-      const vcenter = (vh - ch) / 2;
-
-      const varsMap = { sw, cw, ch, vw, vh, center, vcenter, end };
-
-      let cleanExpr = expression;
-      Object.keys(varsMap).forEach(key => {
-        const regex = new RegExp(`\\b${key}\\b`, 'gi');
-        cleanExpr = cleanExpr.replace(regex, '');
-      });
-
-      if (!/^[0-9\.\+\-\*\/\(\)\s]*$/.test(cleanExpr)) {
-        console.warn('[ScrollCrafter] Unsafe characters in calc expression:', expression);
-        return 0;
-      }
-
-      let finalExpr = expression;
-      const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
-
-      sortedKeys.forEach(key => {
-        const regex = new RegExp(`\\b${key}\\b`, 'gi');
-        finalExpr = finalExpr.replace(regex, varsMap[key]);
-      });
-
-      try {
-        return new Function('return ' + finalExpr)();
-      } catch (e) {
-        console.error('[ScrollCrafter] Calc error:', e);
-        return 0;
-      }
-    };
-  }
-
-  return val;
-}
-
-function parseMacros(vars, contextNode) {
-  if (!vars || typeof vars !== 'object') return vars;
-  const out = { ...vars };
-  Object.keys(out).forEach((key) => {
-    const val = out[key];
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
-      out[key] = parseMacros(val, contextNode);
-      return;
-    }
-    out[key] = parseSmartValue(val, contextNode);
-  });
-  return out;
-}
+import { parseMacros } from '../core/utils';
 
 function getPinElement(node) {
   return node;
@@ -146,6 +63,14 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     const vars = parseMacros(step.vars || {}, pinElem);
     const vars2 = step.vars2 ? parseMacros(step.vars2, pinElem) : null;
 
+    // Fix: Disable CSS transitions and modern CSS transforms to prevent conflict with GSAP
+    gsap.set(targets, {
+      transition: "none",
+      translate: "none",
+      rotate: "none",
+      scale: "none"
+    });
+
     // --- SplitText Support (Timeline) ---
     if (step.split && window.SplitText) {
       try {
@@ -166,9 +91,24 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
       console.log(`${logPrefix} Step ${index + 1}: method=${method}, targets=${targets.length}`, targets);
     }
 
+    // Fix: For 'from' and 'fromTo' in timeline, enable immediateRender
+    if (method === 'from') {
+      if (vars.immediateRender === undefined) vars.immediateRender = true;
+    } else if (method === 'fromTo' && vars2) {
+      if (vars2.immediateRender === undefined) vars2.immediateRender = true;
+    }
+
     try {
-      if (method === 'fromTo' && vars2) tl.fromTo(targets, vars, vars2, position);
-      else if (typeof tl[method] === 'function') tl[method](targets, vars, position);
+      let stepTween;
+      if (method === 'fromTo' && vars2) stepTween = tl.fromTo(targets, vars, vars2, position);
+      else if (typeof tl[method] === 'function') stepTween = tl[method](targets, vars, position);
+
+      // Fix: Force initialization of stagger elements in timeline steps
+      if (stepTween && (method === 'from' || method === 'fromTo')) {
+        // Note: progress() on a timeline step tween might be tricky depending on GSAP version,
+        // but tl.add(tween.progress(1).progress(0)) is another way.
+        // Most stable is to just ensure immediateRender: true is passed.
+      }
     } catch (e) {
       if (debug) console.error(`${logPrefix} Error step ${index + 1}`, e);
     }

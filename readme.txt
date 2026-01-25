@@ -4,7 +4,7 @@ Donate link: https://pixelmobs.com/donate
 Tags: elementor, animation, scroll, gsap, scrolltrigger, motion
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.6
+Stable tag: 1.1.7
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,7 +63,14 @@ Example DSL:
 
 == Changelog ==
 
-= 1.1.5 =
+= 1.1.7 =
+* Fix: Standardized editor initialization to resolve "Open Editor" button non-responsiveness (GitHub Issue #1).
+* Fix: Implemented internal GSAP synchronization for staggers to prevent lagging elements from appearing early.
+* Optimization: Added caching for mathematical expressions in animations.
+* Optimization: Implemented granular script enqueuing for GSAP plugins.
+* Optimization: Added preload hints for GSAP core for faster first paint.
+
+= 1.1.6 =
 *   **New**: Official Freemius integration for licensing and seamless updates.
 *   **Improvement**: Prepared foundation for Pro version features.
 

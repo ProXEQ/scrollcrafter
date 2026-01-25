@@ -801,15 +801,9 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     }
   };
 
-  /**
-   * Register ScrollCrafter editor listeners.
-   * This function is called either immediately (if Elementor is already initialized)
-   * or when the 'elementor/init' event fires.
-   */
   function registerScrollCrafterListeners() {
     if (typeof elementor === 'undefined' || !elementor.channels || !elementor.channels.editor) {
-      console.error('[SC Editor] Critical: elementor.channels.editor not found!');
-      return;
+      return false;
     }
 
     log('Init: Registering scrollcrafter listeners');
@@ -836,18 +830,32 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     });
 
     log('ScrollCrafter listeners registered successfully');
+    return true;
   }
 
-  // Check if Elementor is already initialized (script loaded after init event)
-  if (typeof elementor !== 'undefined' && elementor.channels && elementor.channels.editor) {
-    log('Elementor already initialized, registering listeners immediately');
-    registerScrollCrafterListeners();
-  } else {
-    // Fallback: wait for the event (edge case, e.g., if script is loaded very early)
-    $(window).on('elementor/init', () => {
-      log('Event: elementor/init fired');
-      registerScrollCrafterListeners();
-    });
-  }
+  const initRegistration = () => {
+    let attempts = 0;
+    const maxAttempts = 50;
+
+    const tryRegister = () => {
+      if (registerScrollCrafterListeners()) {
+        return;
+      }
+
+      attempts++;
+      if (attempts < maxAttempts) {
+        if (attempts % 10 === 0) {
+          log(`Waiting for Elementor Editor channels (attempt ${attempts})...`);
+        }
+        setTimeout(tryRegister, 100);
+      } else {
+        console.error('[SC Editor] Could not find Elementor Editor channels after 5s.');
+      }
+    };
+
+    tryRegister();
+  };
+
+  initRegistration();
 
 })(jQuery);

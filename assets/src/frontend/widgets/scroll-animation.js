@@ -1,117 +1,6 @@
 import { registerWidget } from '../core/registry';
 import { getGsap, getScrollTrigger } from '../core/gsap-loader';
-
-/**
- * Helper: Bezpieczny parser wyrażeń matematycznych (Rozszerzony)
- * Obsługuje: sw (scrollWidth), cw (clientWidth), vw (viewportWidth), center, end
- */
-function parseSmartValue(val, contextNode) {
-  if (typeof val !== 'string') return val;
-
-  if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
-  if (val === 'calc_scroll_width') val = 'calc(sw)';
-  if (val === 'calc_100vh') val = 'calc(vh)';
-
-  if (val.match(/^calc\s*\((.*)\)$/i)) {
-    let expression = val.match(/^calc\s*\((.*)\)$/i)[1];
-
-    // Support unit-like syntax: 100sw -> 100 * sw
-    // Only for dimensions (sw, cw, ch, vw, vh), not for keywords like center/end
-    expression = expression.replace(/(\d)\s*(sw|cw|ch|vw|vh)\b/gi, '$1 * $2');
-
-    return (index, target) => {
-      const el = target || contextNode;
-
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      const cw = el.clientWidth || 0;
-      const ch = el.clientHeight || 0;
-
-      const totalScrollW = el.scrollWidth - cw;
-      const sw = totalScrollW > 0 ? totalScrollW : 0;
-
-      const center = (vw - cw) / 2;
-      const vcenter = (vh - ch) / 2;
-      const end = vw - cw;
-
-      const varsMap = {
-        sw: sw, cw: cw, ch: ch, vw: vw, vh: vh,
-        center: center, vcenter: vcenter, end: end
-      };
-
-      let cleanExpr = expression;
-      Object.keys(varsMap).forEach(key => {
-        const regex = new RegExp(`\\b${key}\\b`, 'gi');
-        cleanExpr = cleanExpr.replace(regex, '');
-      });
-
-      if (!/^[0-9\.\+\-\*\/\(\)\s]*$/.test(cleanExpr)) {
-        console.warn('[ScrollCrafter] Unsafe calc expression:', expression);
-        return 0;
-      }
-
-      let finalExpr = expression;
-      const sortedKeys = Object.keys(varsMap).sort((a, b) => b.length - a.length);
-
-      sortedKeys.forEach(key => {
-        const regex = new RegExp(`\\b${key}\\b`, 'gi');
-        finalExpr = finalExpr.replace(regex, varsMap[key]);
-      });
-
-      try {
-        return new Function('return ' + finalExpr)();
-      } catch (e) {
-        console.error('[ScrollCrafter] Calc error:', e);
-        return 0;
-      }
-    };
-  }
-  return val;
-}
-
-/**
- * Helper: Rekurencyjne parsowanie obiektu vars
- */
-function parseMacros(vars, contextNode) {
-  if (!vars || typeof vars !== 'object') return vars;
-  const out = { ...vars };
-  Object.keys(out).forEach((key) => {
-    const val = out[key];
-    if (val && typeof val === 'object' && !Array.isArray(val)) {
-      out[key] = parseMacros(val, contextNode);
-      return;
-    }
-    out[key] = parseSmartValue(val, contextNode);
-  });
-  return out;
-}
-
-/**
- * Helper: Buduje Media Query
- */
-function buildMediaQuery(targetSlug, isStrict, sortedBreakpoints) {
-  if (!sortedBreakpoints || !Array.isArray(sortedBreakpoints)) return null;
-
-  const currentIndex = sortedBreakpoints.findIndex(bp => bp.key === targetSlug);
-  if (currentIndex === -1) return null;
-
-  const currentBp = sortedBreakpoints[currentIndex];
-  const maxQuery = `(max-width: ${currentBp.value}px)`;
-
-  if (!isStrict) {
-    return maxQuery;
-  }
-
-  let minQuery = '';
-  if (currentIndex > 0) {
-    const prevBp = sortedBreakpoints[currentIndex - 1];
-    const minVal = prevBp.value + 1;
-    minQuery = `(min-width: ${minVal}px) and `;
-  } else {
-    return maxQuery;
-  }
-  return `${minQuery}${maxQuery}`;
-}
+import { parseMacros, buildMediaQuery } from '../core/utils';
 
 registerWidget('scroll_animation', (node, config) => {
   const debug = !!window.ScrollCrafterConfig?.debug;
@@ -203,10 +92,9 @@ registerWidget('scroll_animation', (node, config) => {
     const vars = parseMacros({ ...animConfig.vars }, calcContext);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
 
-    // Fix: Disable CSS transitions to prevent conflict with GSAP
+    // Fix: Disable CSS transitions and modern CSS transforms to prevent conflict with GSAP
     gsap.set(elements, {
       transition: "none",
-      // Force individual transforms to 'none' if they exist to prevent conflicts with 'transform' property
       translate: "none",
       rotate: "none",
       scale: "none"
@@ -228,14 +116,29 @@ registerWidget('scroll_animation', (node, config) => {
       if (vars2) console.log(`${logPrefix} Vars2 (To):`, vars2);
     }
 
-    if (method === 'fromTo' && vars2) {
-      return gsap.fromTo(elements, vars, vars2);
-    } else if (typeof gsap[method] === 'function') {
-      return gsap[method](elements, vars);
+    // Fix: For 'from' and 'fromTo', enable immediateRender
+    // so initial values (like opacity: 0) are applied immediately
+    if (method === 'from') {
+      if (vars.immediateRender === undefined) vars.immediateRender = true;
+    } else if (method === 'fromTo' && vars2) {
+      if (vars2.immediateRender === undefined) vars2.immediateRender = true;
     }
 
-    if (debug) console.warn(`${logPrefix} Unknown GSAP method:`, method);
-    return null;
+    let tween;
+    if (method === 'fromTo' && vars2) {
+      tween = gsap.fromTo(elements, vars, vars2);
+    } else if (typeof gsap[method] === 'function') {
+      tween = gsap[method](elements, vars);
+    }
+
+    // Fix: Force all elements in a stagger to their initial state.
+    // This solves the issue where Icon 2 and 3 were visible while Icon 1 was animating.
+    if (tween && (method === 'from' || method === 'fromTo')) {
+      tween.progress(1).progress(0);
+    }
+
+    if (!tween && debug) console.warn(`${logPrefix} Unknown GSAP method:`, method);
+    return tween;
   };
 
   const mm = gsap.matchMedia();
