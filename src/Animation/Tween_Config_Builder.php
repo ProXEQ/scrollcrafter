@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Animation;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 class Tween_Config_Builder
 {
     public function build(

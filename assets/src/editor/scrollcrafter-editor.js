@@ -43,18 +43,37 @@ function getDynamicHeaders() {
 }
 
 let lastValidationState = { valid: true, hasCriticalErrors: false, diagnostics: [] };
+const validationCache = new Map();
 
-async function fetchValidation(scriptContent) {
+async function fetchValidation(scriptContent, options = {}) {
+  const isLintOnly = options.lintOnly || false;
   const apiRoot = window.wpApiSettings?.root || '/wp-json/';
   const nonce = window.wpApiSettings?.nonce || '';
+
+  // Use session cache for linting to avoid redundant calls
+  const cacheKey = `${isLintOnly ? 'lint:' : 'full:'}${scriptContent}`;
+  if (validationCache.has(cacheKey)) {
+    if (DEBUG) console.log('[SC Cache] Returning cached result');
+    return validationCache.get(cacheKey);
+  }
+
   try {
     const res = await fetch(`${apiRoot}scrollcrafter/v1/validate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': nonce },
-      body: JSON.stringify({ script: scriptContent, mode: 'auto' })
+      body: JSON.stringify({
+        script: scriptContent,
+        mode: options.mode || 'auto',
+        lint_only: isLintOnly,
+        widget_id: options.widgetId || 'preview'
+      })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    const data = await res.json();
+
+    // Cache the result
+    validationCache.set(cacheKey, data);
+    return data;
   } catch (e) {
     console.error('[SC Validation] Error:', e);
     return { ok: false, errors: [{ message: 'Validation API unreachable', line: 1 }] };
@@ -272,9 +291,9 @@ function dslCompletionSource(context) {
   const lineText = line.text;
   const textBefore = lineText.slice(0, pos - line.from);
 
-  if (textBefore.includes('#')) return null;
   const { name: sectionName } = getCurrentSection(state, pos);
 
+  // Handle /slash command completions
   const word = context.matchBefore(/\/[a-zA-Z0-9_.]*/);
   if (word) {
     if (!sectionName) return null;
@@ -286,19 +305,52 @@ function dslCompletionSource(context) {
     return { from: word.from + 1, options: withSlashApply(options, word.from) };
   }
 
+  // Handle value completions (e.g., from: opacity, ease: power1.out)
   const matchValueContext = textBefore.match(/([a-zA-Z0-9_.]+):\s*([^:]*)$/);
   if (matchValueContext) {
     const rawKey = matchValueContext[1];
     const filterText = matchValueContext[2] || '';
     const defs = getSectionFieldDefs(sectionName);
+
     if (defs && defs[rawKey] && defs[rawKey].values) {
+      // Check if this is a from/to/startAt field - these need special handling for CSS properties
+      const isCssPropertyField = ['from', 'to', 'startAt'].includes(rawKey);
+
+      // Find what's after the last comma (for multi-property fields)
+      const lastCommaIdx = filterText.lastIndexOf(',');
+      const currentWord = lastCommaIdx >= 0 ? filterText.slice(lastCommaIdx + 1).trim() : filterText.trim();
+
+      const options = defs[rawKey].values.map(v => {
+        if (isCssPropertyField) {
+          // For CSS properties, insert "property=" and keep cursor after =
+          return {
+            label: v.label,
+            type: 'variable',
+            detail: v.detail,
+            info: v.info,
+            apply: (view, completion, from, to) => {
+              const insertText = completion.label + '=';
+              view.dispatch({
+                changes: { from: pos - currentWord.length, to: pos, insert: insertText },
+                selection: { anchor: pos - currentWord.length + insertText.length }
+              });
+            }
+          };
+        } else {
+          return { label: v.label, type: 'enum', detail: v.detail, apply: v.label };
+        }
+      });
+
       return {
-        from: pos - filterText.length,
-        options: defs[rawKey].values.map(v => ({ label: v.label, type: 'enum', detail: v.detail, apply: v.label }))
+        from: pos - currentWord.length,
+        options: options.filter(opt => opt.label.toLowerCase().startsWith(currentWord.toLowerCase()))
       };
     }
     return null;
   }
+
+  // Block header/field suggestions if typing a CSS selector (e.g., #myElement)
+  if (textBefore.includes('#')) return null;
 
   if (textBefore.trim() === '') {
     const options = sectionName ? getFieldCompletionsForSection(sectionName) : [];
@@ -332,7 +384,8 @@ const dslLinter = linter(async (view) => {
     statusEl.style.color = '#8b949e';
   }
 
-  const data = await fetchValidation(doc);
+  // Use lightweight linting during typing
+  const data = await fetchValidation(doc, { lintOnly: true });
   if (DEBUG) console.log('[Linter API Response]', data);
 
   const diagnostics = [];
@@ -433,9 +486,41 @@ function createEditor(parentNode, initialDoc) {
       dslTheme,
       dslLanguage,
       syntaxHighlighting(dslHighlightStyle),
-      autocompletion({ override: [dslCompletionSource], activateOnTyping: true }),
+      autocompletion({
+        override: [dslCompletionSource],
+        activateOnTyping: true,
+        maxRenderedOptions: 20,
+        icons: true,
+        addToOptions: [
+          {
+            render: function (completion, state) {
+              if (!completion.info) return null;
+              const el = document.createElement('div');
+              el.className = 'sc-completion-info-inline';
+              el.textContent = typeof completion.info === 'function' ? '' : completion.info;
+              return el;
+            },
+            position: 50
+          }
+        ]
+      }),
       EditorView.updateListener.of((update) => {
         if (update.docChanged || update.selectionSet) updateCheatSheetState(update.view);
+      }),
+      // Re-trigger autocomplete after typing comma (for multi-value CSS properties)
+      EditorView.inputHandler.of((view, from, to, text) => {
+        if (text === ',') {
+          setTimeout(() => {
+            const pos = view.state.selection.main.head;
+            const line = view.state.doc.lineAt(pos);
+            const textBeforeCursor = line.text.slice(0, pos - line.from);
+            // Match from:/to:/startAt: followed by any content ending with comma
+            if (textBeforeCursor.match(/(?:from|to|startAt):\s*.+,\s*$/)) {
+              startCompletion(view);
+            }
+          }, 100);
+        }
+        return false;
       }),
       lintGutter(),
       dslLinter,

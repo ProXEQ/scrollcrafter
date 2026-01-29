@@ -352,6 +352,85 @@
   padding: 8px !important;
 }
 
+/* Autocomplete tooltip - Premium Redesign */
+.cm-tooltip-autocomplete {
+  background: linear-gradient(135deg, #1a1d24 0%, #14161b 100%) !important;
+  border: 1px solid rgba(88, 166, 255, 0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+  max-height: 320px;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+  padding: 4px !important;
+}
+
+.cm-tooltip-autocomplete>ul {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.cm-tooltip-autocomplete>ul>li {
+  padding: 8px 12px !important;
+  margin: 2px 0 !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  border: 1px solid transparent !important;
+}
+
+.cm-tooltip-autocomplete>ul>li:hover {
+  background: rgba(88, 166, 255, 0.08) !important;
+  border-color: rgba(88, 166, 255, 0.15) !important;
+}
+
+.cm-tooltip-autocomplete>ul>li[aria-selected] {
+  background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(88, 166, 255, 0.08) 100%) !important;
+  border-color: rgba(88, 166, 255, 0.3) !important;
+}
+
+/* Completion label (property name) */
+.cm-completionLabel {
+  font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #58a6ff !important;
+}
+
+/* Completion detail (short description on the right) */
+.cm-completionDetail {
+  font-size: 11px !important;
+  color: #8b949e !important;
+  font-style: italic !important;
+  margin-left: auto !important;
+  padding-left: 12px !important;
+  opacity: 0.8 !important;
+}
+
+/* Inline info (example text) - displayed below each option */
+.sc-completion-info-inline {
+  font-size: 10px !important;
+  color: #6e7681 !important;
+  padding: 4px 0 0 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  margin-top: 4px !important;
+  line-height: 1.3 !important;
+  white-space: normal !important;
+}
+
+/* Hide the default side panel info completely */
+.cm-completionInfo {
+  display: none !important;
+}
+
+/* Hide completion icons */
+.cm-completionIcon {
+  display: none !important;
+}
+
+
 /* RESPONSIVE & ANIMATIONS */
 @keyframes sc-shake {
 

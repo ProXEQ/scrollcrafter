@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2026-01-05 10:56+0000",
+    "translation-revision-date": "2026-01-29 17:24+0000",
     "generator": "Loco https://localise.biz/",
     "source": "assets/src/editor/field-defs.js",
     "domain": "scrollcrafter",
@@ -109,6 +109,12 @@
             "Global stagger": [
                 "Globalne op\u00f3\u017anienie kaskadowe (stagger)"
             ],
+            "Grid [rows, cols] or \"auto\"": [
+                "Siatka [rows, cols] lub \"auto\""
+            ],
+            "Immediate setup vars": [
+                "Natychmiastowa konfiguracja zmiennych"
+            ],
             "Infinite": [
                 "Niesko\u0144czono\u015b\u0107"
             ],
@@ -130,11 +136,26 @@
             "Link animation to scrollbar": [
                 "Powi\u0105\u017c animacj\u0119 z paskiem przewijania"
             ],
+            "Method": [
+                "Metoda"
+            ],
             "Motion curve": [
                 "Krzywa ruchu"
             ],
+            "Move down 100px": [
+                "Przesu\u0144 w d\u00f3\u0142 o 100px."
+            ],
+            "Move left 100px": [
+                "Przesu\u0144 w lewo o 100px."
+            ],
             "Move left 50% of self": [
                 "Przesu\u0144 w lewo o 50% w\u0142asnej szer."
+            ],
+            "Move right 100px": [
+                "Przesu\u0144 w prawo o 100px."
+            ],
+            "Move up 100px": [
+                "Przesu\u0144 w g\u00f3r\u0119 o 100px."
             ],
             "Move up 50% of self": [
                 "rzesu\u0144 w g\u00f3r\u0119 o 50% w\u0142asnej wys."
@@ -157,6 +178,9 @@
             "Override Target": [
                 "Nadpisz cel"
             ],
+            "Override target": [
+                "Zast\u0105p cel"
+            ],
             "Overshoot/Elastic": [
                 "Przestrzeganie/Elastyczno\u015b\u0107 (Elastic)"
             ],
@@ -166,8 +190,14 @@
             "Pin smoothing (1)": [
                 "Wyg\u0142adzanie przyklejenia (1)"
             ],
+            "Pin the trigger element": [
+                "Przypnij element"
+            ],
             "Pivot point: top center": [
                 "Punkt obrotu: g\u00f3ra \u015brodek"
+            ],
+            "Play only once?": [
+                "Odtworzy\u0107 tylko raz?"
             ],
             "Repeat count": [
                 "Liczba powt\u00f3rze\u0144"
@@ -195,6 +225,9 @@
             ],
             "Scope: Targets are relative to the widget. Use \"h2\" or \".my-class\".": [
                 "Zakres: Selektory s\u0105 relatywne do widgetu. U\u017cyj \u201ch2\u201d lub \u201c.my-class\u201d."
+            ],
+            "Scroll 500px from start": [
+                "Przewi\u0144 500px od startu"
             ],
             "ScrollTrigger Config": [
                 "Konfiguracja ScrollTriggera"
@@ -267,6 +300,9 @@
             ],
             "Timeline Defaults": [
                 "Domy\u015blne osi czasu"
+            ],
+            "Timeline placement": [
+                "Po\u0142o\u017cenie osi czasu"
             ],
             "To-Fro loop": [
                 "P\u0119tla Tam-i-Z powrotem (Yolo)"

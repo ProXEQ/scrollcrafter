@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 use ScrollCrafter\Assets\Asset_Manager;
 use ScrollCrafter\Elementor\Plugin_Integration;
 use ScrollCrafter\Elementor\Controls\Animation_Injector;

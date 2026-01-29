@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Admin;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 use ScrollCrafter\Support\Config;
 
 class Settings_Page
@@ -82,38 +85,6 @@ class Settings_Page
 			'scrollcrafter_assets_section'
 		);
 
-		add_settings_field(
-			'gsap_cdn_url',
-			esc_html__( 'Custom GSAP URL', 'scrollcrafter' ),
-			[ $this, 'render_field_gsap_cdn_url' ],
-			'scrollcrafter',
-			'scrollcrafter_assets_section'
-		);
-
-		add_settings_field(
-			'scrolltrigger_cdn',
-			esc_html__( 'Custom ScrollTrigger URL', 'scrollcrafter' ),
-			[ $this, 'render_field_scrolltrigger_cdn_url' ],
-			'scrollcrafter',
-			'scrollcrafter_assets_section'
-		);
-
-        add_settings_field(
-			'textplugin_cdn',
-			esc_html__( 'Custom TextPlugin URL', 'scrollcrafter' ),
-			[ $this, 'render_field_textplugin_cdn_url' ],
-			'scrollcrafter',
-			'scrollcrafter_assets_section'
-		);
-
-        add_settings_field(
-			'splittext_cdn',
-			esc_html__( 'Custom SplitText URL', 'scrollcrafter' ),
-			[ $this, 'render_field_splittext_cdn_url' ],
-			'scrollcrafter',
-			'scrollcrafter_assets_section'
-		);
-
         add_settings_field(
             'enable_editor_animations',
             esc_html__( 'Enable Editor Animations', 'scrollcrafter' ),
@@ -170,12 +141,8 @@ class Settings_Page
         }
         // @fs-pro-end
 
-		$allowed_modes = [ 'local', 'cdn_custom', 'cdn_gsap_docs' ];
+		$allowed_modes = [ 'local', 'cdn' ];
 		$output['gsap_mode'] = in_array( $input['gsap_mode'] ?? '', $allowed_modes, true ) ? $input['gsap_mode'] : 'local';
-		$output['gsap_cdn_url']      = esc_url_raw( $input['gsap_cdn_url'] ?? '' );
-		$output['scrolltrigger_cdn'] = esc_url_raw( $input['scrolltrigger_cdn'] ?? '' ); 
-        $output['textplugin_cdn']    = esc_url_raw( $input['textplugin_cdn'] ?? '' );
-        $output['splittext_cdn']     = esc_url_raw( $input['splittext_cdn'] ?? '' );
         $output['enable_editor_animations'] = isset( $input['enable_editor_animations'] ) && '1' === $input['enable_editor_animations'];
 
 		return $output;
@@ -262,46 +229,10 @@ class Settings_Page
 		$current = $config->get_gsap_mode();
 		?>
 		<select name="<?php echo self::OPTION_NAME; ?>[gsap_mode]">
-			<option value="local" <?php selected( $current, 'local' ); ?>>Local (bundled)</option>
-			<option value="cdn_gsap_docs" <?php selected( $current, 'cdn_gsap_docs' ); ?>>CDN (jsDelivr - Standard)</option>
-			<option value="cdn_custom" <?php selected( $current, 'cdn_custom' ); ?>>CDN (Custom URLs)</option>
+			<option value="local" <?php selected( $current, 'local' ); ?>><?php esc_html_e( 'Local (bundled with plugin)', 'scrollcrafter' ); ?></option>
+			<option value="cdn" <?php selected( $current, 'cdn' ); ?>><?php esc_html_e( 'CDN (jsDelivr)', 'scrollcrafter' ); ?></option>
 		</select>
-		<?php
-	}
-
-	public function render_field_gsap_cdn_url(): void
-	{
-		$config = Config::instance();
-		$val = $config->get( 'gsap_cdn_url' );
-		?>
-		<input type="url" name="<?php echo self::OPTION_NAME; ?>[gsap_cdn_url]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
-		<?php
-	}
-
-	public function render_field_scrolltrigger_cdn_url(): void
-	{
-		$config = Config::instance();
-		$val = $config->get( 'scrolltrigger_cdn' );
-		?>
-		<input type="url" name="<?php echo self::OPTION_NAME; ?>[scrolltrigger_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
-		<?php
-	}
-
-    public function render_field_textplugin_cdn_url(): void
-	{
-		$config = Config::instance();
-		$val = $config->get( 'textplugin_cdn' );
-		?>
-		<input type="url" name="<?php echo self::OPTION_NAME; ?>[textplugin_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
-		<?php
-	}
-
-    public function render_field_splittext_cdn_url(): void
-	{
-		$config = Config::instance();
-		$val = $config->get( 'splittext_cdn' );
-		?>
-		<input type="url" name="<?php echo self::OPTION_NAME; ?>[splittext_cdn]" value="<?php echo esc_attr( $val ); ?>" class="regular-text">
+        <p class="description"><?php esc_html_e( 'CDN offers faster global delivery but requires external connection.', 'scrollcrafter' ); ?></p>
 		<?php
 	}
 

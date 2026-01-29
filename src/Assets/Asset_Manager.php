@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Assets;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 use ScrollCrafter\Support\Config;
 use ScrollCrafter\Support\Logger;
 
@@ -31,16 +34,11 @@ class Asset_Manager
         $config = Config::instance();
         $mode   = $config->get_gsap_mode();
 
-        if ( 'cdn_gsap_docs' === $mode ) {
+        if ( 'cdn' === $mode ) {
             wp_register_script('scrollcrafter-gsap', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/gsap.min.js', [], null, true);
             wp_register_script('scrollcrafter-gsap-scrolltrigger', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/ScrollTrigger.min.js', ['scrollcrafter-gsap'], null, true);
             wp_register_script('scrollcrafter-gsap-text', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/TextPlugin.min.js', ['scrollcrafter-gsap'], null, true);
             wp_register_script('scrollcrafter-gsap-splittext', 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/SplitText.min.js', ['scrollcrafter-gsap'], null, true);
-        } elseif ( 'cdn_custom' === $mode ) {
-            wp_register_script('scrollcrafter-gsap', $config->get_gsap_cdn_url(), [], SCROLLCRAFTER_VERSION, true);
-            wp_register_script('scrollcrafter-gsap-scrolltrigger', $config->get_scrolltrigger_cdn_url(), ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
-            wp_register_script('scrollcrafter-gsap-text', $config->get_textplugin_cdn_url(), ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
-            wp_register_script('scrollcrafter-gsap-splittext', $config->get_splittext_cdn_url(), ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
         } else {
             wp_register_script('scrollcrafter-gsap', SCROLLCRAFTER_URL . 'assets/vendor/gsap/gsap.min.js', [], SCROLLCRAFTER_VERSION, true);
             wp_register_script('scrollcrafter-gsap-scrolltrigger', SCROLLCRAFTER_URL . 'assets/vendor/gsap/ScrollTrigger.min.js', ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
@@ -207,10 +205,8 @@ public function fix_loco_js_translation_path( $file, $handle, $domain ) {
                 $mode   = $config->get_gsap_mode();
                 $url    = '';
 
-                if ( 'cdn_gsap_docs' === $mode ) {
+                if ( 'cdn' === $mode ) {
                     $url = 'https://cdn.jsdelivr.net/npm/gsap@' . self::GSAP_VERSION . '/dist/gsap.min.js';
-                } elseif ( 'cdn_custom' === $mode ) {
-                    $url = $config->get_gsap_cdn_url();
                 } else {
                     $url = SCROLLCRAFTER_URL . 'assets/vendor/gsap/gsap.min.js';
                 }

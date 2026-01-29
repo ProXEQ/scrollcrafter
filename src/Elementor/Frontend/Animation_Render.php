@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Elementor\Frontend;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 use Elementor\Element_Base;
 use ScrollCrafter\Animation\Script_Parser;
 use ScrollCrafter\Animation\Tween_Config_Builder;

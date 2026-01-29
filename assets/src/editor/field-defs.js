@@ -1,24 +1,51 @@
 const { __, _n, sprintf } = wp.i18n;
 
-const COMMON_VARS = [
-  { label: 'opacity=0', detail: __('Fade out (0)', 'scrollcrafter') },
-  { label: 'opacity=1', detail: __('Fade in (1)', 'scrollcrafter') },
-  { label: 'autoAlpha=0', detail: __('Fade out + hide (visibility)', 'scrollcrafter') },
-  { label: 'autoAlpha=1', detail: __('Fade in + show (visibility)', 'scrollcrafter') },
-  { label: 'x=100', detail: __('Move right 100px', 'scrollcrafter') },
-  { label: 'x=-100', detail: __('Move left 100px', 'scrollcrafter') },
-  { label: 'y=100', detail: __('Move down 100px', 'scrollcrafter') },
-  { label: 'y=-100', detail: __('Move up 100px', 'scrollcrafter') },
-  { label: 'xPercent=-50', detail: __('Move left 50% of self', 'scrollcrafter') },
-  { label: 'yPercent=-50', detail: __('Move up 50% of self', 'scrollcrafter') },
-  { label: 'scale=0', detail: __('Scale down to 0', 'scrollcrafter') },
-  { label: 'scale=1.5', detail: __('Scale up to 1.5', 'scrollcrafter') },
-  { label: 'rotation=45', detail: __('Rotate 45deg', 'scrollcrafter') },
-  { label: 'rotation=360', detail: __('Full spin', 'scrollcrafter') },
-  { label: 'backgroundColor=#f00', detail: __('Change to Red', 'scrollcrafter') },
-  { label: 'filter=blur(10px)', detail: __('Blur effect', 'scrollcrafter') },
-  { label: 'transformOrigin=center top', detail: __('Pivot point: top center', 'scrollcrafter') },
+/**
+ * CSS Property definitions for from:/to: autocomplete.
+ * Each entry shows the property name, inserts "property=", and describes the usage.
+ */
+const CSS_PROPERTIES = [
+  // Opacity & Visibility
+  { label: 'opacity', detail: __('0-1, controls transparency', 'scrollcrafter'), info: __('Example: opacity=0 (hidden) or opacity=1 (visible)', 'scrollcrafter') },
+  { label: 'autoAlpha', detail: __('opacity + visibility:hidden when 0', 'scrollcrafter'), info: __('Combines opacity with automatic visibility toggle. Recommended for fade-ins.', 'scrollcrafter') },
+
+  // Transform: Position
+  { label: 'x', detail: __('Horizontal offset (px, %, vw)', 'scrollcrafter'), info: __('Example: x=100 (right), x=-50 (left), x=50%', 'scrollcrafter') },
+  { label: 'y', detail: __('Vertical offset (px, %, vh)', 'scrollcrafter'), info: __('Example: y=100 (down), y=-100 (up)', 'scrollcrafter') },
+  { label: 'xPercent', detail: __('X offset as % of element width', 'scrollcrafter'), info: __('Example: xPercent=-100 moves left by its own width', 'scrollcrafter') },
+  { label: 'yPercent', detail: __('Y offset as % of element height', 'scrollcrafter'), info: __('Example: yPercent=50 moves down by half its height', 'scrollcrafter') },
+
+  // Transform: Scale & Rotation
+  { label: 'scale', detail: __('Uniform scale (1 = normal)', 'scrollcrafter'), info: __('Example: scale=0 (invisible), scale=1.5 (150%)', 'scrollcrafter') },
+  { label: 'scaleX', detail: __('Horizontal scale', 'scrollcrafter'), info: __('Example: scaleX=0 (squashed horizontally)', 'scrollcrafter') },
+  { label: 'scaleY', detail: __('Vertical scale', 'scrollcrafter'), info: __('Example: scaleY=2 (stretched vertically)', 'scrollcrafter') },
+  { label: 'rotation', detail: __('Z-axis rotation (degrees)', 'scrollcrafter'), info: __('Example: rotation=45, rotation=360 (full spin)', 'scrollcrafter') },
+  { label: 'rotationX', detail: __('X-axis 3D rotation (degrees)', 'scrollcrafter'), info: __('Flips forward/backward. Needs perspective on parent.', 'scrollcrafter') },
+  { label: 'rotationY', detail: __('Y-axis 3D rotation (degrees)', 'scrollcrafter'), info: __('Flips left/right. Needs perspective on parent.', 'scrollcrafter') },
+  { label: 'skewX', detail: __('Horizontal skew (degrees)', 'scrollcrafter'), info: __('Example: skewX=20', 'scrollcrafter') },
+  { label: 'skewY', detail: __('Vertical skew (degrees)', 'scrollcrafter'), info: __('Example: skewY=-10', 'scrollcrafter') },
+  { label: 'transformOrigin', detail: __('Pivot point for transforms', 'scrollcrafter'), info: __('Example: transformOrigin=center top, transformOrigin=0% 100%', 'scrollcrafter') },
+
+  // Colors & Background
+  { label: 'backgroundColor', detail: __('Background color (#hex, rgb, hsl)', 'scrollcrafter'), info: __('Example: backgroundColor=#ff0000', 'scrollcrafter') },
+  { label: 'color', detail: __('Text color', 'scrollcrafter'), info: __('Example: color=#ffffff', 'scrollcrafter') },
+  { label: 'borderColor', detail: __('Border color', 'scrollcrafter'), info: __('Example: borderColor=#333', 'scrollcrafter') },
+
+  // Dimensions
+  { label: 'width', detail: __('Element width (px, %, vw)', 'scrollcrafter'), info: __('Example: width=100%, width=50vw', 'scrollcrafter') },
+  { label: 'height', detail: __('Element height (px, %, vh)', 'scrollcrafter'), info: __('Example: height=auto, height=300', 'scrollcrafter') },
+
+  // Filters & Effects
+  { label: 'filter', detail: __('CSS filter effects', 'scrollcrafter'), info: __('Example: filter=blur(10px), filter=grayscale(100%)', 'scrollcrafter') },
+  { label: 'clipPath', detail: __('CSS clip-path', 'scrollcrafter'), info: __('Example: clipPath=inset(0% 100% 0% 0%)', 'scrollcrafter') },
+
+  // Other
+  { label: 'zIndex', detail: __('Stack order (integer)', 'scrollcrafter'), info: __('Example: zIndex=10', 'scrollcrafter') },
+  { label: 'boxShadow', detail: __('Box shadow', 'scrollcrafter'), info: __('Example: boxShadow=0 10px 30px rgba(0,0,0,0.3)', 'scrollcrafter') },
 ];
+
+// Legacy format for backwards compatibility
+const COMMON_VARS = CSS_PROPERTIES;
 
 const COMMON_EASES = [
   { label: 'none', detail: __('Linear (no ease)', 'scrollcrafter') },

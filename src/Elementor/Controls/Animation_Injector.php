@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Elementor\Controls;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 use Elementor\Controls_Manager;
 use Elementor\Element_Base;
 use ScrollCrafter\Support\Logger;

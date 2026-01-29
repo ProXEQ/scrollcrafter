@@ -1,5 +1,5 @@
 {
-    "translation-revision-date": "2026-01-05 10:56+0000",
+    "translation-revision-date": "2026-01-29 17:24+0000",
     "generator": "Loco https://localise.biz/",
     "source": "assets/src/editor/scrollcrafter-editor.js",
     "domain": "scrollcrafter",
@@ -10,11 +10,17 @@
                 "lang": "pl_PL",
                 "plural-forms": "nplurals=3; plural=(n==1 ? 0 : n%10 >= 2 && n%10<=4 &&(n%100<10||n%100 >= 20)? 1 : 2);"
             },
+            "? Preview": [
+                "Podgl\u0105d"
+            ],
             "Applied!": [
                 "Zastosowano!"
             ],
-            "Apply & Preview": [
-                "Zapisz"
+            "Apply": [
+                "Zastosuj"
+            ],
+            "Are you sure you want to discard changes and close?": [
+                "Czy napewno chcesz anulowa\u0107 zmiany i zamkn\u0105\u0107?"
             ],
             "Cancel": [
                 "Anuluj"
@@ -25,19 +31,34 @@
             "Checking...": [
                 "Sprawdzanie..."
             ],
-            "Fix errors before saving!": [
-                "Napraw b\u0142\u0119dy przed zapisaniem!"
+            "Close": [
+                "Zamknij"
             ],
             "Found %d error.": [
                 "Znaleziono %d b\u0142\u0105d.",
                 "Znaleziono %d b\u0142\u0119dy.",
                 "Znaleziono %d b\u0142\u0119d\u00f3w."
             ],
+            "Ghost Mode (Ctrl+G)": [
+                "Tryb ducha (CTRL+G)"
+            ],
+            "Ghost Mode Active (Scroll now!)": [
+                "Tryb ducha aktywny"
+            ],
+            "Markers enabled for preview": [
+                "Znaczniki w\u0142\u0105czone do podgl\u0105du"
+            ],
+            "Minimize (Ctrl+M)": [
+                "Minimalizuj (CTRL+M)"
+            ],
             "Ready": [
                 "Gotowy"
             ],
             "Script is valid.": [
                 "Skrypt jest poprawny."
+            ],
+            "Show GSAP Markers (Ctrl+K)": [
+                "Poka\u017c znaczniki GSAP (CTRL+K)"
             ],
             "Start with [animation]...": [
                 "Zacznij od //"
@@ -46,9 +67,6 @@
                 "Poprawny (lecz zawiera %d ostrze\u017cenie)",
                 "Poprawny (lecz zawiera %d ostrze\u017cenia)",
                 "Poprawny (lecz zawiera %d ostrze\u017ce\u0144)"
-            ],
-            "Your code has %d warning(s). This might cause unexpected behavior. Are you sure you want to save?": [
-                "Tw\u00f3j kod ma %d ostrze\u017ce(\u0144/nie). Mo\u017ce to spowodowa\u0107 nieprzewidziane skutki. Czy chcesz kontynuowa\u0107?"
             ]
         }
     }

@@ -2,6 +2,10 @@
 
 namespace ScrollCrafter\Admin;
 
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 use WP_REST_Request;
 use WP_REST_Response;
 use ScrollCrafter\Animation\Script_Parser;
@@ -49,6 +53,7 @@ class Validation_Controller
                     'mode'      => [ 'type' => 'string', 'default' => 'auto' ],
                     'widget_id' => [ 'type' => 'string', 'default' => 'preview' ],
                     'markers'   => [ 'type' => 'boolean', 'default' => false ],
+                    'lint_only' => [ 'type' => 'boolean', 'default' => false ],
                 ],
             ]
         );
@@ -91,6 +96,15 @@ class Validation_Controller
         if ( ! empty( $errors ) ) {
             return new WP_REST_Response([
                 'ok' => false, 'errors' => $errors, 'warnings' => $warnings, 'config' => null
+            ], 200);
+        }
+
+        if ( (bool) $request->get_param( 'lint_only' ) ) {
+            return new WP_REST_Response([
+                'ok'       => true,
+                'errors'   => [],
+                'warnings' => $warnings,
+                'config'   => null,
             ], 200);
         }
 
@@ -153,8 +167,8 @@ class Validation_Controller
 
                 if ( ! in_array( $normalizedKey, $allowedKeys, true ) ) {
                     $message = sprintf(
-                        /* translators: %s: The unknown key found. */
-                        __("Unknown key '%s' in [%s].", 'scrollcrafter'),
+                        /* translators: 1: Unknown key name, 2: Section name (e.g. [animation]). */
+                        __( "Unknown key '%1\$s' in [%2\$s].", 'scrollcrafter' ),
                         $key,
                         $sectionName
                     );
@@ -164,7 +178,15 @@ class Validation_Controller
                 // Simple sane checks
                 if (in_array($normalizedKey, ['duration', 'delay', 'stagger'], true)) {
                     if (is_numeric($value) && $value < 0) {
-                        $issues[] = $this->create_issue(sprintf(__("Value for '%s' cannot be negative.", 'scrollcrafter'), $key), 'error', $line);
+                        $issues[] = $this->create_issue(
+                            sprintf(
+                                /* translators: %s: The field name (e.g. duration). */
+                                __("Value for '%s' cannot be negative.", 'scrollcrafter'),
+                                $key
+                            ),
+                            'error',
+                            $line
+                        );
                     }
                 }
             }
@@ -194,7 +216,15 @@ class Validation_Controller
                     
                     if (in_array($normalizedKey, ['duration', 'delay', 'stagger'], true)) {
                         if (is_numeric($value) && $value < 0) {
-                            $issues[] = $this->create_issue(sprintf(__("Value for '%s' cannot be negative.", 'scrollcrafter'), $key), 'error', $line);
+                            $issues[] = $this->create_issue(
+                                sprintf(
+                                    /* translators: %s: The field name (e.g. duration). */
+                                    __("Value for '%s' cannot be negative.", 'scrollcrafter'),
+                                    $key
+                                ),
+                                'error',
+                                $line
+                            );
                         }
                     }
                 }
@@ -205,6 +235,9 @@ class Validation_Controller
         $check_keys( $parsed['scroll'] ?? [], 'scroll', self::ALLOWED_KEYS['scroll'] );
         $check_steps( $parsed['timeline']['steps'] ?? [] );
 
+        // Add GSAP-specific logic warnings
+        $this->add_gsap_sanity_checks( $parsed, $issues );
+
         if ( ! empty( $parsed['media'] ) ) {
             foreach ( $parsed['media'] as $mediaSlug => $mediaData ) {
                 $check_keys( $mediaData['animation'] ?? [], "animation @{$mediaSlug}", self::ALLOWED_KEYS['animation'] );
@@ -214,6 +247,55 @@ class Validation_Controller
         }
 
         return $issues;
+    }
+
+    private function add_gsap_sanity_checks( array $parsed, array &$issues ): void
+    {
+        $scroll = $parsed['scroll'] ?? [];
+        $anim   = $parsed['animation'] ?? [];
+
+        // 1. Scrub vs toggleActions
+        if ( isset( $scroll['scrub'] ) && isset( $scroll['toggleactions'] ) ) {
+            $issues[] = $this->create_issue(
+                __( "GSAP ignores 'toggleActions' when 'scrub' is enabled.", 'scrollcrafter' ),
+                'warning',
+                $scroll['toggleactions']['line'] ?? 1
+            );
+        }
+
+        // 2. Pin without Scrub (UX suggestion)
+        if ( ( $scroll['pin']['value'] ?? false ) && ! isset( $scroll['scrub'] ) ) {
+            $issues[] = $this->create_issue(
+                __( "Consider adding 'scrub: true' when using 'pin' for smoother interaction.", 'scrollcrafter' ),
+                'warning',
+                $scroll['pin']['line'] ?? 1
+            );
+        }
+
+        // 3. Start vs End logic (simple numeric comparison)
+        $start = $scroll['start']['value'] ?? '';
+        $end   = $scroll['end']['value'] ?? '';
+        if ( is_string( $start ) && is_string( $end ) ) {
+            if ( preg_match( '/^(\d+)%$/', $start, $mStart ) && preg_match( '/^(\d+)%$/', $end, $mEnd ) ) {
+                if ( (int) $mStart[1] > (int) $mEnd[1] ) {
+                    $issues[] = $this->create_issue(
+                        __( "End position occurs before start position (e.g. 80% vs 20%).", 'scrollcrafter' ),
+                        'warning',
+                        $scroll['end']['line'] ?? 1
+                    );
+                }
+            }
+        }
+
+        // 4. type: from conflicts
+        $type = strtolower( $anim['type']['value'] ?? 'from' );
+        if ( 'from' === $type && isset( $anim['to'] ) ) {
+            $issues[] = $this->create_issue(
+                __( "You are using 'type: from' but defined properties in a 'to:' block. Move them to 'from:' or change type to 'fromTo'.", 'scrollcrafter' ),
+                'warning',
+                $anim['to']['line'] ?? 1
+            );
+        }
     }
 
     private function create_issue( string $message, string $severity = 'warning', int $line = 1 ): array

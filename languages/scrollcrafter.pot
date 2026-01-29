@@ -2,13 +2,13 @@
 # This file is distributed under the GPLv2 or later license.
 msgid ""
 msgstr ""
-"Project-Id-Version: ScrollCrafter for Elementor 1.0.0\n"
+"Project-Id-Version: ScrollCrafter for Elementor 1.1.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugins/scrollcrafter\n"
 "MIME-Version: 1.0\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Plural-Forms: nplurals=2; plural=(n!=1);\n"
-"POT-Creation-Date: 2026-01-05T10:55:19.749Z\n"
+"POT-Creation-Date: 2026-01-29T17:19:33.767Z\n"
 "PO-Revision-Date: 2026-MO-DA HO:MI+ZONE\n"
 "Last-Translator: PixelMobs, ProXEQ <connect@pixelmobs.com>\n"
 "Language-Team: PixelMobs, ProXEQ <connect@pixelmobs.com>\n"
@@ -42,81 +42,257 @@ msgid "https://pixelmobs.com"
 msgstr ""
 
 # %s: Minimum PHP version.
-#: scrollcrafter.php:70
-#: scrollcrafter.php:105
+#: scrollcrafter.php:121
+#: scrollcrafter.php:156
 msgid "ScrollCrafter requires PHP in version at least %s."
 msgstr ""
 
 # %s: Minimum WordPress version.
-#: scrollcrafter.php:114
+#: scrollcrafter.php:165
 msgid "ScrollCrafter requires WordPress in version at least %s."
 msgstr ""
 
-#: scrollcrafter.php:121
+#: scrollcrafter.php:172
 msgid "ScrollCrafter requires an active Elementor plugin."
 msgstr ""
 
 # %s: Minimum Elementor version.
-#: scrollcrafter.php:127
+#: scrollcrafter.php:178
 msgid "ScrollCrafter requires Elementor in version at least %s."
 msgstr ""
 
-#: src/Plugin.php:93
+#: src/Plugin.php:105
 msgid "Settings"
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:321
-#: assets/src/editor/scrollcrafter-editor.js:514
+# %d: Line number in the script
+#: src/Animation/Script_Parser.php:49
+msgid "Unknown section header ignored."
+msgstr ""
+
+#: src/Animation/Script_Parser.php:83
+msgid "Missing colon separator (:)."
+msgstr ""
+
+# %d: Line number in the script
+#: src/Animation/Script_Parser.php:147
+msgid "Properties in [timeline] must use 'timeline.defaults' prefix."
+msgstr ""
+
+#: src/Admin/Validation_Controller.php:70
+msgid "The script is empty."
+msgstr ""
+
+# 1: Error message, 2: Line number.
+#: src/Admin/Validation_Controller.php:142
+msgid "Error building the configuration: %1$s (line %2$d)."
+msgstr ""
+
+# 1: Unknown key name, 2: Section name (e.g. [animation]).
+#: src/Admin/Validation_Controller.php:171
+msgid "Unknown key '%1\\$s' in [%2\\$s]."
+msgstr ""
+
+# %s: The field name (e.g. duration).
+#: src/Admin/Validation_Controller.php:184
+#: src/Admin/Validation_Controller.php:222
+msgid "Value for '%s' cannot be negative."
+msgstr ""
+
+# 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number
+#: src/Admin/Validation_Controller.php:207
+msgid "Unknown key '%1\\$s' in [%2\\$sstep.%3\\$d]."
+msgstr ""
+
+#: src/Admin/Validation_Controller.php:260
+msgid "GSAP ignores 'toggleActions' when 'scrub' is enabled."
+msgstr ""
+
+#: src/Admin/Validation_Controller.php:269
+msgid "Consider adding 'scrub: true' when using 'pin' for smoother interaction."
+msgstr ""
+
+#: src/Admin/Validation_Controller.php:282
+msgid "End position occurs before start position (e.g. 80% vs 20%)."
+msgstr ""
+
+#: src/Admin/Validation_Controller.php:294
+msgid ""
+"You are using 'type: from' but defined properties in a 'to:' block. Move "
+"them to 'from:' or change type to 'fromTo'."
+msgstr ""
+
+# %s: The unsafe expression found in calc().
+#: src/Admin/Validation_Controller.php:385
+msgid ""
+"Unsafe characters in calc(): '%s'. Only math and vars (sw, vw, center...) "
+"are allowed."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:45
+msgid "General Configuration"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:52
+msgid "Debug Mode"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:60
+msgid "Breakpoints"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:67
+msgid "Custom Breakpoints"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:75
+msgid "GSAP & Assets"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:82
+msgid "GSAP Source"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:90
+msgid "Enable Editor Animations"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:156
+msgid "ScrollCrafter Settings"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:170
+msgid "Define custom breakpoints. Format: slug: width [strict]. Example:"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:171
+msgid "If empty, breakpoints from Elementor will be used automatically."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:196
+msgid ""
+"Custom breakpoints are only available in the Pro version. Elementor "
+"breakpoints will be used automatically in the Free version."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:198
+msgid "Upgrade to Pro"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:203
+msgid ""
+"mobile: 768\\n"
+"tablet: 1024 strict"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:209
+msgid "Choose how the GSAP library should be loaded on your site."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:218
+msgid "Enable Debug Mode"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:221
+msgid "Enables GSAP markers on frontend and detailed logging."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:232
+msgid "Local (bundled with plugin)"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:233
+msgid "CDN (jsDelivr)"
+msgstr ""
+
+#: src/Admin/Settings_Page.php:235
+msgid "CDN offers faster global delivery but requires external connection."
+msgstr ""
+
+#: src/Admin/Settings_Page.php:245
+msgid "Live animations inside Elementor Editor (might affect performance)"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:350
+#: assets/src/editor/scrollcrafter-editor.js:551
 msgid "Checking..."
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:386
+#: assets/src/editor/scrollcrafter-editor.js:416
 msgid "Found %d error."
 msgid_plural "Found %d errors."
 msgstr[0] ""
 msgstr[1] ""
 
-#: assets/src/editor/scrollcrafter-editor.js:394
+#: assets/src/editor/scrollcrafter-editor.js:424
 msgid "Valid (%d warning)."
 msgid_plural "Valid (%d warnings)."
 msgstr[0] ""
 msgstr[1] ""
 
-#: assets/src/editor/scrollcrafter-editor.js:401
+#: assets/src/editor/scrollcrafter-editor.js:431
 msgid "Script is valid."
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:422
+#: assets/src/editor/scrollcrafter-editor.js:452
 msgid "Start with [animation]..."
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:474
+#: assets/src/editor/scrollcrafter-editor.js:491
+msgid "Show GSAP Markers (Ctrl+K)"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:492
+msgid "Ghost Mode (Ctrl+G)"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:493
+msgid "Minimize (Ctrl+M)"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:494
+msgid "Close"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:509
 msgid "Cheat Sheet"
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:483
+#: assets/src/editor/scrollcrafter-editor.js:518
+#: assets/src/editor/scrollcrafter-editor.js:631
+#: assets/src/editor/scrollcrafter-editor.js:645
 msgid "Ready"
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:486
+#: assets/src/editor/scrollcrafter-editor.js:521
 msgid "Cancel"
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:487
-msgid "Apply & Preview"
+#: assets/src/editor/scrollcrafter-editor.js:522
+msgid "? Preview"
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:559
-msgid "Fix errors before saving!"
+#: assets/src/editor/scrollcrafter-editor.js:523
+msgid "Apply"
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:566
-msgid ""
-"Your code has %d warning(s). This might cause unexpected behavior. Are you "
-"sure you want to save?"
+#: assets/src/editor/scrollcrafter-editor.js:578
+msgid "Are you sure you want to discard changes and close?"
 msgstr ""
 
-#: assets/src/editor/scrollcrafter-editor.js:576
+#: assets/src/editor/scrollcrafter-editor.js:631
+msgid "Ghost Mode Active (Scroll now!)"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:645
+msgid "Markers enabled for preview"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:675
+msgid "Fix errors before preview!"
+msgstr ""
+
+#: assets/src/editor/scrollcrafter-editor.js:689
 msgid "Applied!"
 msgstr ""
 
@@ -564,143 +740,34 @@ msgstr ""
 msgid "Next Step..."
 msgstr ""
 
-# %d: Line number in the script
-#: src/Animation/Script_Parser.php:46
-msgid "Unknown section header ignored."
-msgstr ""
-
-#: src/Animation/Script_Parser.php:80
-msgid "Missing colon separator (:)."
-msgstr ""
-
-# %d: Line number in the script
-#: src/Animation/Script_Parser.php:144
-msgid "Properties in [timeline] must use 'timeline.defaults' prefix."
-msgstr ""
-
-#: src/Admin/Validation_Controller.php:61
-msgid "The script is empty."
-msgstr ""
-
-# 1: Error message, 2: Line number.
-#: src/Admin/Validation_Controller.php:117
-msgid "Error building the configuration: %1$s (line %2$d)."
-msgstr ""
-
-# %s: The unknown key found.
-#: src/Admin/Validation_Controller.php:146
-msgid "Unknown key '%s' in [%s]."
-msgstr ""
-
-#: src/Admin/Validation_Controller.php:156
-#: src/Admin/Validation_Controller.php:186
-msgid "Value for '%s' cannot be negative."
-msgstr ""
-
-# 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number
-#: src/Admin/Validation_Controller.php:174
-msgid "Unknown key '%1\\$s' in [%2\\$sstep.%3\\$d]."
-msgstr ""
-
-# %s: The unsafe expression found in calc().
-#: src/Admin/Validation_Controller.php:283
-msgid ""
-"Unsafe characters in calc(): '%s'. Only math and vars (sw, vw, center...) "
-"are allowed."
-msgstr ""
-
-#: src/Admin/Settings_Page.php:42
-msgid "General Configuration"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:49
-msgid "Debug Mode"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:57
-msgid "Breakpoints"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:64
-msgid "Custom Breakpoints"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:72
-msgid "GSAP & Assets"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:79
-msgid "GSAP Source"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:87
-msgid "Custom GSAP URL"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:95
-msgid "Custom ScrollTrigger URL"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:103
-msgid "Custom TextPlugin URL"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:111
-msgid "Custom SplitText URL"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:172
-msgid "ScrollCrafter Settings"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:186
-msgid "Define custom breakpoints. Format: slug: width [strict]. Example:"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:187
-msgid "If empty, breakpoints from Elementor will be used automatically."
-msgstr ""
-
-#: src/Admin/Settings_Page.php:213
-msgid "Choose how the GSAP library should be loaded on your site."
-msgstr ""
-
-#: src/Admin/Settings_Page.php:222
-msgid "Enable Debug Mode"
-msgstr ""
-
-#: src/Admin/Settings_Page.php:225
-msgid "Enables GSAP markers on frontend and detailed logging."
-msgstr ""
-
-#: src/Elementor/Controls/Animation_Injector.php:56
+#: src/Elementor/Controls/Animation_Injector.php:62
 msgid "ScrollCrafter Animations"
 msgstr ""
 
-#: src/Elementor/Controls/Animation_Injector.php:64
+#: src/Elementor/Controls/Animation_Injector.php:70
 msgid "Enable ScrollCrafter"
 msgstr ""
 
-#: src/Elementor/Controls/Animation_Injector.php:66
+#: src/Elementor/Controls/Animation_Injector.php:72
 msgid "Yes"
 msgstr ""
 
-#: src/Elementor/Controls/Animation_Injector.php:67
+#: src/Elementor/Controls/Animation_Injector.php:73
 msgid "No"
 msgstr ""
 
-#: src/Elementor/Controls/Animation_Injector.php:76
+#: src/Elementor/Controls/Animation_Injector.php:82
 msgid "Animation script"
 msgstr ""
 
-#: src/Elementor/Controls/Animation_Injector.php:79
+#: src/Elementor/Controls/Animation_Injector.php:85
 msgid "[animation] ..."
 msgstr ""
 
-#: src/Elementor/Controls/Animation_Injector.php:80
+#: src/Elementor/Controls/Animation_Injector.php:86
 msgid "Click button at the bottom to open the DSL Editor."
 msgstr ""
 
-#: src/Elementor/Controls/Animation_Injector.php:91
-msgid "Open DSL Editor"
+#: src/Elementor/Controls/Animation_Injector.php:97
+msgid "Open Editor"
 msgstr ""

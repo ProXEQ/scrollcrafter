@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Support;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 /**
  * Prosty logger dla ScrollCrafter.
  *

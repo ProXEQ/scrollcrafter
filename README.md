@@ -155,6 +155,14 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.1.8
+-   **Perf**: Lightweight `lint_only` validation mode to eliminate Editor lag.
+-   **Perf**: Session-based client-side caching for instant undo/redo.
+-   **Fix**: Unknown keys in `[animation]`, `[target]`, and `step` now correctly flagged.
+-   **Fix**: Autocomplete suggestions now appear correctly after `from:` and `to:` fields.
+-   **New**: Logic warnings for `scrub`/`toggleActions`, `pin`/`scrub`, and `start`/`end` positions.
+-   **Security**: Removed custom CDN URL fields to prevent arbitrary script injection.
+
 ### 1.1.5
 -   **New**: Official Freemius integration for licensing and seamless updates.
 -   **Impr**: Prepared foundation for Pro version features.

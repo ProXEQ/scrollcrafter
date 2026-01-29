@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Animation;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 class Script_Parser
 {
     private const SECTION_ANIM     = 'animation';
@@ -285,6 +288,7 @@ class Script_Parser
             case 'yoyo':   $anim['yoyo'] = ['value' => $this->parseBool($value), 'line' => $line]; break;
 
             default:
+                $anim[$key] = ['value' => $this->parseSmartValue($value), 'line' => $line];
                 break;
         }
     }
@@ -342,12 +346,19 @@ class Script_Parser
             case 'position': $step['position'] = ['value' => $value, 'line' => $line]; break;
             case 'ease': $step['ease'] = ['value' => $value, 'line' => $line]; break;
             case 'label': $step['label'] = ['value' => $value, 'line' => $line]; break; 
+            default:
+                $step[$key] = ['value' => $this->parseSmartValue($value), 'line' => $line];
+                break;
         }
     }
 
     private function assignTargetKey(array &$target, string $key, string $value, int $line): void
     {
-        if ($key === 'selector') $target['selector'] = ['value' => $value, 'line' => $line];
+        if ($key === 'selector') {
+            $target['selector'] = ['value' => $value, 'line' => $line];
+        } else {
+            $target[$key] = ['value' => $this->parseSmartValue($value), 'line' => $line];
+        }
     }
 
     private function parseVarsList(string $value): array

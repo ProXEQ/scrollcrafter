@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Support;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 /**
  * Globalna konfiguracja pluginu ScrollCrafter.
  *
@@ -65,8 +68,6 @@ class Config
     {
         return [
             'gsap_mode'          => 'local',
-            'gsap_cdn_url'       => 'https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js',
-            'scrolltrigger_cdn'  => 'https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js',
             'debug_mode'         => false,
             'custom_breakpoints' => [],
             'enable_editor_animations' => false,
@@ -159,32 +160,10 @@ class Config
         return $queries;
     }
 
-
     public function get_gsap_mode(): string
     {
         $mode = $this->options['gsap_mode'] ?? 'local';
-        return in_array( $mode, [ 'local', 'cdn_custom', 'cdn_gsap_docs' ], true ) ? $mode : 'local';
-    }
-
-    public function get_gsap_cdn_url(): string
-    {
-        return esc_url_raw( $this->options['gsap_cdn_url'] ?: 'https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js' );
-    }
-
-    public function get_scrolltrigger_cdn_url(): string
-    {
-        return esc_url_raw( $this->options['scrolltrigger_cdn'] ?: 'https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js' );
-    }
-
-    public function get_textplugin_cdn_url(): string
-    {
-        return esc_url_raw( $this->options['textplugin_cdn'] ?? 'https://cdn.jsdelivr.net/npm/gsap@3/dist/TextPlugin.min.js' );
-    }
-
-    public function get_splittext_cdn_url(): string
-    {
-        // Default empty or placeholder, user must provide for splittext usually, but we have a workaround link
-        return esc_url_raw( $this->options['splittext_cdn'] ?? 'https://cdn.jsdelivr.net/npm/gsap@3.14.1/dist/SplitText.min.js' );
+        return in_array( $mode, [ 'local', 'cdn' ], true ) ? $mode : 'local';
     }
 
     /**

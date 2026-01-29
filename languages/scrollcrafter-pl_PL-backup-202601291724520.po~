@@ -10,7 +10,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10 >= 2 && n%10<=4 "
 "&&(n%100<10||n%100 >= 20)? 1 : 2);\n"
 "POT-Creation-Date: 2025-12-27T12:07:27.806Z\n"
-"PO-Revision-Date: 2025-12-30 16:01+0000\n"
+"PO-Revision-Date: 2026-01-29 17:24+0000\n"
 "Last-Translator: \n"
 "Language-Team: Polski\n"
 "X-Generator: Loco https://localise.biz/\n"
@@ -18,7 +18,11 @@ msgstr ""
 "X-Domain: scrollcrafter\n"
 "X-Loco-Version: 2.8.0; wp-6.9; php-8.2.27"
 
-#: src/Elementor/Controls/Animation_Injector.php:79
+#: assets/src/editor/scrollcrafter-editor.js:522
+msgid "? Preview"
+msgstr "Podgląd"
+
+#: src/Elementor/Controls/Animation_Injector.php:85
 msgid "[animation] ..."
 msgstr "[animation] ..."
 
@@ -51,17 +55,21 @@ msgstr "Animuj DO stanu (to)"
 msgid "Animate TO these values from current"
 msgstr "Animuj OD tych wartości do obecnych"
 
-#: src/Elementor/Controls/Animation_Injector.php:76
+#: src/Elementor/Controls/Animation_Injector.php:82
 msgid "Animation script"
 msgstr "Skrypt Animacji"
 
-#: assets/src/editor/scrollcrafter-editor.js:574
+#: assets/src/editor/scrollcrafter-editor.js:689
 msgid "Applied!"
 msgstr "Zastosowano!"
 
-#: assets/src/editor/scrollcrafter-editor.js:487
-msgid "Apply & Preview"
-msgstr "Zapisz"
+#: assets/src/editor/scrollcrafter-editor.js:523
+msgid "Apply"
+msgstr "Zastosuj"
+
+#: assets/src/editor/scrollcrafter-editor.js:578
+msgid "Are you sure you want to discard changes and close?"
+msgstr "Czy napewno chcesz anulować zmiany i zamknąć?"
 
 #: assets/src/editor/field-defs.js:93
 msgid "As soon as element enters viewport"
@@ -76,28 +84,37 @@ msgstr "Efekt rozmycia (Blur)"
 msgid "Bouncing effect"
 msgstr "Efekt podskoczenia"
 
-#: src/Admin/Settings_Page.php:57
+#: src/Admin/Settings_Page.php:60
 msgid "Breakpoints"
 msgstr "Breakpointy"
 
-#: assets/src/editor/scrollcrafter-editor.js:486
+#: assets/src/editor/scrollcrafter-editor.js:521
 msgid "Cancel"
 msgstr "Anuluj"
+
+#: src/Admin/Settings_Page.php:233
+msgid "CDN (jsDelivr)"
+msgstr "CDN (jsDelivr)"
+
+#: src/Admin/Settings_Page.php:235
+msgid "CDN offers faster global delivery but requires external connection."
+msgstr ""
+"CDN oferuje szybsze dostarczenie treści, ale wymaga połączenia zewnętrznego."
 
 #: assets/src/editor/field-defs.js:18
 msgid "Change to Red"
 msgstr "Zmiana koloru tła na czerwony"
 
-#: assets/src/editor/scrollcrafter-editor.js:474
+#: assets/src/editor/scrollcrafter-editor.js:509
 msgid "Cheat Sheet"
 msgstr "Ściągawka"
 
-#: assets/src/editor/scrollcrafter-editor.js:321
-#: assets/src/editor/scrollcrafter-editor.js:514
+#: assets/src/editor/scrollcrafter-editor.js:350
+#: assets/src/editor/scrollcrafter-editor.js:551
 msgid "Checking..."
 msgstr "Sprawdzanie..."
 
-#: src/Admin/Settings_Page.php:213
+#: src/Admin/Settings_Page.php:209
 msgid "Choose how the GSAP library should be loaded on your site."
 msgstr "Wybierz jak plugin GSAP ma być ładowany na twojej stronie."
 
@@ -105,9 +122,20 @@ msgstr "Wybierz jak plugin GSAP ma być ładowany na twojej stronie."
 msgid "Circular curve"
 msgstr "Krzywa kołowa (Circular)"
 
-#: src/Elementor/Controls/Animation_Injector.php:80
+#: src/Elementor/Controls/Animation_Injector.php:86
 msgid "Click button at the bottom to open the DSL Editor."
 msgstr "Kliknij przycisk poniżej aby otworzyć edytor kodu DSL."
+
+#: assets/src/editor/scrollcrafter-editor.js:494
+msgid "Close"
+msgstr "Zamknij"
+
+#: src/Admin/Validation_Controller.php:269
+msgid ""
+"Consider adding 'scrub: true' when using 'pin' for smoother interaction."
+msgstr ""
+"Rozważ dodanie \"scrub: true\" podczas używania \"pin\" dla płynniejszej "
+"interakcji."
 
 #: assets/src/editor/field-defs.js:176
 msgid "Control start & end"
@@ -119,27 +147,19 @@ msgid ""
 "Create advanced scroll-based animations visually with Elementor and GSAP."
 msgstr "Twórz zaawansowane animacje scroll-based wizualnie w Elementorze!"
 
-#: src/Admin/Settings_Page.php:64
+#: src/Admin/Settings_Page.php:67
 msgid "Custom Breakpoints"
 msgstr "Dodatkowe breakpointy"
 
-#: src/Admin/Settings_Page.php:87
-msgid "Custom GSAP URL"
-msgstr "Własny URL GSAP"
+#: src/Admin/Settings_Page.php:196
+msgid ""
+"Custom breakpoints are only available in the Pro version. Elementor "
+"breakpoints will be used automatically in the Free version."
+msgstr ""
+"Niestandardowe punkty układu są dostępne jedynie w wersji Pro. W darmowej "
+"wersji możesz korzystać z Elementorowych punktów."
 
-#: src/Admin/Settings_Page.php:95
-msgid "Custom ScrollTrigger URL"
-msgstr "Własny URL GSAP ScrollTrigger"
-
-#: src/Admin/Settings_Page.php:111
-msgid "Custom SplitText URL"
-msgstr "Własny URL GSAP SplitText"
-
-#: src/Admin/Settings_Page.php:103
-msgid "Custom TextPlugin URL"
-msgstr "Własny URL GSAP TextPlugin"
-
-#: src/Admin/Settings_Page.php:49
+#: src/Admin/Settings_Page.php:52
 msgid "Debug Mode"
 msgstr "Tryb debugowania"
 
@@ -151,7 +171,7 @@ msgstr "Domyślne (Cofa przy przewijaniu w górę)"
 msgid "Define BOTH start and end values"
 msgstr "Zdefiniuj OBA: start i koniec (fromTo)"
 
-#: src/Admin/Settings_Page.php:186
+#: src/Admin/Settings_Page.php:170
 #| msgid ""
 #| "Define custom breakpoints. Format: slug: width (one per line). Example:"
 msgid "Define custom breakpoints. Format: slug: width [strict]. Example:"
@@ -183,17 +203,25 @@ msgstr "Czas trwania w sekundach"
 msgid "Element selector (default: self)"
 msgstr "Selektor elementu (domyślnie: ten widget)"
 
-#: src/Admin/Settings_Page.php:222
+#: src/Admin/Settings_Page.php:218
 msgid "Enable Debug Mode"
 msgstr "Włącz tryb debugowania"
 
-#: src/Elementor/Controls/Animation_Injector.php:64
+#: src/Admin/Settings_Page.php:90
+msgid "Enable Editor Animations"
+msgstr "Włącz animacje w edytorze"
+
+#: src/Elementor/Controls/Animation_Injector.php:70
 msgid "Enable ScrollCrafter"
 msgstr "Włącz animowanie"
 
-#: src/Admin/Settings_Page.php:225
+#: src/Admin/Settings_Page.php:221
 msgid "Enables GSAP markers on frontend and detailed logging."
 msgstr "Włącza markery GSAP w front endzie i dostarcza szczegółowe dane."
+
+#: src/Admin/Validation_Controller.php:282
+msgid "End position occurs before start position (e.g. 80% vs 20%)."
+msgstr "Pozycja końcowa występuje przed pozycją początkową (np. 80% vs 20%)."
 
 #: assets/src/editor/field-defs.js:210
 msgid "End properties"
@@ -204,7 +232,7 @@ msgid "End properties (e.g. opacity=1)"
 msgstr "Właściwości końcowe (np. opacity=1)"
 
 # 1: Error message, 2: Line number.
-#: src/Admin/Validation_Controller.php:117
+#: src/Admin/Validation_Controller.php:142
 msgid "Error building the configuration: %1$s (line %2$d)."
 msgstr "Błąd przy tworzeniu konfiguracji %1$s (linia %2$d)."
 
@@ -232,11 +260,13 @@ msgstr "Zanikanie + ukrycie (autoAlpha)"
 msgid "First Step"
 msgstr "Pierwszy krok"
 
-#: assets/src/editor/scrollcrafter-editor.js:557
-msgid "Fix errors before saving!"
+#: assets/src/editor/scrollcrafter-editor.js:675
+#, fuzzy
+#| msgid "Fix errors before saving!"
+msgid "Fix errors before preview!"
 msgstr "Napraw błędy przed zapisaniem!"
 
-#: assets/src/editor/scrollcrafter-editor.js:386
+#: assets/src/editor/scrollcrafter-editor.js:416
 msgid "Found %d error."
 msgid_plural "Found %d errors."
 msgstr[0] "Znaleziono %d błąd."
@@ -247,9 +277,17 @@ msgstr[2] "Znaleziono %d błędów."
 msgid "Full spin"
 msgstr "Pełny obrót (360deg)"
 
-#: src/Admin/Settings_Page.php:42
+#: src/Admin/Settings_Page.php:45
 msgid "General Configuration"
 msgstr "Główna konfiguracja"
+
+#: assets/src/editor/scrollcrafter-editor.js:492
+msgid "Ghost Mode (Ctrl+G)"
+msgstr "Tryb ducha (CTRL+G)"
+
+#: assets/src/editor/scrollcrafter-editor.js:631
+msgid "Ghost Mode Active (Scroll now!)"
+msgstr "Tryb ducha aktywny"
 
 #: assets/src/editor/field-defs.js:162
 msgid "Global duration"
@@ -264,16 +302,19 @@ msgid "Global stagger"
 msgstr "Globalne opóźnienie kaskadowe (stagger)"
 
 #: assets/src/editor/field-defs.js:64 assets/src/editor/field-defs.js:196
-#, fuzzy
 #| msgid "[rows, cols] or \"auto\""
 msgid "Grid [rows, cols] or \"auto\""
-msgstr "[rows, cols] lub \"auto\""
+msgstr "Siatka [rows, cols] lub \"auto\""
 
-#: src/Admin/Settings_Page.php:72
+#: src/Admin/Settings_Page.php:75
 msgid "GSAP & Assets"
 msgstr "GSAP & zasoby"
 
-#: src/Admin/Settings_Page.php:79
+#: src/Admin/Validation_Controller.php:260
+msgid "GSAP ignores 'toggleActions' when 'scrub' is enabled."
+msgstr "GSAP ignoruje 'toggleActions' kiedy 'scrub' jest aktywny."
+
+#: src/Admin/Settings_Page.php:82
 msgid "GSAP Source"
 msgstr "Źródło GSAP"
 
@@ -287,15 +328,14 @@ msgstr "https://pixelmobs.com"
 msgid "https://pixelmobs.com/scrollcrafter"
 msgstr "https://pixelmobs.com/scrollcrafter"
 
-#: src/Admin/Settings_Page.php:187
+#: src/Admin/Settings_Page.php:171
 msgid "If empty, breakpoints from Elementor will be used automatically."
 msgstr "Jeśli brak, plugin użyje domyślnych breakpointów Elementora."
 
 #: assets/src/editor/field-defs.js:212
-#, fuzzy
 #| msgid "immediate setup vars"
 msgid "Immediate setup vars"
-msgstr "zmienne natychmiastowej konfiguracji"
+msgstr "Natychmiastowa konfiguracja zmiennych"
 
 #: assets/src/editor/field-defs.js:77
 msgid "Infinite"
@@ -325,47 +365,62 @@ msgstr "Liniowy (brak wygładzania)"
 msgid "Link animation to scrollbar"
 msgstr "Powiąż animację z paskiem przewijania"
 
+#: src/Admin/Settings_Page.php:245
+msgid "Live animations inside Elementor Editor (might affect performance)"
+msgstr "Animacje na żywo w Edytorze Elementora (może mieć wpływ na wydajność)"
+
+#: src/Admin/Settings_Page.php:232
+msgid "Local (bundled with plugin)"
+msgstr "Lokalnie (załadowane przez plugin)"
+
+#: assets/src/editor/scrollcrafter-editor.js:645
+msgid "Markers enabled for preview"
+msgstr "Znaczniki włączone do podglądu"
+
 #: assets/src/editor/field-defs.js:37
-#, fuzzy
 #| msgid "method"
 msgid "Method"
-msgstr "metoda"
+msgstr "Metoda"
 
-#: src/Animation/Script_Parser.php:80
+#: assets/src/editor/scrollcrafter-editor.js:493
+msgid "Minimize (Ctrl+M)"
+msgstr "Minimalizuj (CTRL+M)"
+
+#: src/Animation/Script_Parser.php:83
 msgid "Missing colon separator (:)."
 msgstr "Brakujący dwukropek (:)"
+
+#: src/Admin/Settings_Page.php:203
+msgid "mobile: 768\\ntablet: 1024 strict"
+msgstr "mobile: 768\\ntablet: 1024 strict"
 
 #: assets/src/editor/field-defs.js:53
 msgid "Motion curve"
 msgstr "Krzywa ruchu"
 
 #: assets/src/editor/field-defs.js:10
-#, fuzzy
 #| msgid "move down 50px"
 msgid "Move down 100px"
-msgstr "Przesuń w dół o 50px"
+msgstr "Przesuń w dół o 100px."
 
 #: assets/src/editor/field-defs.js:9
-#, fuzzy
 #| msgid "move left 100px"
 msgid "Move left 100px"
-msgstr "Przesuń w lewo o 100px"
+msgstr "Przesuń w lewo o 100px."
 
 #: assets/src/editor/field-defs.js:12
 msgid "Move left 50% of self"
 msgstr "Przesuń w lewo o 50% własnej szer."
 
 #: assets/src/editor/field-defs.js:8
-#, fuzzy
 #| msgid "move right 100px"
 msgid "Move right 100px"
-msgstr "przesuń w prawo o 100px"
+msgstr "Przesuń w prawo o 100px."
 
 #: assets/src/editor/field-defs.js:11
-#, fuzzy
 #| msgid "move up 50px"
 msgid "Move up 100px"
-msgstr "przesuń w górę o 50px"
+msgstr "Przesuń w górę o 100px."
 
 #: assets/src/editor/field-defs.js:13
 msgid "Move up 50% of self"
@@ -379,7 +434,7 @@ msgstr "Nowa treść tekstu"
 msgid "Next Step..."
 msgstr "Następny krok..."
 
-#: src/Elementor/Controls/Animation_Injector.php:67
+#: src/Elementor/Controls/Animation_Injector.php:73
 msgid "No"
 msgstr "Nie"
 
@@ -391,8 +446,10 @@ msgstr "Nie (Nakładka/Overlay)"
 msgid "Once"
 msgstr "Tylko raz"
 
-#: src/Elementor/Controls/Animation_Injector.php:91
-msgid "Open DSL Editor"
+#: src/Elementor/Controls/Animation_Injector.php:97
+#, fuzzy
+#| msgid "Open DSL Editor"
+msgid "Open Editor"
 msgstr "Otwórz Edytor DSL"
 
 #: assets/src/editor/field-defs.js:204
@@ -404,10 +461,9 @@ msgid "Override Target"
 msgstr "Nadpisz cel"
 
 #: assets/src/editor/field-defs.js:182
-#, fuzzy
 #| msgid "override target"
 msgid "Override target"
-msgstr "nadpisz cel"
+msgstr "Zastąp cel"
 
 #: assets/src/editor/field-defs.js:27
 msgid "Overshoot/Elastic"
@@ -422,10 +478,9 @@ msgid "Pin smoothing (1)"
 msgstr "Wygładzanie przyklejenia (1)"
 
 #: assets/src/editor/field-defs.js:117
-#, fuzzy
 #| msgid "Pin trigger element"
 msgid "Pin the trigger element"
-msgstr "Przypnij element wyzwalający"
+msgstr "Przypnij element"
 
 #: assets/src/editor/field-defs.js:20
 msgid "Pivot point: top center"
@@ -437,18 +492,19 @@ msgid "PixelMobs, ProXEQ"
 msgstr "PixelMobs, ProXEQ"
 
 #: assets/src/editor/field-defs.js:130
-#, fuzzy
 #| msgid "Play only once"
 msgid "Play only once?"
-msgstr "Odtwórz tylko raz"
+msgstr "Odtworzyć tylko raz?"
 
 # %d: Line number in the script
-#: src/Animation/Script_Parser.php:144
+#: src/Animation/Script_Parser.php:147
 msgid "Properties in [timeline] must use 'timeline.defaults' prefix."
 msgstr ""
 "Wartości w [timeline] muszą być użyte z prefiksem 'timeline.defaults'.\n"
 
-#: assets/src/editor/scrollcrafter-editor.js:483
+#: assets/src/editor/scrollcrafter-editor.js:518
+#: assets/src/editor/scrollcrafter-editor.js:631
+#: assets/src/editor/scrollcrafter-editor.js:645
 msgid "Ready"
 msgstr "Gotowy"
 
@@ -488,45 +544,44 @@ msgstr "Powiększ do 1.5x"
 msgid "Scope: Targets are relative to the widget. Use \"h2\" or \".my-class\"."
 msgstr "Zakres: Selektory są relatywne do widgetu. Użyj “h2” lub “.my-class”."
 
-#: assets/src/editor/scrollcrafter-editor.js:401
+#: assets/src/editor/scrollcrafter-editor.js:431
 msgid "Script is valid."
 msgstr "Skrypt jest poprawny."
 
 #: assets/src/editor/field-defs.js:102
-#, fuzzy
 #| msgid "scroll 500px from start"
 msgid "Scroll 500px from start"
-msgstr "scroll 500px od pkt. startu"
+msgstr "Przewiń 500px od startu"
 
-#: src/Elementor/Controls/Animation_Injector.php:56
+#: src/Elementor/Controls/Animation_Injector.php:62
 msgid "ScrollCrafter Animations"
 msgstr "Animacje ScrollCrafter"
 
 #. Name of the plugin
 #: scrollcrafter.php
 msgid "ScrollCrafter for Elementor"
-msgstr "ScrollCrafter dla Elementowa"
+msgstr "ScrollCrafter dla Elementora"
 
-#: scrollcrafter.php:121
+#: scrollcrafter.php:172
 msgid "ScrollCrafter requires an active Elementor plugin."
 msgstr "Plugin ScrollCrafter wymaga aktywnego pluginu Elementor"
 
 # %s: Minimum Elementor version.
-#: scrollcrafter.php:127
+#: scrollcrafter.php:178
 msgid "ScrollCrafter requires Elementor in version at least %s."
 msgstr "ScrollCrafter wymaga Elementora w wersji co najmniej %s."
 
 # %s: Minimum PHP version.
-#: scrollcrafter.php:70 scrollcrafter.php:105
+#: scrollcrafter.php:121 scrollcrafter.php:156
 msgid "ScrollCrafter requires PHP in version at least %s."
 msgstr "ScrollCrafter wymaga PHP w wersji co najmniej %s."
 
 # %s: Minimum WordPress version.
-#: scrollcrafter.php:114
+#: scrollcrafter.php:165
 msgid "ScrollCrafter requires WordPress in version at least %s."
 msgstr "ScrollCrafter wymaga Wordpress w wersji co najmniej %s."
 
-#: src/Admin/Settings_Page.php:172
+#: src/Admin/Settings_Page.php:156
 msgid "ScrollCrafter Settings"
 msgstr "Ustawienia ScrollCrafter"
 
@@ -538,7 +593,7 @@ msgstr "Konfiguracja ScrollTriggera"
 msgid "Set values immediately (no duration)"
 msgstr "Ustaw wartości natychmiast (bez czasu trwania)"
 
-#: src/Plugin.php:93
+#: src/Plugin.php:105
 msgid "Settings"
 msgstr "Ustawienia"
 
@@ -549,6 +604,10 @@ msgstr "Ostre przyspieszenie"
 #: assets/src/editor/field-defs.js:135
 msgid "Show debug markers"
 msgstr "Pokaż znaczniki debugowania"
+
+#: assets/src/editor/scrollcrafter-editor.js:491
+msgid "Show GSAP Markers (Ctrl+K)"
+msgstr "Pokaż znaczniki GSAP (CTRL+K)"
 
 #: assets/src/editor/field-defs.js:230
 msgid "Single Tween"
@@ -590,7 +649,7 @@ msgstr "Właściwości początkowe"
 msgid "Start properties (e.g. opacity=0)"
 msgstr "Właściwości początkowe (np. opacity=0)"
 
-#: assets/src/editor/scrollcrafter-editor.js:422
+#: assets/src/editor/scrollcrafter-editor.js:452
 msgid "Start with [animation]..."
 msgstr "Zacznij od //"
 
@@ -630,7 +689,7 @@ msgstr "Wybierz element podrzędny tylko dla tego kroku (np. “.icon”)"
 msgid "Target child elements"
 msgstr "Celuj w elementy podrzędne"
 
-#: src/Admin/Validation_Controller.php:61
+#: src/Admin/Validation_Controller.php:70
 msgid "The script is empty."
 msgstr "Skrypt jest pusty"
 
@@ -639,10 +698,9 @@ msgid "Timeline Defaults"
 msgstr "Domyślne osi czasu"
 
 #: assets/src/editor/field-defs.js:200
-#, fuzzy
 #| msgid "timeline placement"
 msgid "Timeline placement"
-msgstr "położenie na osi czasu"
+msgstr "Położenie osi czasu"
 
 #: assets/src/editor/field-defs.js:81
 msgid "To-Fro loop"
@@ -660,23 +718,25 @@ msgstr "Kursor maszyny do pisania lub znak"
 msgid "Typing speed multiplier"
 msgstr "Mnożnik prędkości pisania"
 
+# %s: The unknown key found.
+#: src/Admin/Validation_Controller.php:171
+#, fuzzy
+#| msgid "Unknown key '%s' in [%s]."
+msgid "Unknown key '%1\\$s' in [%2\\$s]."
+msgstr "Niepoprawny klucz '%s' w [%s]."
+
 # 1: Unknown key name, 2: Step identifier (e.g. step.1), 3: Step number
-#: src/Admin/Validation_Controller.php:163
+#: src/Admin/Validation_Controller.php:207
 msgid "Unknown key '%1\\$s' in [%2\\$sstep.%3\\$d]."
 msgstr "Niepoprawny klucz '%1\\$s' w [%2\\$sstep.%3\\$d]."
 
-# %s: The unknown key found.
-#: src/Admin/Validation_Controller.php:144
-msgid "Unknown key '%s' in [%s]."
-msgstr "Niepoprawny klucz '%s' w [%s]."
-
 # %d: Line number in the script
-#: src/Animation/Script_Parser.php:46
+#: src/Animation/Script_Parser.php:49
 msgid "Unknown section header ignored."
 msgstr "Niepoprawny nagłówek sekcji."
 
 # %s: The unsafe expression found in calc().
-#: src/Admin/Validation_Controller.php:278
+#: src/Admin/Validation_Controller.php:385
 msgid ""
 "Unsafe characters in calc(): '%s'. Only math and vars (sw, vw, center...) "
 "are allowed."
@@ -684,12 +744,21 @@ msgstr ""
 "Niebezpieczne znaki w calc(): '%s'. Tylko wyrażenia matematyczne i zmienne "
 "(sw, vw, center...) są dozwolone."
 
-#: assets/src/editor/scrollcrafter-editor.js:394
+#: src/Admin/Settings_Page.php:198
+msgid "Upgrade to Pro"
+msgstr "Ulepsz do wersji PRO"
+
+#: assets/src/editor/scrollcrafter-editor.js:424
 msgid "Valid (%d warning)."
 msgid_plural "Valid (%d warnings)."
 msgstr[0] "Poprawny (lecz zawiera %d ostrzeżenie)"
 msgstr[1] "Poprawny (lecz zawiera %d ostrzeżenia)"
 msgstr[2] "Poprawny (lecz zawiera %d ostrzeżeń)"
+
+#: src/Admin/Validation_Controller.php:184
+#: src/Admin/Validation_Controller.php:222
+msgid "Value for '%s' cannot be negative."
+msgstr "Wartość %s nie może być negatywna."
 
 #: assets/src/editor/field-defs.js:205
 msgid "Wait 1s"
@@ -711,7 +780,7 @@ msgstr "Gdy góra elementu dotrze do 80% ekranu"
 msgid "When top of element hits center of viewport"
 msgstr "Gdy góra elementu dotrze do środka ekranu"
 
-#: src/Elementor/Controls/Animation_Injector.php:66
+#: src/Elementor/Controls/Animation_Injector.php:72
 msgid "Yes"
 msgstr "Tak"
 
@@ -719,13 +788,13 @@ msgstr "Tak"
 msgid "Yes (Default)"
 msgstr "Tak (Domyślnie)"
 
-#: assets/src/editor/scrollcrafter-editor.js:564
+#: src/Admin/Validation_Controller.php:294
 msgid ""
-"Your code has %d warning(s). This might cause unexpected behavior. Are you "
-"sure you want to save?"
+"You are using 'type: from' but defined properties in a 'to:' block. Move "
+"them to 'from:' or change type to 'fromTo'."
 msgstr ""
-"Twój kod ma %d ostrzeże(ń/nie). Może to spowodować nieprzewidziane skutki. "
-"Czy chcesz kontynuować?"
+"Używasz 'type: from', ale zdefiniowane właściwości w bloku 'to:'. Przenieś "
+"je do 'from:' lub zmień typ na 'fromTo'."
 
 #: assets/src/editor/field-defs.js:167
 msgid "Yoyo entire timeline"

@@ -2,6 +2,9 @@
 
 namespace ScrollCrafter\Elementor;
 
+if ( ! defined( "ABSPATH" ) ) {
+    exit;
+}
 use Elementor\Widgets_Manager;
 use Elementor\Widget_Base;
 use ScrollCrafter\Support\Config;

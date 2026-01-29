@@ -1,10 +1,10 @@
 === ScrollCrafter – Scroll Animations DSL for Elementor ===
-Contributors: ProXEQ
+Contributors: PixelMobs
 Donate link: https://pixelmobs.com/donate
-Tags: elementor, animation, scroll, gsap, scrolltrigger, motion
+Tags: elementor, animation, scroll, gsap, scrolltrigger
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.7
+Stable tag: 1.1.8
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,6 +62,15 @@ Example DSL:
 3. Lint markers showing DSL validation errors.
 
 == Changelog ==
+
+= 1.1.8 =
+* Performance: Implemented lightweight REST validation mode (lint_only) to eliminate Editor lag.
+* Performance: Added session-based client-side caching in the DSL Editor.
+* Bugfix: Fixed unknown keys in [animation], [target], and step sections being silently ignored.
+* Bugfix: Fixed autocomplete suggestions not appearing after from: and to: fields.
+* Validation: Added logic warnings for scrub/toggleActions, pin/scrub, and start/end ordering.
+* Validation: Added sync warning for type: from vs to: block conflicts.
+* Security: Removed custom CDN URL input fields to prevent arbitrary script injection.
 
 = 1.1.7 =
 * Fix: Standardized editor initialization to resolve "Open Editor" button non-responsiveness (GitHub Issue #1).
