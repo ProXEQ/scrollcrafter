@@ -28,6 +28,8 @@ class Script_Parser
                 'steps'    => [],
             ],
             'media'     => [],
+            'disabled'  => [], // Breakpoints/tags to disable animation
+            'conditions' => [], // Multi-tag condition configs
             '_warnings' => [],
         ];
 
@@ -54,6 +56,22 @@ class Script_Parser
 
                 $currentMedia = $parsed['media'] ?? null;
                 $currentSection = $parsed['section'];
+                $currentConditions = $parsed['conditions'] ?? [];
+                
+                // Handle [disable @tag1 @tag2] section
+                if ($currentSection === 'disable') {
+                    $result['disabled'] = array_merge(
+                        $result['disabled'],
+                        $parsed['disabledTags'] ?? []
+                    );
+                    continue;
+                }
+                
+                // Store conditions for multi-tag sections
+                if (!empty($currentConditions) && $currentConditions[0]['type'] !== 'single') {
+                    $conditionKey = $this->generateConditionKey($currentConditions);
+                    // Will be populated with config data as lines are parsed
+                }
                 
                 if ($currentMedia) {
                     if (!isset($result['media'][$currentMedia])) {
@@ -195,18 +213,67 @@ class Script_Parser
     private function parseSectionHeader(string $line): array|false
     {
         $content = trim($line, '[] ');
-        $media = null;
+        
+        // Handle [disable @tag1 @tag2] section
+        if (str_starts_with(strtolower($content), 'disable')) {
+            return $this->parseDisableSection($content);
+        }
+        
+        // Parse condition tags: @tag1 @tag2 (OR) or @tag1+@tag2 (AND)
+        $conditions = [];
+        $mediaLegacy = null; // For backwards compatibility
+        
         if (strpos($content, '@') !== false) {
-            $parts = explode('@', $content, 2);
-            $content = trim($parts[0]);
-            $media = trim($parts[1]);
+            // Extract all @tags (including compound ones with +)
+            preg_match_all('/@([a-zA-Z0-9_-]+(?:\+@[a-zA-Z0-9_-]+)*)/', $content, $matches);
+            
+            if (!empty($matches[1])) {
+                foreach ($matches[1] as $match) {
+                    if (strpos($match, '+@') !== false) {
+                        // AND condition: @mobile+@dark
+                        $tags = preg_split('/\+@/', $match);
+                        $conditions[] = ['type' => 'and', 'tags' => $tags];
+                    } else {
+                        // Single tag or part of OR group
+                        $conditions[] = ['type' => 'single', 'tags' => [$match]];
+                    }
+                }
+                
+                // Multiple single conditions = OR
+                if (count($conditions) > 1) {
+                    $allSingle = true;
+                    $orTags = [];
+                    foreach ($conditions as $c) {
+                        if ($c['type'] !== 'single') {
+                            $allSingle = false;
+                            break;
+                        }
+                        $orTags = array_merge($orTags, $c['tags']);
+                    }
+                    if ($allSingle) {
+                        $conditions = [['type' => 'or', 'tags' => $orTags]];
+                    }
+                }
+                
+                // Legacy compatibility: single tag becomes $mediaLegacy
+                if (count($conditions) === 1 && $conditions[0]['type'] === 'single') {
+                    $mediaLegacy = $conditions[0]['tags'][0];
+                }
+            }
+            
+            // Remove @tags from content to get section name
+            $content = trim(preg_replace('/@[^\s\]]+/', '', $content));
         }
 
         $name = strtolower($content);
         $basicSections = [self::SECTION_ANIM, self::SECTION_SCROLL, self::SECTION_TARGET, self::SECTION_TIMELINE];
         
         if (in_array($name, $basicSections, true)) {
-            return ['section' => $name, 'media' => $media];
+            return [
+                'section' => $name, 
+                'media' => $mediaLegacy, // Backwards compatible
+                'conditions' => $conditions
+            ];
         }
 
         if (str_starts_with($name, 'step.')) {
@@ -214,12 +281,55 @@ class Script_Parser
             if (is_numeric($suffix)) {
                 return [
                     'section' => ['type' => 'step', 'index' => (int)$suffix],
-                    'media' => $media
+                    'media' => $mediaLegacy,
+                    'conditions' => $conditions
                 ];
             }
         }
 
         return false;
+    }
+    
+    /**
+     * Parse [disable @tag1 @tag2] section
+     */
+    private function parseDisableSection(string $content): array
+    {
+        $tags = [];
+        preg_match_all('/@([a-zA-Z0-9_-]+)/', $content, $matches);
+        if (!empty($matches[1])) {
+            $tags = $matches[1];
+        }
+        
+        return [
+            'section' => 'disable',
+            'media' => null,
+            'conditions' => [],
+            'disabledTags' => $tags
+        ];
+    }
+    
+    /**
+     * Generate a unique key for a set of conditions (for result indexing)
+     */
+    private function generateConditionKey(array $conditions): string
+    {
+        if (empty($conditions)) {
+            return '_base';
+        }
+        
+        $parts = [];
+        foreach ($conditions as $c) {
+            $type = $c['type'];
+            $tags = implode('+', $c['tags']);
+            if ($type === 'and') {
+                $parts[] = $tags; // Already joined with +
+            } else {
+                $parts[] = implode('|', $c['tags']);
+            }
+        }
+        
+        return implode('_', $parts);
     }
 
     private function handleDotNotation(array &$result, string $rawKey, string $value, int $line): bool

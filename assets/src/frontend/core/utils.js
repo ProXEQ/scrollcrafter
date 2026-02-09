@@ -88,27 +88,5 @@ export function parseMacros(vars, contextNode) {
     return out;
 }
 
-/**
- * Builds Media Query based on breakpoint configuration
- */
-export function buildMediaQuery(targetSlug, isStrict, sortedBreakpoints) {
-    if (!sortedBreakpoints || !Array.isArray(sortedBreakpoints)) return null;
-
-    const currentIndex = sortedBreakpoints.findIndex(bp => bp.key === targetSlug);
-    if (currentIndex === -1) return null;
-
-    const currentBp = sortedBreakpoints[currentIndex];
-    const maxQuery = `(max-width: ${currentBp.value}px)`;
-
-    if (!isStrict) {
-        return maxQuery;
-    }
-
-    if (currentIndex > 0) {
-        const prevBp = sortedBreakpoints[currentIndex - 1];
-        const minVal = prevBp.value + 1;
-        return `(min-width: ${minVal}px) and ${maxQuery}`;
-    }
-
-    return maxQuery;
-}
+// Note: buildMediaQuery() has been moved to responsive.js as part of the
+// unified breakpoint handling system. Import from '../core/responsive' if needed.

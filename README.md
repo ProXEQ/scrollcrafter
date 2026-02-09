@@ -156,8 +156,13 @@ Check the browser console (F12). Ensure the target element actually exists on th
 ## 📝 Changelog
 
 ### 1.1.8
+-   **New**: Redesigned isolated Preview System bypassing Elementor hooks for reliable playback.
+-   **New**: Direct `scPreview()` API with preview lock mechanism to prevent conflicts.
+-   **New**: Loading overlay (gray + spinner) during preview initialization.
 -   **Perf**: Lightweight `lint_only` validation mode to eliminate Editor lag.
 -   **Perf**: Session-based client-side caching for instant undo/redo.
+-   **Fix**: SplitText now properly handles breakpoint-specific types (words↔chars↔lines).
+-   **Fix**: SplitText type mismatch detection with smart revert and recreation.
 -   **Fix**: Unknown keys in `[animation]`, `[target]`, and `step` now correctly flagged.
 -   **Fix**: Autocomplete suggestions now appear correctly after `from:` and `to:` fields.
 -   **New**: Logic warnings for `scrub`/`toggleActions`, `pin`/`scrub`, and `start`/`end` positions.

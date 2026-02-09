@@ -2,6 +2,7 @@ import { initWidgetsInScope } from './core/registry';
 import { getScrollTrigger } from './core/gsap-loader';
 import './widgets/scroll-animation';
 import './widgets/scroll-timeline';
+import './preview-player'; // Direct preview API for editor
 
 /**
  * Główna funkcja inicjalizująca.

@@ -26,6 +26,26 @@ const BREAKPOINT_SLUGS = Array.isArray(BREAKPOINTS)
   ? BREAKPOINTS.map(bp => bp.key)
   : Object.keys(BREAKPOINTS);
 
+/**
+ * Detect active breakpoint based on iframe/viewport width
+ * @param {HTMLIFrameElement} iframe - The Elementor preview iframe
+ * @returns {string} - Active breakpoint slug (e.g., 'mobile', 'tablet', 'desktop')
+ */
+function getActiveBreakpoint(iframe) {
+  const width = iframe?.offsetWidth || window.innerWidth;
+
+  // BREAKPOINTS is sorted by value ascending: [{key: 'mobile', value: 767}, {key: 'tablet', value: 1024}]
+  if (Array.isArray(BREAKPOINTS) && BREAKPOINTS.length > 0) {
+    for (const bp of BREAKPOINTS) {
+      if (width <= bp.value) {
+        return bp.key;
+      }
+    }
+  }
+
+  return 'desktop';
+}
+
 function getDynamicHeaders() {
   let headers = [...SECTION_HEADERS];
   const responsiveSections = ['animation', 'scroll', 'step.1'];
@@ -192,6 +212,14 @@ function renderCheatSheet(container, view) {
                 <div class="sc-cs-item" data-insert="[scroll @mobile]\n">Override Scroll</div>
              </div>`;
 
+  // New Conditions section
+  html += `<div class="sc-cs-section">
+                <div class="sc-cs-title">Conditions</div>
+                <div class="sc-cs-item" data-insert="[animation @mobile @tablet]\nfrom: opacity=0\n">OR: Mobile or Tablet</div>
+                <div class="sc-cs-item" data-insert="[disable @mobile]\n">Disable on Mobile</div>
+                <div class="sc-cs-item" data-insert="[animation @reduced-motion]\nfrom: opacity=0\nduration: 0.2\n">@reduced-motion (a11y)</div>
+             </div>`;
+
   html += `<div class="sc-cs-section">
                 <div class="sc-cs-title">Snippets</div>
                 <div class="sc-cs-item" data-insert="[animation]\ntype: from\nfrom: opacity=0, y=50\nduration: 1\n">Fade In Up</div>
@@ -292,6 +320,33 @@ function dslCompletionSource(context) {
   const textBefore = lineText.slice(0, pos - line.from);
 
   const { name: sectionName } = getCurrentSection(state, pos);
+
+  // Handle @ breakpoint tag completions in section headers like [animation @...]
+  // or [disable @...]
+  const atMatch = context.matchBefore(/@[a-zA-Z0-9_-]*/);
+  if (atMatch && textBefore.includes('[')) {
+    // Build breakpoint options
+    const bpOptions = BREAKPOINT_SLUGS.map(slug => ({
+      label: '@' + slug,
+      type: 'variable',
+      detail: `Breakpoint: ${slug}`,
+      boost: 2
+    }));
+
+    // Add special condition tags
+    const specialTags = [
+      { label: '@reduced-motion', type: 'variable', detail: 'Accessibility: prefers-reduced-motion', boost: 1 },
+      { label: '@dark', type: 'variable', detail: 'Pro: Dark mode', boost: 0 },
+      { label: '@retina', type: 'variable', detail: 'Pro: High DPI display', boost: 0 },
+    ];
+
+    const allOptions = [...bpOptions, ...specialTags];
+
+    return {
+      from: atMatch.from,
+      options: allOptions
+    };
+  }
 
   // Handle /slash command completions
   const word = context.matchBefore(/\/[a-zA-Z0-9_.]*/);
@@ -584,7 +639,7 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
           </div>
           <div class="sc-dsl-editor__actions">
               <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--ghost sc-dsl-editor__cancel">${__('Cancel', 'scrollcrafter')}</button>
-              <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--preview sc-dsl-editor__preview">${__('▶ Preview', 'scrollcrafter')}</button>
+              <button type="button" class="elementor-button sc-dsl-editor__btn sc-dsl-editor__btn--preview sc-dsl-editor__preview">▶ ${__('Preview', 'scrollcrafter')}</button>
               <button type="button" class="elementor-button elementor-button-success sc-dsl-editor__btn sc-dsl-editor__apply">${__('Apply', 'scrollcrafter')}</button>
           </div>
         </div>
@@ -800,46 +855,53 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       window.ScrollCrafterForcePreview = widgetId;
       sessionStorage.setItem('sc_force_preview', widgetId);
 
-      // 2. Get iframe and widget reference early for loading state
+      // 2. Get iframe and widget reference
       const previewIframe = elementor.$preview[0];
       const previewWindow = previewIframe?.contentWindow;
       const $widget = previewWindow?.jQuery('[data-id="' + widgetId + '"]');
 
-      // 3. Show loading overlay on target widget
+      // 3. Detect current breakpoint based on iframe width
+      const activeBreakpoint = getActiveBreakpoint(previewIframe);
+      log('Active breakpoint detected:', activeBreakpoint);
+
+      // 4. Show loading overlay (positioned OVER widget via parent, not inside to avoid SplitText corruption)
+      let $loadingOverlay = null;
       if ($widget && $widget.length) {
-        const loadingOverlay = `
-          <div class="sc-preview-loading" style="
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.6);
+        const widgetOffset = $widget.offset();
+        const widgetWidth = $widget.outerWidth();
+        const widgetHeight = $widget.outerHeight();
+
+        $loadingOverlay = previewWindow.jQuery(`
+          <div class="sc-loading-overlay" style="
+            position: fixed;
+            top: ${widgetOffset.top}px;
+            left: ${widgetOffset.left}px;
+            width: ${widgetWidth}px;
+            height: ${widgetHeight}px;
+            background: rgba(128, 128, 128, 0.6);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 9999;
-            backdrop-filter: blur(2px);
-            border-radius: 8px;
+            z-index: 99999;
+            pointer-events: none;
           ">
             <div style="
-              color: #fff;
-              font-size: 14px;
-              font-family: system-ui, sans-serif;
-              display: flex;
-              align-items: center;
-              gap: 10px;
-            ">
-              <span style="animation: sc-spin 1s linear infinite; display: inline-block;">⏳</span>
-              Preparing animation...
-            </div>
+              width: 32px;
+              height: 32px;
+              border: 3px solid rgba(255,255,255,0.3);
+              border-top-color: white;
+              border-radius: 50%;
+              animation: sc-spin 0.8s linear infinite;
+            "></div>
           </div>
           <style>
-            @keyframes sc-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            @keyframes sc-spin { to { transform: rotate(360deg); } }
           </style>
-        `;
-        $widget.css('position', 'relative');
-        $widget.append(loadingOverlay);
+        `);
+        previewWindow.jQuery('body').append($loadingOverlay);
       }
 
-      // 4. Fetch parsed config from REST API
+      // 5. Fetch parsed config from REST API
       const restUrl = window.ScrollCrafterConfig?.rest_url || (window.location.origin + '/wp-json/');
       const showMarkers = !!window.ScrollCrafterShowMarkers;
       const response = await fetch(restUrl + 'scrollcrafter/v1/validate', {
@@ -858,9 +920,10 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
 
       const result = await response.json();
 
-      // 5. Remove loading overlay
-      if ($widget && $widget.length) {
-        $widget.find('.sc-preview-loading').remove();
+      // Remove loading overlay
+      if ($loadingOverlay) {
+        $loadingOverlay.remove();
+        previewWindow.jQuery('.sc-loading-overlay').remove();
       }
 
       if (!result.ok || !result.config) {
@@ -868,18 +931,32 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
         return;
       }
 
-      // 6. Inject config with delay to ensure DOM is ready
+      // 6. CRITICAL: Ensure SplitText is initialized before preview
+      // First trigger scroll-animation.js via Elementor to create SplitText elements
       if (previewWindow && previewWindow.elementorFrontend && $widget && $widget.length) {
-        log('Injecting fresh config into iframe widget...');
+        log('Pre-initializing widget to create SplitText...');
+
+        // Store config first
         $widget.attr('data-scrollcrafter-config', JSON.stringify(result.config));
+        $widget.attr('data-scrollcrafter-force-breakpoint', activeBreakpoint);
 
-        // Debounce: wait for DOM to settle before triggering animation
-        await new Promise(resolve => setTimeout(resolve, 150));
-
-        log('Triggering runReadyTrigger...');
+        // Trigger scroll-animation.js to create SplitText
         previewWindow.elementorFrontend.elementsHandler.runReadyTrigger($widget);
+
+        // Wait for SplitText to be created
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // 7. Now call scPreview to replay the animation with proper SplitText
+        if (previewWindow.scPreview) {
+          log('Calling scPreview with pre-created SplitText');
+          const success = previewWindow.scPreview(widgetId, result.config, activeBreakpoint);
+
+          if (!success) {
+            log('Preview failed - check console for errors');
+          }
+        }
       } else {
-        log('Widget not found in iframe view.');
+        log('scPreview API not available or widget not found');
       }
     } catch (e) {
       log('Error in live preview trigger:', e);

@@ -245,8 +245,123 @@ class Validation_Controller
                 $check_steps( $mediaData['timeline']['steps'] ?? [], "@{$mediaSlug} " );
             }
         }
+        
+        // New validators for condition syntax
+        $this->validate_condition_syntax( $parsed, $issues );
+        $this->validate_disabled_breakpoints( $parsed, $issues );
+        $this->validate_reduced_motion_a11y( $parsed, $issues );
 
         return $issues;
+    }
+    
+    /**
+     * Validate that condition tags reference known breakpoints or special tags
+     */
+    private function validate_condition_syntax( array $parsed, array &$issues ): void
+    {
+        // Get known breakpoint slugs using get_frontend_breakpoints() which returns [{key, value}]
+        $knownBreakpoints = [];
+        $sysBreakpoints = \ScrollCrafter\Support\Config::instance()->get_frontend_breakpoints() ?? [];
+        foreach ($sysBreakpoints as $bp) {
+            $knownBreakpoints[] = $bp['key'] ?? '';
+        }
+        
+        $specialTags = ['reduced-motion', 'dark', 'retina', 'no-hover'];
+        
+        foreach ( $parsed['conditions'] ?? [] as $condition ) {
+            $tags = $condition['tags'] ?? [];
+            foreach ( $tags as $tag ) {
+                if ( !in_array( $tag, $knownBreakpoints, true ) && !in_array( $tag, $specialTags, true ) ) {
+                    $issues[] = $this->create_issue(
+                        sprintf(
+                            /* translators: %s: The unknown tag name */
+                            __( "Unknown breakpoint or tag: '@%s'. Valid breakpoints: %s", 'scrollcrafter' ),
+                            $tag,
+                            implode( ', ', array_merge( $knownBreakpoints, $specialTags ) )
+                        ),
+                        'warning',
+                        $condition['line'] ?? 1
+                    );
+                }
+            }
+        }
+    }
+    
+    /**
+     * Validate disabled breakpoints exist
+     */
+    private function validate_disabled_breakpoints( array $parsed, array &$issues ): void
+    {
+        $disabled = $parsed['disabled'] ?? [];
+        if ( empty( $disabled ) ) return;
+        
+        $knownBreakpoints = [];
+        $sysBreakpoints = \ScrollCrafter\Support\Config::instance()->get_frontend_breakpoints() ?? [];
+        foreach ($sysBreakpoints as $bp) {
+            $knownBreakpoints[] = $bp['key'] ?? '';
+        }
+        
+        $specialTags = ['reduced-motion', 'dark', 'retina', 'no-hover'];
+        
+        foreach ( $disabled as $tag ) {
+            if ( !in_array( $tag, $knownBreakpoints, true ) && !in_array( $tag, $specialTags, true ) ) {
+                $issues[] = $this->create_issue(
+                    sprintf(
+                        /* translators: %s: The unknown tag in [disable] section */
+                        __( "Unknown tag in [disable]: '@%s'", 'scrollcrafter' ),
+                        $tag
+                    ),
+                    'warning',
+                    1
+                );
+            }
+        }
+    }
+    
+    /**
+     * Validate reduced-motion accessibility best practices
+     */
+    private function validate_reduced_motion_a11y( array $parsed, array &$issues ): void
+    {
+        // Check if there's a @reduced-motion override in media
+        $rmConfig = $parsed['media']['reduced-motion'] ?? null;
+        if ( !$rmConfig ) return;
+        
+        // Check animation duration
+        $animation = $rmConfig['animation'] ?? [];
+        $duration = $animation['duration']['value'] ?? null;
+        
+        if ( $duration !== null && is_numeric( $duration ) && $duration > 0.5 ) {
+            $issues[] = $this->create_issue(
+                sprintf(
+                    /* translators: %s: The current duration value */
+                    __( "@reduced-motion animations should be quick (≤0.5s). Current: %ss. Consider reducing for accessibility.", 'scrollcrafter' ),
+                    $duration
+                ),
+                'warning',
+                $animation['duration']['line'] ?? 1
+            );
+        }
+        
+        // Check if any complex animations are used (transforms, etc)
+        $complexProps = ['rotation', 'rotationX', 'rotationY', 'scale', 'scaleX', 'scaleY', 'skewX', 'skewY'];
+        $from = $animation['from']['value'] ?? '';
+        $to = $animation['to']['value'] ?? '';
+        
+        foreach ( $complexProps as $prop ) {
+            if ( stripos( $from, $prop ) !== false || stripos( $to, $prop ) !== false ) {
+                $issues[] = $this->create_issue(
+                    sprintf(
+                        /* translators: %s: The complex property name */
+                        __( "Consider removing '%s' from @reduced-motion for better accessibility.", 'scrollcrafter' ),
+                        $prop
+                    ),
+                    'warning',
+                    $animation['from']['line'] ?? $animation['to']['line'] ?? 1
+                );
+                break; // Only warn once
+            }
+        }
     }
 
     private function add_gsap_sanity_checks( array $parsed, array &$issues ): void

@@ -64,12 +64,16 @@ Example DSL:
 == Changelog ==
 
 = 1.1.8 =
+* New: Redesigned isolated Preview System bypassing Elementor hooks for reliable playback.
+* New: Direct scPreview() API with preview lock mechanism to prevent conflicts.
+* New: Loading overlay (gray + spinner) during preview initialization.
 * Performance: Implemented lightweight REST validation mode (lint_only) to eliminate Editor lag.
 * Performance: Added session-based client-side caching in the DSL Editor.
+* Bugfix: SplitText now properly handles breakpoint-specific types (words/chars/lines).
+* Bugfix: SplitText type mismatch detection with smart revert and recreation.
 * Bugfix: Fixed unknown keys in [animation], [target], and step sections being silently ignored.
 * Bugfix: Fixed autocomplete suggestions not appearing after from: and to: fields.
 * Validation: Added logic warnings for scrub/toggleActions, pin/scrub, and start/end ordering.
-* Validation: Added sync warning for type: from vs to: block conflicts.
 * Security: Removed custom CDN URL input fields to prevent arbitrary script injection.
 
 = 1.1.7 =

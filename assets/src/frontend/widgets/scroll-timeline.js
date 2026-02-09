@@ -1,6 +1,7 @@
 import { registerWidget } from '../core/registry';
 import { getGsap, getScrollTrigger } from '../core/gsap-loader';
 import { parseMacros } from '../core/utils';
+import { createResponsiveContext } from '../core/responsive';
 
 function getPinElement(node) {
   return node;
@@ -138,98 +139,61 @@ registerWidget('scroll_timeline', (node, config) => {
     return;
   }
 
-  const mm = gsap.matchMedia();
-  const sysBreakpoints = window.ScrollCrafterConfig?.breakpoints || [];
-
-  // Ensure sorted by value
-  const sortedBps = [...sysBreakpoints].sort((a, b) => a.value - b.value);
-
-  let prevMax = 0;
-  const rangeConfig = [];
-
-  // Build ranges for defined breakpoints
-  sortedBps.forEach(bp => {
-    const min = prevMax + 1;
-    const max = bp.value;
-    prevMax = max;
-
-    const query = min === 1
-      ? `(max-width: ${max}px)`
-      : `(min-width: ${min}px) and (max-width: ${max}px)`;
-
-    rangeConfig.push({ slug: bp.key, query });
-  });
-
-  // Add Desktop/Default (above last breakpoint)
-  rangeConfig.push({
-    slug: '_default_desktop',
-    query: `(min-width: ${prevMax + 1}px)`
-  });
-
-  // Register Contexts
+  // Use shared responsive context - eliminates ~80 lines of duplicated code
   const timelines = [];
 
-  rangeConfig.forEach(range => {
-    mm.add(range.query, () => {
-      let activeConfig = config; // Default to global config struct (which has steps)
-      // For timeline, config IS the container of steps.
-      // Media overrides usually provide different 'steps' or 'timelineVars'.
+  const handlePreview = (tl) => {
+    const isManualPreview = (window.ScrollCrafterForcePreview === config.id) ||
+      (window.parent && window.parent.ScrollCrafterForcePreview === config.id) ||
+      (node.getAttribute('data-sc-preview') === 'yes');
 
-      let isOverride = false;
-      if (range.slug !== '_default_desktop' && config.media && config.media[range.slug]) {
-        if (config.media[range.slug]) {
-          activeConfig = config.media[range.slug];
-          isOverride = true;
-        }
-      }
-
-      // Validation: Ensure activeConfig has steps
-      if (activeConfig && activeConfig.steps && activeConfig.steps.length > 0) {
-        let tl;
-        if (isOverride) {
-          logConfig(`Active: ${range.slug} (Override)`, activeConfig);
-          tl = createTimeline(node, activeConfig, config, debug, logPrefix + `[${range.slug}]`, gsap);
+    if (isManualPreview && tl) {
+      if (debug) console.log(`${logPrefix} Manual preview detected, force playing timeline`);
+      if (tl.scrollTrigger) {
+        const st = tl.scrollTrigger;
+        if (st.pin || (st.vars && st.vars.scrub)) {
+          if (debug) console.log(`${logPrefix} Pin/Scrub detected, animating progress`);
+          gsap.fromTo(st, { progress: 0 }, {
+            progress: 1,
+            duration: 1.5,
+            ease: "power1.inOut"
+          });
         } else {
-          logConfig(`Active: ${range.slug} (Global)`, activeConfig);
-          tl = createTimeline(node, activeConfig, config, debug, logPrefix, gsap);
+          st.disable();
+          tl.restart(true);
         }
-
-        if (tl) timelines.push(tl);
-
-        // --- Preview Logic ---
-        const isManualPreview = (window.ScrollCrafterForcePreview === config.id) ||
-          (window.parent && window.parent.ScrollCrafterForcePreview === config.id) ||
-          (node.getAttribute('data-sc-preview') === 'yes');
-
-        if (isManualPreview && tl) {
-          if (debug) console.log(`${logPrefix} Manual preview detected, force playing timeline`);
-          if (tl.scrollTrigger) {
-            const st = tl.scrollTrigger;
-            if (st.pin || (st.vars && st.vars.scrub)) {
-              if (debug) console.log(`${logPrefix} Pin/Scrub detected, animating progress`);
-              gsap.fromTo(st, { progress: 0 }, {
-                progress: 1,
-                duration: 1.5,
-                ease: "power1.inOut"
-              });
-            } else {
-              st.disable();
-              tl.restart(true);
-            }
-          } else {
-            tl.restart(true);
-          }
-        }
+      } else {
+        tl.restart(true);
       }
-    });
-  });
+    }
+  };
+
+  const cleanup = createResponsiveContext(gsap, config, (activeConfig, range) => {
+    // For timeline, we need to check for steps in the active config
+    // If activeConfig comes from media override, it has steps directly
+    // If it's the base config, steps are at config.steps
+    const configWithSteps = activeConfig.steps ? activeConfig : config;
+
+    if (!configWithSteps.steps || configWithSteps.steps.length === 0) {
+      return null;
+    }
+
+    logConfig(`Active: ${range.slug}`, activeConfig);
+    const tl = createTimeline(node, configWithSteps, config, debug, logPrefix + `[${range.slug}]`, gsap);
+
+    if (tl) {
+      timelines.push(tl);
+      handlePreview(tl);
+    }
+    return tl;
+  }, node);
 
   return () => {
     if (debug) console.log(`${logPrefix} Cleaning up...`);
-    mm.revert();
+    cleanup();
     timelines.forEach(t => {
       if (t.scrollTrigger) {
-        t.scrollTrigger.kill(true); // Reverts pin-spacer etc.
+        t.scrollTrigger.kill(true);
       }
       t.kill();
     });

@@ -260,4 +260,12 @@ export const SECTION_HEADERS = [
   { label: '[target]', type: 'keyword', detail: __('Override Target', 'scrollcrafter') },
   { label: '[step.1]', type: 'keyword', detail: __('First Step', 'scrollcrafter') },
   { label: '[step.2]', type: 'keyword', detail: __('Next Step...', 'scrollcrafter') },
+  { label: '[disable]', type: 'keyword', detail: __('Disable on breakpoints (e.g. [disable @mobile])', 'scrollcrafter') },
+];
+
+// Special condition tags for autocomplete
+export const CONDITION_TAGS = [
+  { label: '@reduced-motion', type: 'variable', detail: __('Accessibility: reduced motion preference', 'scrollcrafter') },
+  { label: '@mobile', type: 'variable', detail: __('Mobile breakpoint', 'scrollcrafter') },
+  { label: '@tablet', type: 'variable', detail: __('Tablet breakpoint', 'scrollcrafter') },
 ];

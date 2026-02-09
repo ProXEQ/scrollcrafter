@@ -53,6 +53,7 @@ class Tween_Config_Builder
             ],
             'animation' => $finalConfig,
             'media'     => $mediaConfigs,
+            'disabled'  => $parsed['disabled'] ?? [], // Pass disabled breakpoints to frontend
         ];
     }
 

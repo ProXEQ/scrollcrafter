@@ -93,7 +93,8 @@ class Timeline_Config_Builder
             ],
             'timelineVars' => $timelineVars,
             'steps'        => $steps,
-            'media'        => $mediaConfigs, 
+            'media'        => $mediaConfigs,
+            'disabled'     => $parsed['disabled'] ?? [], // Pass disabled breakpoints to frontend
         ];
     }
 

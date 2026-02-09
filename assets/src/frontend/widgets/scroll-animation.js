@@ -1,6 +1,7 @@
 import { registerWidget } from '../core/registry';
 import { getGsap, getScrollTrigger } from '../core/gsap-loader';
-import { parseMacros, buildMediaQuery } from '../core/utils';
+import { parseMacros } from '../core/utils';
+import { createResponsiveContext } from '../core/responsive';
 
 registerWidget('scroll_animation', (node, config) => {
   const debug = !!window.ScrollCrafterConfig?.debug;
@@ -57,25 +58,43 @@ registerWidget('scroll_animation', (node, config) => {
 
       if (window.SplitText) {
         try {
-          // Check if elements already have split data and revert first
-          elements.forEach(el => {
-            if (el._splitText) {
-              if (debug) console.log(`${logPrefix} Reverting existing SplitText`);
-              el._splitText.revert();
+          const requestedType = animConfig.split.toLowerCase();
+          const existingSplit = elements[0]?._splitText;
+          const existingType = elements[0]?._splitTextType;
+          let split;
+
+          // Check if existing split matches requested type
+          const typeMatches = existingType === requestedType;
+          const hasUsableSplit = existingSplit && (existingSplit.chars?.length || existingSplit.words?.length || existingSplit.lines?.length);
+
+          if (hasUsableSplit && typeMatches) {
+            // Reuse existing split - same type
+            if (debug) console.log(`${logPrefix} Reusing existing SplitText (type: ${existingType})`);
+            split = existingSplit;
+          } else {
+            // Type mismatch or no existing split - create fresh
+            if (existingSplit) {
+              if (debug) console.log(`${logPrefix} Type mismatch (${existingType} vs ${requestedType}), reverting and creating new`);
+              existingSplit.revert();
+            } else {
+              if (debug) console.log(`${logPrefix} Creating fresh SplitText`);
             }
-          });
 
-          const split = new SplitText(elements, { type: animConfig.split });
+            split = new SplitText(elements, { type: requestedType });
 
-          // Store reference for cleanup
-          elements.forEach(el => { el._splitText = split; });
+            // Store reference AND type for future checks
+            elements.forEach(el => {
+              el._splitText = split;
+              el._splitTextType = requestedType;
+            });
+          }
 
-          // Priority: chars > words > lines
-          if (split.chars && split.chars.length) elements = split.chars;
-          else if (split.words && split.words.length) elements = split.words;
-          else if (split.lines && split.lines.length) elements = split.lines;
+          // Select elements based on split type
+          if (requestedType.includes('char') && split.chars && split.chars.length) elements = split.chars;
+          else if (requestedType.includes('word') && split.words && split.words.length) elements = split.words;
+          else if (requestedType.includes('line') && split.lines && split.lines.length) elements = split.lines;
 
-          if (debug) console.log(`${logPrefix} SplitText created, elements count: ${elements.length}`);
+          if (debug) console.log(`${logPrefix} SplitText elements count: ${elements.length}`);
 
           // Fix: Elements must be inline-block for rotation to work
           if (elements.length) {
@@ -141,90 +160,52 @@ registerWidget('scroll_animation', (node, config) => {
     return tween;
   };
 
-  const mm = gsap.matchMedia();
-  const sysBreakpoints = window.ScrollCrafterConfig?.breakpoints || [];
-
-  // Ensure sorted by value
-  const sortedBps = [...sysBreakpoints].sort((a, b) => a.value - b.value);
-
-  let prevMax = 0;
-  const rangeConfig = [];
-
-  // Build ranges for defined breakpoints
-  sortedBps.forEach(bp => {
-    const min = prevMax + 1;
-    const max = bp.value;
-    prevMax = max;
-
-    const query = min === 1
-      ? `(max-width: ${max}px)`
-      : `(min-width: ${min}px) and (max-width: ${max}px)`;
-
-    rangeConfig.push({ slug: bp.key, query });
-  });
-
-  // Add Desktop/Default (above last breakpoint)
-  rangeConfig.push({
-    slug: '_default_desktop',
-    query: `(min-width: ${prevMax + 1}px)`
-  });
-
-  // Register Contexts
+  // Use shared responsive context - eliminates ~75 lines of duplicated code
   const tweens = [];
 
-  rangeConfig.forEach(range => {
-    mm.add(range.query, () => {
-      let activeConfig = config.animation; // Default to global/base
+  const handlePreview = (tween) => {
+    const isManualPreview = (window.ScrollCrafterForcePreview === config.id) ||
+      (window.parent && window.parent.ScrollCrafterForcePreview === config.id) ||
+      (node.getAttribute('data-sc-preview') === 'yes');
 
-      // Check for override
-      if (range.slug !== '_default_desktop' && config.media && config.media[range.slug]) {
-        activeConfig = config.media[range.slug];
-        logConfig(`Active: ${range.slug} (Override)`, { ...config, animation: activeConfig });
-      } else {
-        logConfig(`Active: ${range.slug} (Global)`, config);
-      }
+    if (isManualPreview && tween) {
+      if (debug) console.log(`${logPrefix} Manual preview detected, force playing animation`);
 
-      if (activeConfig) {
-        const tween = createTween({ ...config, animation: activeConfig }, node);
-        if (tween) tweens.push(tween);
-
-        // Force play if this is a manual preview
-        const isManualPreview = (window.ScrollCrafterForcePreview === config.id) ||
-          (window.parent && window.parent.ScrollCrafterForcePreview === config.id) ||
-          (node.getAttribute('data-sc-preview') === 'yes');
-
-        if (isManualPreview && tween) {
-          if (debug) console.log(`${logPrefix} Manual preview detected, force playing animation`);
-
-          if (tween.scrollTrigger) {
-            const st = tween.scrollTrigger;
-            // For Pin/Scrub, animate progress to show effect without breaking structure
-            if (st.pin || (st.vars && st.vars.scrub)) {
-              if (debug) console.log(`${logPrefix} Pin/Scrub detected, animating progress`);
-              gsap.fromTo(st, { progress: 0 }, {
-                progress: 1,
-                duration: 1.5,
-                ease: "power1.inOut"
-              });
-            } else {
-              st.disable();
-              tween.restart(true);
-            }
-          } else {
-            // For non-ScrollTrigger animations
-            tween.restart(true);
-          }
+      if (tween.scrollTrigger) {
+        const st = tween.scrollTrigger;
+        if (st.pin || (st.vars && st.vars.scrub)) {
+          if (debug) console.log(`${logPrefix} Pin/Scrub detected, animating progress`);
+          gsap.fromTo(st, { progress: 0 }, {
+            progress: 1,
+            duration: 1.5,
+            ease: "power1.inOut"
+          });
+        } else {
+          st.disable();
+          tween.restart(true);
         }
+      } else {
+        tween.restart(true);
       }
-    });
-  });
+    }
+  };
+
+  const cleanup = createResponsiveContext(gsap, config, (activeConfig, range) => {
+    logConfig(`Active: ${range.slug}`, { ...config, animation: activeConfig });
+
+    const tween = createTween({ ...config, animation: activeConfig }, node);
+    if (tween) {
+      tweens.push(tween);
+      handlePreview(tween);
+    }
+    return tween;
+  }, node);
 
   return () => {
     if (debug) console.log(`${logPrefix} Cleaning up...`);
-    mm.revert(); // Revert matchMedia
+    cleanup();
     tweens.forEach(t => {
       if (t.scrollTrigger) {
-        // Very important for Pin: kill(true) removes the spacer and reverts DOM
         t.scrollTrigger.kill(true);
       }
       t.kill();
