@@ -92,6 +92,14 @@ class Settings_Page
             'scrollcrafter',
             'scrollcrafter_assets_section'
         );
+
+        add_settings_field(
+            'smooth_scroll',
+            esc_html__( 'Smooth Scroll', 'scrollcrafter' ),
+            [ $this, 'render_field_smooth_scroll' ],
+            'scrollcrafter',
+            'scrollcrafter_assets_section'
+        );
 	}
 
 	public function sanitize_settings( $input ): array
@@ -144,6 +152,17 @@ class Settings_Page
 		$allowed_modes = [ 'local', 'cdn' ];
 		$output['gsap_mode'] = in_array( $input['gsap_mode'] ?? '', $allowed_modes, true ) ? $input['gsap_mode'] : 'local';
         $output['enable_editor_animations'] = isset( $input['enable_editor_animations'] ) && '1' === $input['enable_editor_animations'];
+
+        // @fs-pro-start
+        // Smooth Scroll is Pro-only
+        if ( sc_is_pro() ) {
+            $output['smooth_scroll'] = isset( $input['smooth_scroll'] ) && '1' === $input['smooth_scroll'];
+            $output['smooth_scroll_lerp'] = isset( $input['smooth_scroll_lerp'] ) ? floatval( $input['smooth_scroll_lerp'] ) : 0.1;
+        } else {
+            $output['smooth_scroll'] = false;
+            $output['smooth_scroll_lerp'] = 0.1;
+        }
+        // @fs-pro-end
 
 		return $output;
 	}
@@ -243,6 +262,44 @@ class Settings_Page
         ?>
         <input type="checkbox" name="<?php echo self::OPTION_NAME; ?>[enable_editor_animations]" value="1" <?php checked( 1, $val ); ?> />
         <?php echo esc_html__( 'Live animations inside Elementor Editor (might affect performance)', 'scrollcrafter' ); ?>
+        <?php
+    }
+
+    public function render_field_smooth_scroll(): void
+    {
+        $config = Config::instance();
+        $is_pro = sc_is_pro();
+        $enabled = $config->get( 'smooth_scroll', false );
+        $lerp = $config->get( 'smooth_scroll_lerp', 0.1 );
+
+        if ( ! $is_pro ) {
+            ?>
+            <div style="background: #fff8e5; border-left: 4px solid #ffb900; padding: 12px; margin-bottom: 10px; max-width: 500px;">
+                <strong>💎 Pro Feature</strong><br>
+                <?php echo esc_html__( 'Smooth scrolling powered by Lenis is only available in the Pro version. It makes scroll-linked animations buttery smooth on all devices.', 'scrollcrafter' ); ?>
+                <br><br>
+                <a href="<?php echo scr_fs()->get_upgrade_url(); ?>" class="button button-primary"><?php echo esc_html__( 'Upgrade to Pro', 'scrollcrafter' ); ?></a>
+            </div>
+            <?php
+        }
+        ?>
+        <label>
+            <input type="checkbox" name="<?php echo self::OPTION_NAME; ?>[smooth_scroll]" value="1" <?php checked( $enabled ); ?> <?php disabled( ! $is_pro ); ?>>
+            <?php echo esc_html__( 'Enable Smooth Scroll (Lenis)', 'scrollcrafter' ); ?>
+        </label>
+        <p class="description">
+            <?php echo esc_html__( 'Adds inertia-based smooth scrolling. Makes scroll animations feel smooth on Windows and all browsers.', 'scrollcrafter' ); ?>
+        </p>
+        <?php if ( $is_pro ) : ?>
+        <br>
+        <label>
+            <?php echo esc_html__( 'Smoothness (lerp):', 'scrollcrafter' ); ?>
+            <input type="number" name="<?php echo self::OPTION_NAME; ?>[smooth_scroll_lerp]" value="<?php echo esc_attr( $lerp ); ?>" min="0.01" max="1" step="0.01" style="width: 80px;">
+        </label>
+        <p class="description">
+            <?php echo esc_html__( 'Lower = smoother but more laggy. Recommended: 0.08 - 0.12', 'scrollcrafter' ); ?>
+        </p>
+        <?php endif; ?>
         <?php
     }
 }

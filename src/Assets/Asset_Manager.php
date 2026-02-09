@@ -46,6 +46,15 @@ class Asset_Manager
             wp_register_script('scrollcrafter-gsap-splittext', SCROLLCRAFTER_URL . 'assets/vendor/gsap/SplitText.min.js', ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
         }
 
+        // Register Lenis for smooth scrolling (Pro feature)
+        wp_register_script(
+            'scrollcrafter-lenis',
+            SCROLLCRAFTER_URL . 'assets/vendor/lenis/lenis.min.js',
+            [],
+            '1.1.18',
+            true
+        );
+
         wp_register_script(
             'scrollcrafter-frontend',
             SCROLLCRAFTER_URL . 'assets/js/frontend.bundle.js',
@@ -56,6 +65,17 @@ class Asset_Manager
 
         wp_set_script_translations( 'scrollcrafter-frontend', 'scrollcrafter', SCROLLCRAFTER_PATH . 'languages' );
 
+        // Build smooth scroll config for Pro users
+        $smooth_scroll_config = false;
+        if ( sc_is_pro() && $config->get('smooth_scroll') ) {
+            $smooth_scroll_config = [
+                'enabled' => true,
+                'options' => [
+                    'lerp' => (float) $config->get('smooth_scroll_lerp', 0.1),
+                ]
+            ];
+        }
+
         wp_localize_script(
             'scrollcrafter-frontend',
             'ScrollCrafterConfig',
@@ -63,6 +83,8 @@ class Asset_Manager
                 'debug'       => $config->is_debug(),
                 'breakpoints' => $config->get_frontend_breakpoints(),
                 'enableEditorAnimations' => (bool)$config->get('enable_editor_animations'),
+                'isPro'       => sc_is_pro(),
+                'smoothScroll' => $smooth_scroll_config,
             ]
         );
     }
@@ -86,6 +108,12 @@ class Asset_Manager
         }
         if ( $analysis['needs_split'] ) {
             wp_enqueue_script( 'scrollcrafter-gsap-splittext' );
+        }
+
+        // Load Lenis for Pro users with smooth scroll enabled
+        $config = Config::instance();
+        if ( sc_is_pro() && $config->get('smooth_scroll') ) {
+            wp_enqueue_script( 'scrollcrafter-lenis' );
         }
 
         wp_enqueue_script( 'scrollcrafter-frontend' );
@@ -165,6 +193,7 @@ class Asset_Manager
                 'rest_nonce'  => wp_create_nonce( 'wp_rest' ),
                 'breakpoints' => $config->get_frontend_breakpoints(),
                 'enableEditorAnimations' => (bool)$config->get('enable_editor_animations'),
+                'isPro'       => sc_is_pro(),
             ]
         );
         

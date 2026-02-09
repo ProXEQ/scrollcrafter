@@ -86,12 +86,27 @@ export function getBreakpointRanges() {
 }
 
 /**
+ * Check if Pro features are available
+ * @returns {boolean}
+ */
+function isPro() {
+    return !!window.ScrollCrafterConfig?.isPro;
+}
+
+/**
  * Check if a special condition is currently active
  * @param {string} tag 
  * @returns {boolean}
  */
 export function isSpecialConditionActive(tag) {
-    const query = SPECIAL_QUERIES[tag] || PRO_SPECIAL_QUERIES[tag];
+    // Check free conditions first
+    let query = SPECIAL_QUERIES[tag];
+
+    // Check Pro conditions only if Pro is active
+    if (!query && isPro()) {
+        query = PRO_SPECIAL_QUERIES[tag];
+    }
+
     if (!query) return false;
 
     // Cache the result for this session
@@ -165,7 +180,8 @@ export function buildConditionQuery(condition) {
         // Check if it's a special condition
         if (SPECIAL_QUERIES[tag]) {
             queries.push(SPECIAL_QUERIES[tag]);
-        } else if (PRO_SPECIAL_QUERIES[tag]) {
+        } else if (isPro() && PRO_SPECIAL_QUERIES[tag]) {
+            // Pro-only conditions
             queries.push(PRO_SPECIAL_QUERIES[tag]);
         } else {
             // Find breakpoint range

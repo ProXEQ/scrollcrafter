@@ -32,10 +32,10 @@ This means: "on mobile AND when dark mode is preferred"
 
 | Tag | Description | Availability |
 |-----|-------------|--------------|
-| `@reduced-motion` | User prefers reduced motion | Free |
-| `@dark` | User prefers dark color scheme | Pro |
-| `@retina` | High DPI display | Pro |
-| `@no-hover` | Touch device (no hover) | Pro |
+| `@reduced-motion` | User prefers reduced motion | ✅ Free |
+| `@dark` | User prefers dark color scheme | 🔒 Pro |
+| `@retina` | High DPI display (2x+) | 🔒 Pro |
+| `@no-hover` | Touch device (no hover) | 🔒 Pro |
 
 ## Priority
 
