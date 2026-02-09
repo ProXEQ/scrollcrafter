@@ -12,6 +12,7 @@ use ScrollCrafter\Elementor\Frontend\Animation_Render;
 use ScrollCrafter\Admin\Validation_Controller;
 use ScrollCrafter\Admin\Settings_Page;
 use ScrollCrafter\Premium\License_Manager;
+use ScrollCrafter\Elementor\Page_Settings;
 
 final class Plugin
 {
@@ -78,6 +79,10 @@ final class Plugin
 			function () {
 				$this->animation_injector->hooks();
 				$this->animation_render->hooks();
+                
+                // Pro page settings
+                $page_settings = new Page_Settings();
+                $page_settings->hooks();
 			}
 		);
 	}

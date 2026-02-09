@@ -66,15 +66,7 @@ class Asset_Manager
         wp_set_script_translations( 'scrollcrafter-frontend', 'scrollcrafter', SCROLLCRAFTER_PATH . 'languages' );
 
         // Build smooth scroll config for Pro users
-        $smooth_scroll_config = false;
-        if ( sc_is_pro() && $config->get('smooth_scroll') ) {
-            $smooth_scroll_config = [
-                'enabled' => true,
-                'options' => [
-                    'lerp' => (float) $config->get('smooth_scroll_lerp', 0.1),
-                ]
-            ];
-        }
+        $smooth_scroll_config = $this->build_smooth_scroll_config( $config );
 
         wp_localize_script(
             'scrollcrafter-frontend',
@@ -250,6 +242,54 @@ public function fix_loco_js_translation_path( $file, $handle, $domain ) {
             }
         }
         return $hints;
+    }
+
+    /**
+     * Build smooth scroll config from global and page-level settings.
+     *
+     * @param Config $config
+     * @return array|false
+     */
+    private function build_smooth_scroll_config( Config $config )
+    {
+        if ( ! sc_is_pro() ) {
+            return false;
+        }
+
+        // Get global settings
+        $global_enabled = (bool) $config->get('smooth_scroll');
+        $global_lerp = (float) $config->get('smooth_scroll_lerp', 0.1);
+
+        // Check for page-level override
+        $page_override = null;
+        if ( is_singular() ) {
+            global $post;
+            if ( $post && class_exists( '\\ScrollCrafter\\Elementor\\Page_Settings' ) ) {
+                $page_override = \ScrollCrafter\Elementor\Page_Settings::get_page_settings( $post->ID );
+            }
+        }
+
+        // Determine final enabled state
+        $enabled = $global_enabled;
+        $lerp = $global_lerp;
+
+        if ( $page_override !== null ) {
+            $enabled = $page_override['enabled'];
+            if ( $enabled && isset( $page_override['lerp'] ) ) {
+                $lerp = $page_override['lerp'];
+            }
+        }
+
+        if ( ! $enabled ) {
+            return false;
+        }
+
+        return [
+            'enabled' => true,
+            'options' => [
+                'lerp' => $lerp,
+            ]
+        ];
     }
 
 }
