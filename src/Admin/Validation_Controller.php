@@ -20,7 +20,7 @@ class Validation_Controller
 
     private const ALLOWED_KEYS = [
         'animation' => ['type', 'method', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'strict', 'repeat', 'yoyo', 'split', 'stagger.from', 'stagger.amount'],
-        'scroll'    => ['start', 'end', 'scrub', 'once', 'markers', 'toggleactions', 'pin', 'pinspacing', 'snap', 'anticipatepin', 'strict', 'id', 'trigger'],
+        'scroll'    => ['start', 'end', 'scrub', 'once', 'markers', 'toggleactions', 'pin', 'pinspacing', 'snap', 'anticipatepin', 'fastscrollend', 'preventoverlaps', 'strict', 'id', 'trigger'],
         'target'    => ['selector', 'type'],
         'step'      => ['type', 'selector', 'from', 'to', 'duration', 'delay', 'ease', 'stagger', 'startat', 'position', 'label'],
     ];
@@ -488,6 +488,8 @@ class Validation_Controller
         }
         
         if ( array_key_exists( 'trigger', $scroll ) ) $scrollTrigger['trigger'] = $scroll['trigger']['value'];
+        if ( array_key_exists( 'fastScrollEnd', $scroll ) ) $scrollTrigger['fastScrollEnd'] = $scroll['fastScrollEnd']['value'];
+        if ( array_key_exists( 'preventOverlaps', $scroll ) ) $scrollTrigger['preventOverlaps'] = $scroll['preventOverlaps']['value'];
         
         return $scrollTrigger;
     }

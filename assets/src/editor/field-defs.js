@@ -175,6 +175,24 @@ export const FIELD_DEFS = {
     snap: {
       label: 'snap:', detail: __('Snap to progress', 'scrollcrafter'),
       values: [{ label: '1 / (items.length - 1)' }, { label: '0.5' }]
+    },
+
+    fastScrollEnd: {
+      label: 'fastScrollEnd:', detail: __('Force-complete animation on fast scroll', 'scrollcrafter'),
+      info: __('When user scrolls fast past the trigger, the animation jumps to its end state instead of getting stuck mid-way.', 'scrollcrafter'),
+      values: [
+        { label: 'true', detail: __('Use default velocity threshold (2500 px/s)', 'scrollcrafter') },
+        { label: '3000', detail: __('Custom velocity threshold in px/s', 'scrollcrafter') }
+      ]
+    },
+
+    preventOverlaps: {
+      label: 'preventOverlaps:', detail: __('Kill previous animations before starting', 'scrollcrafter'),
+      info: __('Prevents overlapping scroll-triggered animations. Use true or a group name string to group related triggers.', 'scrollcrafter'),
+      values: [
+        { label: 'true', detail: __('Prevent overlaps globally', 'scrollcrafter') },
+        { label: '"group1"', detail: __('Named group for related triggers', 'scrollcrafter') }
+      ]
     }
   },
 

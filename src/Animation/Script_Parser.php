@@ -405,7 +405,7 @@ class Script_Parser
 
     private function assignScrollKey(array &$scroll, string $key, string $value, int $line): void
     {
-        $map = [ 'toggleactions' => 'toggleActions', 'pinspacing' => 'pinSpacing', 'anticipatepin' => 'anticipatePin' ];
+        $map = [ 'toggleactions' => 'toggleActions', 'pinspacing' => 'pinSpacing', 'anticipatepin' => 'anticipatePin', 'fastscrollend' => 'fastScrollEnd', 'preventoverlaps' => 'preventOverlaps' ];
         $realKey = $map[$key] ?? $key;
         $parsedVal = $value;
 
@@ -415,7 +415,10 @@ class Script_Parser
              $parsedVal = $this->parseBool($value);
         } elseif ($key === 'anticipatepin') {
              $parsedVal = (float) $value;
-             
+        } elseif ($key === 'fastscrollend') {
+             $parsedVal = $this->parseBoolOrNumberOrString($value);
+        } elseif ($key === 'preventoverlaps') {
+             $parsedVal = $this->parseBoolOrNumberOrString($value);
         } elseif ($key === 'strict') {
              $parsedVal = $this->parseBool($value);
         
