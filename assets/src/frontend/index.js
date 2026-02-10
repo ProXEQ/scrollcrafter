@@ -19,14 +19,35 @@ if (document.readyState === 'loading') {
 }
 
 // Fix: Recalculate ScrollTrigger positions after full page load.
-// When the browser navigates to a #hash anchor, it scrolls AFTER DOMContentLoaded
-// but BEFORE load. Pin spacers calculated during init() have wrong positions.
-// A deferred refresh after load fixes pin overlap issues with hash navigation
-// and fast-scroll-on-load scenarios.
+// When the browser navigates to a #hash anchor, it scrolls AFTER DOMContentLoaded.
+// Pin spacers calculated during init() at scrollY=0 have wrong positions.
 window.addEventListener('load', () => {
   const ScrollTrigger = getScrollTrigger();
-  if (ScrollTrigger) {
-    // Small delay to let the browser finalize hash scroll and Elementor lazy-load
+  if (!ScrollTrigger) return;
+
+  if (window.location.hash) {
+    // Hash navigation detected — browser will scroll to anchor at unpredictable time.
+    // Strategy: clear cached positions, wait for browser to settle, then recalculate everything.
+    let refreshed = false;
+    const doRefresh = () => {
+      if (refreshed) return;
+      refreshed = true;
+      ScrollTrigger.clearScrollMemory();
+      ScrollTrigger.refresh(true);
+    };
+
+    // Primary: delayed refresh (300ms covers most hash-scroll timings)
+    setTimeout(doRefresh, 300);
+
+    // Safety net: if scroll happens after our timeout, catch it
+    const onScroll = () => {
+      window.removeEventListener('scroll', onScroll);
+      // Small delay to let the scroll position fully settle
+      setTimeout(doRefresh, 100);
+    };
+    window.addEventListener('scroll', onScroll, { once: true, passive: true });
+  } else {
+    // No hash — standard refresh after layout settles
     requestAnimationFrame(() => {
       ScrollTrigger.refresh();
     });
