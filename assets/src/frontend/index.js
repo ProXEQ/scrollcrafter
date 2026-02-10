@@ -12,47 +12,22 @@ function init() {
   initWidgetsInScope(document);
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+// When the URL contains a #hash, the browser scrolls to the anchor AFTER
+// DOMContentLoaded. If we init ScrollTrigger before that scroll happens,
+// pin positions are calculated at scrollY=0 — causing pin overlaps.
+// Fix: defer init() until after the browser finishes the hash scroll.
+if (window.location.hash) {
+  window.addEventListener('load', () => {
+    // Wait for the browser to finalize hash scroll + any lazy-loaded content
+    setTimeout(init, 100);
+  });
 } else {
-  init();
-}
-
-// Fix: Recalculate ScrollTrigger positions after full page load.
-// When the browser navigates to a #hash anchor, it scrolls AFTER DOMContentLoaded.
-// Pin spacers calculated during init() at scrollY=0 have wrong positions.
-window.addEventListener('load', () => {
-  const ScrollTrigger = getScrollTrigger();
-  if (!ScrollTrigger) return;
-
-  if (window.location.hash) {
-    // Hash navigation detected — browser will scroll to anchor at unpredictable time.
-    // Strategy: clear cached positions, wait for browser to settle, then recalculate everything.
-    let refreshed = false;
-    const doRefresh = () => {
-      if (refreshed) return;
-      refreshed = true;
-      ScrollTrigger.clearScrollMemory();
-      ScrollTrigger.refresh(true);
-    };
-
-    // Primary: delayed refresh (300ms covers most hash-scroll timings)
-    setTimeout(doRefresh, 300);
-
-    // Safety net: if scroll happens after our timeout, catch it
-    const onScroll = () => {
-      window.removeEventListener('scroll', onScroll);
-      // Small delay to let the scroll position fully settle
-      setTimeout(doRefresh, 100);
-    };
-    window.addEventListener('scroll', onScroll, { once: true, passive: true });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    // No hash — standard refresh after layout settles
-    requestAnimationFrame(() => {
-      ScrollTrigger.refresh();
-    });
+    init();
   }
-});
+}
 
 window.addEventListener('elementor/popup/show', (event) => {
   initWidgetsInScope(event.target);
