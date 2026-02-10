@@ -122,10 +122,26 @@ registerWidget('scroll_animation', (node, config) => {
     if (vars.scrollTrigger) {
       vars.scrollTrigger.trigger = contextNode;
       if (config.id) vars.scrollTrigger.id = 'sc-' + config.id;
+
+      // Pin safety: recalculate positions on refresh and smooth pin activation
+      if (typeof vars.scrollTrigger.invalidateOnRefresh === 'undefined') vars.scrollTrigger.invalidateOnRefresh = true;
+      if (typeof vars.scrollTrigger.anticipatePin === 'undefined' && vars.scrollTrigger.pin) vars.scrollTrigger.anticipatePin = 0.5;
+
+      // Fix: Disable CSS transitions on pinned element to prevent layout conflicts
+      if (vars.scrollTrigger.pin) {
+        gsap.set(vars.scrollTrigger.pin === true ? contextNode : vars.scrollTrigger.pin, { transition: "none" });
+      }
     }
     if (vars2 && vars2.scrollTrigger) {
       vars2.scrollTrigger.trigger = contextNode;
       if (config.id) vars2.scrollTrigger.id = 'sc-' + config.id;
+
+      if (typeof vars2.scrollTrigger.invalidateOnRefresh === 'undefined') vars2.scrollTrigger.invalidateOnRefresh = true;
+      if (typeof vars2.scrollTrigger.anticipatePin === 'undefined' && vars2.scrollTrigger.pin) vars2.scrollTrigger.anticipatePin = 0.5;
+
+      if (vars2.scrollTrigger.pin) {
+        gsap.set(vars2.scrollTrigger.pin === true ? contextNode : vars2.scrollTrigger.pin, { transition: "none" });
+      }
     }
 
     if (debug) {

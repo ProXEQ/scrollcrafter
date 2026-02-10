@@ -18,6 +18,21 @@ if (document.readyState === 'loading') {
   init();
 }
 
+// Fix: Recalculate ScrollTrigger positions after full page load.
+// When the browser navigates to a #hash anchor, it scrolls AFTER DOMContentLoaded
+// but BEFORE load. Pin spacers calculated during init() have wrong positions.
+// A deferred refresh after load fixes pin overlap issues with hash navigation
+// and fast-scroll-on-load scenarios.
+window.addEventListener('load', () => {
+  const ScrollTrigger = getScrollTrigger();
+  if (ScrollTrigger) {
+    // Small delay to let the browser finalize hash scroll and Elementor lazy-load
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+    });
+  }
+});
+
 window.addEventListener('elementor/popup/show', (event) => {
   initWidgetsInScope(event.target);
 
