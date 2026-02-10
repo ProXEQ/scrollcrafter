@@ -27,6 +27,33 @@ if (window.location.hash) {
   } else {
     init();
   }
+
+  // For non-hash pages: refresh after load to catch lazy images changing page height.
+  // Hash pages don't need this — they already init after load.
+  window.addEventListener('load', () => {
+    const ST = getScrollTrigger();
+    if (ST) requestAnimationFrame(() => ST.refresh());
+  });
+}
+
+// bfcache: when user navigates Back/Forward, the browser may restore a cached page
+// with stale ScrollTrigger positions. Re-init to recalculate everything.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) {
+    const ST = getScrollTrigger();
+    if (ST) {
+      ST.clearScrollMemory();
+      ST.refresh(true);
+    }
+  }
+});
+
+// Web fonts: font swap can change element heights, shifting pin positions.
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    const ST = getScrollTrigger();
+    if (ST) ST.refresh();
+  });
 }
 
 window.addEventListener('elementor/popup/show', (event) => {
