@@ -18,6 +18,12 @@ class Animation_Render
     private Tween_Config_Builder $tweenBuilder;
     private Timeline_Config_Builder $timelineBuilder;
 
+    /** @var array<string, array> In-memory cache per request to avoid redundant parsing */
+    private array $config_cache = [];
+
+    private const TRANSIENT_PREFIX = 'sc_cfg_';
+    private const TRANSIENT_TTL   = DAY_IN_SECONDS;
+
     public function __construct()
     {
         $this->parser         = new Script_Parser();
@@ -28,6 +34,7 @@ class Animation_Render
     public function hooks(): void
     {
         add_action( 'elementor/frontend/before_render', [ $this, 'add_animation_attributes' ] );
+        add_action( 'elementor/editor/after_save', [ $this, 'invalidate_cache' ], 10, 2 );
     }
 
     public function add_animation_attributes( $element ): void
@@ -47,10 +54,29 @@ class Animation_Render
             return;
         }
 
+        $widget_id = $element->get_id();
+        $cache_key = md5( $script . '|' . $widget_id );
+
+        // 1. Check in-memory cache (same request, e.g. multiple renders)
+        if ( isset( $this->config_cache[ $cache_key ] ) ) {
+            $config = $this->config_cache[ $cache_key ];
+            $element->add_render_attribute( '_wrapper', 'data-scrollcrafter-config', esc_attr( wp_json_encode( $config ) ) );
+            return;
+        }
+
+        // 2. Check transient cache (cross-request persistence)
+        $cached = get_transient( self::TRANSIENT_PREFIX . $cache_key );
+        if ( false !== $cached && is_array( $cached ) ) {
+            // Refresh markers check (user login state can change)
+            $cached = $this->apply_runtime_overrides( $cached );
+            $this->config_cache[ $cache_key ] = $cached;
+            $element->add_render_attribute( '_wrapper', 'data-scrollcrafter-config', esc_attr( wp_json_encode( $cached ) ) );
+            return;
+        }
+
+        // 3. Full parse + build
         try {
             $parsed = $this->parser->parse( $script );
-            // Normalize parsed data to flat values for the renderer logic
-            $parsed = $this->normalizeParsedData( $parsed );
         } catch ( \Throwable $e ) {
             if ( Config::instance()->is_debug() ) {
                 Logger::log_exception( $e, 'animation_parsing' );
@@ -58,8 +84,7 @@ class Animation_Render
             return;
         }
 
-        $widget_id       = $element->get_id();
-        $target_selector = $parsed['target']['selector'] ?? ( '.elementor-element-' . $widget_id );
+        $target_selector = $parsed['target']['selector']['value'] ?? ( '.elementor-element-' . $widget_id );
         $target_type     = isset( $parsed['target']['selector'] ) ? 'custom' : 'wrapper';
 
         $scroll_config = $parsed['scroll'] ?? [];
@@ -79,6 +104,10 @@ class Animation_Render
 
         $config = apply_filters( 'scrollcrafter/frontend/config', $config, $element, $parsed );
 
+        // Store in both caches
+        $this->config_cache[ $cache_key ] = $config;
+        set_transient( self::TRANSIENT_PREFIX . $cache_key, $config, self::TRANSIENT_TTL );
+
         $element->add_render_attribute(
             '_wrapper',
             'data-scrollcrafter-config',
@@ -86,18 +115,50 @@ class Animation_Render
         );
     }
 
-    private function normalizeParsedData(array $data): array {
-        $clean = [];
-        foreach ($data as $key => $item) {
-            if (is_array($item) && array_key_exists('value', $item) && array_key_exists('line', $item)) {
-                 $clean[$key] = $item['value'];
-            } elseif (is_array($item)) {
-                 $clean[$key] = $this->normalizeParsedData($item);
-            } else {
-                 $clean[$key] = $item;
+    /**
+     * Invalidate all ScrollCrafter config transients when Elementor saves.
+     * Uses global transient deletion since we can't track which scripts changed.
+     */
+    public function invalidate_cache( int $post_id, array $editor_data ): void
+    {
+        global $wpdb;
+
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                '_transient_' . self::TRANSIENT_PREFIX . '%'
+            )
+        );
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s",
+                '_transient_timeout_' . self::TRANSIENT_PREFIX . '%'
+            )
+        );
+
+        // Clear in-memory cache too
+        $this->config_cache = [];
+    }
+
+    /**
+     * Apply runtime-only overrides that shouldn't be cached (e.g. markers depend on login state).
+     */
+    private function apply_runtime_overrides( array $config ): array
+    {
+        // Markers should only show for logged-in users
+        if ( ! is_user_logged_in() ) {
+            // Deep check for scrollTrigger.markers in various config shapes
+            if ( isset( $config['animation']['vars']['scrollTrigger']['markers'] ) ) {
+                $config['animation']['vars']['scrollTrigger']['markers'] = false;
+            }
+            if ( isset( $config['animation']['vars2']['scrollTrigger']['markers'] ) ) {
+                $config['animation']['vars2']['scrollTrigger']['markers'] = false;
+            }
+            if ( isset( $config['timelineVars']['scrollTrigger']['markers'] ) ) {
+                $config['timelineVars']['scrollTrigger']['markers'] = false;
             }
         }
-        return $clean;
+        return $config;
     }
 
     private function build_scroll_trigger_config( array $scroll, string $widget_id ): array
@@ -108,22 +169,20 @@ class Animation_Render
             'end'           => 'bottom 20%',
             'toggleActions' => 'play none none reverse',
             'scrub'         => false,
-            'markers'       => false, // Never enable by default - controlled explicitly via DSL or editor toggle
+            'markers'       => false,
             'id'            => 'sc-' . $widget_id,
         ];
 
-        $pass_through = [ 'pin', 'pinSpacing', 'anticipatePin', 'once', 'snap' ];
+        $pass_through = [ 'pin', 'pinSpacing', 'anticipatePin', 'once', 'snap', 'fastScrollEnd', 'preventOverlaps' ];
 
         $config = array_merge( $defaults, array_intersect_key( $scroll, $defaults ) );
 
-        
         foreach ( $pass_through as $key ) {
             if ( isset( $scroll[ $key ] ) ) {
                 $config[ $key ] = $scroll[ $key ];
             }
         }
 
-        // Markers only for logged-in users (security: don't expose to public)
         if ( isset( $scroll['markers'] ) && $scroll['markers'] && is_user_logged_in() ) {
             $config['markers'] = true;
         } else {
