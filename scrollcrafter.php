@@ -3,7 +3,7 @@
  * Plugin Name:       ScrollCrafter for Elementor
  * Plugin URI:        https://pixelmobs.com/scrollcrafter
  * Description:       Create advanced scroll-based animations visually with Elementor and GSAP.
- * Version:           1.1.8
+ * Version:           1.1.9
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            PixelMobs, ProXEQ
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'SCROLLCRAFTER_FILE', __FILE__ );
 define( 'SCROLLCRAFTER_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SCROLLCRAFTER_URL', plugin_dir_url( __FILE__ ) );
-define( 'SCROLLCRAFTER_VERSION', '1.1.8' );
+define( 'SCROLLCRAFTER_VERSION', '1.1.9' );
 define( 'SCROLLCRAFTER_MIN_WP_VERSION', '6.0' );
 define( 'SCROLLCRAFTER_MIN_PHP_VERSION', '8.1' );
 define( 'SCROLLCRAFTER_MIN_ELEMENTOR', '3.30.0' );
@@ -73,8 +73,10 @@ if ( ! function_exists( 'scr_fs' ) ) {
 /**
  * Helper to check if the user is on a Pro plan.
  */
-function sc_is_pro() {
-    return function_exists( 'scr_fs' ) && scr_fs() && ( scr_fs()->is_premium() || scr_fs()->is_plan( 'pro' ) );
+if ( ! function_exists( 'sc_is_pro' ) ) {
+    function sc_is_pro() {
+        return function_exists( 'scr_fs' ) && scr_fs() && ( scr_fs()->is_premium() || scr_fs()->is_plan( 'pro' ) );
+    }
 }
 
 /**

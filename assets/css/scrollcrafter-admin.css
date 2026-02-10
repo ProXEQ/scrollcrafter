@@ -1,0 +1,756 @@
+/**
+ * ScrollCrafter Admin Styles
+ * Modern UI for Settings Page
+ */
+
+:root {
+    --sc-primary: #0ae448;
+    --sc-primary-dark: #08b53a;
+    --sc-primary-light: #4ade80;
+    --sc-accent: #0ea5e9;
+    --sc-success: #10b981;
+    --sc-warning: #f59e0b;
+    --sc-danger: #ef4444;
+    --sc-bg: #f8fafc;
+    --sc-card-bg: #ffffff;
+    --sc-border: #e2e8f0;
+    --sc-text: #1e293b;
+    --sc-text-muted: #64748b;
+    --sc-radius: 12px;
+    --sc-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --sc-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Main Container */
+.sc-settings-wrap {
+    max-width: 1200px;
+    margin: 20px 20px 20px 0;
+}
+
+/* Header */
+.sc-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-radius: var(--sc-radius);
+    color: white;
+    box-shadow: var(--sc-shadow-lg);
+}
+
+.sc-settings-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sc-settings-header h1 .sc-header-logo,
+.sc-header-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.sc-license-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.sc-license-badge.pro {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.sc-license-badge.free {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--sc-primary-dark);
+}
+
+.sc-license-badge .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Tabs */
+.sc-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--sc-card-bg);
+    padding: 8px;
+    border-radius: var(--sc-radius);
+    margin-bottom: 24px;
+    box-shadow: var(--sc-shadow);
+}
+
+.sc-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--sc-text-muted);
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.sc-tab:hover {
+    background: var(--sc-bg);
+    color: var(--sc-text);
+}
+
+.sc-tab.active {
+    background: var(--sc-primary);
+    color: white;
+}
+
+.sc-tab .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Tab Content */
+.sc-tab-content {
+    display: none;
+}
+
+.sc-tab-content.active {
+    display: block;
+}
+
+/* Cards */
+.sc-card {
+    background: var(--sc-card-bg);
+    border-radius: var(--sc-radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--sc-shadow);
+}
+
+.sc-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--sc-border);
+}
+
+.sc-card-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--sc-primary-light) 0%, var(--sc-primary) 100%);
+    border-radius: 10px;
+    color: white;
+    font-size: 20px;
+}
+
+.sc-card-icon .dashicons {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+
+.sc-card-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--sc-text);
+}
+
+.sc-card-desc {
+    margin: 0;
+    font-size: 13px;
+    color: var(--sc-text-muted);
+}
+
+/* Form Elements */
+.sc-field {
+    margin-bottom: 20px;
+}
+
+.sc-field:last-child {
+    margin-bottom: 0;
+}
+
+.sc-field-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--sc-text);
+}
+
+.sc-field-desc {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--sc-text-muted);
+}
+
+/* Toggle Switch */
+.sc-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.sc-toggle input[type="checkbox"] {
+    display: none;
+}
+
+.sc-toggle-track {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: #cbd5e1;
+    border-radius: 13px;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.sc-toggle-track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: left 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sc-toggle input[type="checkbox"]:checked+.sc-toggle-track {
+    background: var(--sc-primary);
+}
+
+.sc-toggle input[type="checkbox"]:checked+.sc-toggle-track::after {
+    left: 25px;
+}
+
+.sc-toggle input[type="checkbox"]:disabled+.sc-toggle-track {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sc-toggle-label {
+    font-size: 14px;
+    color: var(--sc-text);
+}
+
+/* Select */
+.sc-select {
+    width: 100%;
+    max-width: 300px;
+    padding: 10px 14px;
+    border: 1px solid var(--sc-border);
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: var(--sc-text);
+    cursor: pointer;
+}
+
+.sc-select:focus {
+    outline: none;
+    border-color: var(--sc-primary);
+    box-shadow: 0 0 0 3px rgba(10, 228, 72, 0.2);
+}
+
+/* Textarea */
+.sc-textarea {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    border: 1px solid var(--sc-border);
+    border-radius: 8px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 13px;
+    resize: vertical;
+}
+
+.sc-textarea:focus {
+    outline: none;
+    border-color: var(--sc-primary);
+    box-shadow: 0 0 0 3px rgba(10, 228, 72, 0.2);
+}
+
+.sc-textarea:disabled {
+    background: #f1f5f9;
+    cursor: not-allowed;
+}
+
+/* Number Input */
+.sc-input-number {
+    width: 100px;
+    padding: 8px 12px;
+    border: 1px solid var(--sc-border);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.sc-input-number:focus {
+    outline: none;
+    border-color: var(--sc-primary);
+}
+
+/* Pro Banner */
+.sc-pro-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fbbf24;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sc-pro-banner-icon {
+    font-size: 32px;
+    color: #92400e;
+}
+
+.sc-pro-banner-icon .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+}
+
+.sc-pro-banner-content {
+    flex: 1;
+}
+
+.sc-pro-banner-title {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #92400e;
+}
+
+.sc-pro-banner-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #a16207;
+}
+
+.sc-pro-banner .button-primary {
+    background: #f59e0b;
+    border-color: #d97706;
+    color: white;
+    font-weight: 600;
+}
+
+.sc-pro-banner .button-primary:hover {
+    background: #d97706;
+    border-color: #b45309;
+}
+
+/* Pro Badge inline */
+.sc-pro-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Submit Button */
+.sc-submit {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--sc-border);
+}
+
+.sc-submit .button-primary {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    background: var(--sc-primary);
+    border-color: var(--sc-primary-dark);
+}
+
+.sc-submit .button-primary:hover {
+    background: var(--sc-primary-dark);
+}
+
+/* Layout */
+.sc-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .sc-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.sc-main {
+    min-width: 0;
+}
+
+/* Sidebar */
+.sc-sidebar .sc-card {
+    position: sticky;
+    top: 32px;
+}
+
+.sc-sidebar-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sc-sidebar-links li {
+    margin-bottom: 8px;
+}
+
+.sc-sidebar-links a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--sc-text);
+    font-size: 14px;
+    transition: all 0.15s ease;
+}
+
+.sc-sidebar-links a:hover {
+    background: var(--sc-bg);
+    color: var(--sc-primary);
+}
+
+.sc-sidebar-links .dashicons {
+    color: var(--sc-text-muted);
+    transition: color 0.15s ease;
+}
+
+.sc-sidebar-links a:hover .dashicons {
+    color: var(--sc-primary);
+}
+
+/* Version info */
+.sc-version {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--sc-border);
+    text-align: center;
+    font-size: 12px;
+    color: var(--sc-text-muted);
+}
+
+/* Freemius overrides */
+.fs-notice.sc-branded {
+    border-radius: var(--sc-radius) !important;
+    border-left-color: var(--sc-primary) !important;
+}
+
+/* Account Tab */
+.sc-account-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sc-account-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--sc-border);
+    font-size: 14px;
+}
+
+.sc-account-table tr:last-child td {
+    border-bottom: none;
+}
+
+.sc-account-label {
+    font-weight: 600;
+    color: var(--sc-text-muted);
+    width: 120px;
+}
+
+.sc-plan-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.sc-plan-badge.pro {
+    background: linear-gradient(135deg, var(--sc-primary-light), var(--sc-primary));
+    color: white;
+}
+
+.sc-plan-badge.free {
+    background: #e2e8f0;
+    color: var(--sc-text-muted);
+}
+
+.sc-account-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.sc-account-actions .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sc-account-actions .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* Support Tab */
+.sc-support-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sc-support-option {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: var(--sc-bg);
+    border-radius: 10px;
+}
+
+.sc-support-option>.dashicons {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: var(--sc-primary-dark);
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.sc-support-option h4 {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--sc-text);
+}
+
+.sc-support-option p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--sc-text-muted);
+}
+
+/* Account Tab Enhancements */
+.sc-account-table .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    vertical-align: text-top;
+    color: var(--sc-primary-dark);
+    margin-right: 4px;
+}
+
+.sc-license-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.sc-license-status.active {
+    background: rgba(10, 228, 72, 0.12);
+    color: #0a8f2e;
+}
+
+.sc-license-status.expired {
+    background: rgba(234, 67, 53, 0.12);
+    color: #c62828;
+}
+
+.sc-license-status .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.sc-license-key {
+    font-size: 13px;
+    padding: 4px 10px;
+    background: var(--sc-bg);
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+.sc-lifetime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--sc-primary-dark);
+    font-weight: 600;
+}
+
+.sc-lifetime-badge .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.sc-version-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--sc-primary);
+    color: white;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.sc-plan-badge.trial {
+    background: #fff3cd;
+    color: #856404;
+    margin-left: 6px;
+}
+
+.sc-expired-text {
+    color: #c62828;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.sc-no-license {
+    text-align: center;
+    padding: 24px 16px;
+}
+
+.sc-no-license>.dashicons {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+}
+
+.sc-no-license p {
+    margin: 0 0 16px;
+    color: var(--sc-text-muted);
+    font-size: 14px;
+}
+
+.sc-action-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+}
+
+.sc-action-btn .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.sc-action-danger {
+    color: #c62828 !important;
+    border-color: #e57373 !important;
+}
+
+.sc-action-danger:hover {
+    background: #ffebee !important;
+    border-color: #c62828 !important;
+}
+
+/* License Activation Form */
+.sc-license-input-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.sc-license-input {
+    flex: 1;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-family: monospace;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--sc-border);
+    border-radius: var(--sc-radius);
+    background: var(--sc-bg);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sc-license-input:focus {
+    outline: none;
+    border-color: var(--sc-primary);
+    box-shadow: 0 0 0 3px rgba(10, 228, 72, 0.15);
+}
+
+.sc-license-input-wrap .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    min-height: auto;
+}
+
+.sc-license-input-wrap .spinner {
+    margin: 0;
+    float: none;
+}
+
+.sc-license-message {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border-radius: var(--sc-radius);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.sc-license-message.success {
+    background: rgba(10, 228, 72, 0.1);
+    color: #0a8f2e;
+    border: 1px solid rgba(10, 228, 72, 0.3);
+}
+
+.sc-license-message.error {
+    background: rgba(234, 67, 53, 0.08);
+    color: #c62828;
+    border: 1px solid rgba(234, 67, 53, 0.25);
+}

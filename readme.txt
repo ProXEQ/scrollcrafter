@@ -4,7 +4,7 @@ Donate link: https://pixelmobs.com/donate
 Tags: elementor, animation, scroll, gsap, scrolltrigger
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.8
+Stable tag: 1.1.9
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -62,6 +62,15 @@ Example DSL:
 3. Lint markers showing DSL validation errors.
 
 == Changelog ==
+
+= 1.1.9 =
+* New (Pro): Lenis smooth scroll integration with global and per-page control.
+* New (Pro): Elementor Page Settings panel for per-page smooth scroll overrides.
+* New: Client Mode toggle in Settings to hide developer-facing tabs for clean client handoff.
+* New: fastScrollEnd and preventOverlaps properties in [scroll] DSL section.
+* New: Comprehensive user documentation (DSL syntax, examples, troubleshooting).
+* Bugfix: Prevented pin overlap issues on fast scroll and hash anchor navigation.
+* Bugfix: Resolved PHP Fatal Error (Cannot redeclare sc_is_pro()) when activating Pro alongside free plugin.
 
 = 1.1.8 =
 * New: Redesigned isolated Preview System bypassing Elementor hooks for reliable playback.

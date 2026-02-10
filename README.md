@@ -155,6 +155,15 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.1.9
+-   **New (Pro)**: Lenis smooth scroll integration with global and per-page control.
+-   **New (Pro)**: Elementor Page Settings panel for per-page smooth scroll overrides.
+-   **New**: Client Mode toggle in Settings to hide developer-facing tabs for clean client handoff.
+-   **New**: `fastScrollEnd` and `preventOverlaps` properties in `[scroll]` DSL section.
+-   **New**: Comprehensive user documentation (DSL syntax, examples, troubleshooting).
+-   **Fix**: Prevented pin overlap issues on fast scroll and hash anchor navigation.
+-   **Fix**: Resolved PHP Fatal Error (`Cannot redeclare sc_is_pro()`) when activating Pro alongside free plugin.
+
 ### 1.1.8
 -   **New**: Redesigned isolated Preview System bypassing Elementor hooks for reliable playback.
 -   **New**: Direct `scPreview()` API with preview lock mechanism to prevent conflicts.
