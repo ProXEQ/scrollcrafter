@@ -851,20 +851,16 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     log('Fetching config and triggering preview for widget:', widgetId);
 
     try {
-      // 1. Set global flag locally
       window.ScrollCrafterForcePreview = widgetId;
       sessionStorage.setItem('sc_force_preview', widgetId);
 
-      // 2. Get iframe and widget reference
       const previewIframe = elementor.$preview[0];
       const previewWindow = previewIframe?.contentWindow;
       const $widget = previewWindow?.jQuery('[data-id="' + widgetId + '"]');
 
-      // 3. Detect current breakpoint based on iframe width
       const activeBreakpoint = getActiveBreakpoint(previewIframe);
       log('Active breakpoint detected:', activeBreakpoint);
 
-      // 4. Show loading overlay (positioned OVER widget via parent, not inside to avoid SplitText corruption)
       let $loadingOverlay = null;
       if ($widget && $widget.length) {
         const widgetOffset = $widget.offset();
@@ -901,7 +897,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
         previewWindow.jQuery('body').append($loadingOverlay);
       }
 
-      // 5. Fetch parsed config from REST API
       const restUrl = window.ScrollCrafterConfig?.rest_url || (window.location.origin + '/wp-json/');
       const showMarkers = !!window.ScrollCrafterShowMarkers;
       const response = await fetch(restUrl + 'scrollcrafter/v1/validate', {
@@ -920,7 +915,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
 
       const result = await response.json();
 
-      // Remove loading overlay
       if ($loadingOverlay) {
         $loadingOverlay.remove();
         previewWindow.jQuery('.sc-loading-overlay').remove();
@@ -931,22 +925,15 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
         return;
       }
 
-      // 6. CRITICAL: Ensure SplitText is initialized before preview
-      // First trigger scroll-animation.js via Elementor to create SplitText elements
       if (previewWindow && previewWindow.elementorFrontend && $widget && $widget.length) {
         log('Pre-initializing widget to create SplitText...');
-
-        // Store config first
         $widget.attr('data-scrollcrafter-config', JSON.stringify(result.config));
         $widget.attr('data-scrollcrafter-force-breakpoint', activeBreakpoint);
 
-        // Trigger scroll-animation.js to create SplitText
         previewWindow.elementorFrontend.elementsHandler.runReadyTrigger($widget);
 
-        // Wait for SplitText to be created
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // 7. Now call scPreview to replay the animation with proper SplitText
         if (previewWindow.scPreview) {
           log('Calling scPreview with pre-created SplitText');
           const success = previewWindow.scPreview(widgetId, result.config, activeBreakpoint);
@@ -970,7 +957,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
 
     log('Init: Registering scrollcrafter listeners');
 
-    // Inject AI badge into label
     elementor.hooks.addAction('panel/open_editor/widget/common', (panel, model, view) => {
       const checkBadge = () => {
         const label = panel.$el.find('.elementor-control-scrollcrafter_script .elementor-control-title');

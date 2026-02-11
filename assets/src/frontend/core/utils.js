@@ -11,7 +11,6 @@ const compiledCalcs = new Map();
 export function parseSmartValue(val, contextNode) {
     if (typeof val !== 'string') return val;
 
-    // Shortcuts
     if (val === 'calc_scroll_width_neg') val = 'calc(sw * -1)';
     if (val === 'calc_scroll_width') val = 'calc(sw)';
     if (val === 'calc_100vh') val = 'calc(vh)';
@@ -42,10 +41,8 @@ export function parseSmartValue(val, contextNode) {
                 finalExpr = finalExpr.replace(new RegExp(`\\b${key}\\b`, 'gi'), varsMap[key]);
             });
 
-            // Use cache for the compiled function
             let fn = compiledCalcs.get(finalExpr);
             if (!fn) {
-                // Basic safety check: only numbers, operators, dots, and space
                 const safetyCheck = finalExpr.replace(/[0-9\.\+\-\*\/\(\)\s]/g, '');
                 if (safetyCheck.length > 0) {
                     console.warn('[ScrollCrafter] Unsafe characters in result expression:', safetyCheck);
@@ -88,5 +85,3 @@ export function parseMacros(vars, contextNode) {
     return out;
 }
 
-// Note: buildMediaQuery() has been moved to responsive.js as part of the
-// unified breakpoint handling system. Import from '../core/responsive' if needed.

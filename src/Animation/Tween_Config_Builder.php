@@ -135,7 +135,13 @@ class Tween_Config_Builder
             default:
                 $vars = !empty($varsFrom) ? $varsFrom : $varsTo;
                 if (empty($vars)) {
-                    $vars = ['y' => 50, 'opacity' => 0];
+                    $vars = ['y' => 50, 'autoAlpha' => 0];
+                } else {
+                    // Map opacity to autoAlpha for better visibility handling
+                    if (isset($vars['opacity'])) {
+                        $vars['autoAlpha'] = $vars['opacity'];
+                        unset($vars['opacity']);
+                    }
                 }
                 $finalConfig = [
                     'method' => 'from',

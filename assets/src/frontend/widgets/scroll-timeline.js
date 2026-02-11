@@ -29,7 +29,6 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
   if (!st.trigger) st.trigger = pinElem;
   if (st.pin === true) st.pin = pinElem;
 
-  // Fix Elementor Jump: Disable CSS transitions on pinned element to prevent conflicts
   if (st.pin) {
     gsap.set(st.pin, { transition: "none" });
   }
@@ -64,7 +63,16 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     const vars = parseMacros(step.vars || {}, pinElem);
     const vars2 = step.vars2 ? parseMacros(step.vars2, pinElem) : null;
 
-    // Fix: Disable CSS transitions and modern CSS transforms to prevent conflict with GSAP
+    // Map opacity to autoAlpha for BETTER visibility handling (prevents FOUC)
+    const ensureAutoAlpha = (v) => {
+      if (v && v.opacity !== undefined) {
+        v.autoAlpha = v.opacity;
+        delete v.opacity;
+      }
+    };
+    ensureAutoAlpha(vars);
+    ensureAutoAlpha(vars2);
+
     gsap.set(targets, {
       transition: "none",
       translate: "none",
@@ -72,7 +80,6 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
       scale: "none"
     });
 
-    // --- SplitText Support (Timeline) ---
     if (step.split && window.SplitText) {
       try {
         const split = new SplitText(targets, { type: step.split });
@@ -81,34 +88,31 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
         else if (split.lines && split.lines.length) targets = split.lines;
 
         if (targets.length) {
-          gsap.set(targets, { display: 'inline-block' });
+          gsap.set(targets, { display: 'inline-block', backfaceVisibility: 'hidden' });
         }
       } catch (e) {
         if (debug) console.warn(`${logPrefix} SplitText error:`, e);
       }
     }
 
-    if (debug) {
-      console.log(`${logPrefix} Step ${index + 1}: method=${method}, targets=${targets.length}`, targets);
-    }
+    if (method === 'from' || method === 'fromTo') {
+      vars.immediateRender = true;
 
-    // Fix: For 'from' and 'fromTo' in timeline, enable immediateRender
-    if (method === 'from') {
-      if (vars.immediateRender === undefined) vars.immediateRender = true;
-    } else if (method === 'fromTo' && vars2) {
-      if (vars2.immediateRender === undefined) vars2.immediateRender = true;
+      // FAIL-SAFE: Hide elements manually to prevent FOUC before GSAP takes over
+      if (vars.autoAlpha === 0 || vars.opacity === 0) {
+        targets.forEach(el => {
+          if (el.style) el.style.visibility = 'hidden';
+        });
+      }
     }
 
     try {
       let stepTween;
-      if (method === 'fromTo' && vars2) stepTween = tl.fromTo(targets, vars, vars2, position);
-      else if (typeof tl[method] === 'function') stepTween = tl[method](targets, vars, position);
-
-      // Fix: Force initialization of stagger elements in timeline steps
-      if (stepTween && (method === 'from' || method === 'fromTo')) {
-        // Note: progress() on a timeline step tween might be tricky depending on GSAP version,
-        // but tl.add(tween.progress(1).progress(0)) is another way.
-        // Most stable is to just ensure immediateRender: true is passed.
+      const tweenVars = { ...vars, overwrite: 'auto' };
+      if (method === 'fromTo' && vars2) {
+        stepTween = tl.fromTo(targets, tweenVars, { ...vars2, overwrite: 'auto' }, position);
+      } else if (typeof tl[method] === 'function') {
+        stepTween = tl[method](targets, tweenVars, position);
       }
     } catch (e) {
       if (debug) console.error(`${logPrefix} Error step ${index + 1}`, e);
@@ -139,7 +143,6 @@ registerWidget('scroll_timeline', (node, config) => {
     return;
   }
 
-  // Use shared responsive context - eliminates ~80 lines of duplicated code
   const timelines = [];
 
   const handlePreview = (tl) => {
@@ -169,9 +172,6 @@ registerWidget('scroll_timeline', (node, config) => {
   };
 
   const cleanup = createResponsiveContext(gsap, config, (activeConfig, range) => {
-    // For timeline, we need to check for steps in the active config
-    // If activeConfig comes from media override, it has steps directly
-    // If it's the base config, steps are at config.steps
     const configWithSteps = activeConfig.steps ? activeConfig : config;
 
     if (!configWithSteps.steps || configWithSteps.steps.length === 0) {

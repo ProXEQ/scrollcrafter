@@ -1,10 +1,9 @@
 const registry = {};
 
 const initializedNodes = new WeakSet();
-const pendingInits = new Map(); // Per-widget debounce timers
-const previewLocks = new Set(); // Widgets with active preview - skip normal init
+const pendingInits = new Map();
+const previewLocks = new Set();
 
-// Export for preview-player.js to use
 export function setPreviewLock(widgetId, locked) {
   if (locked) {
     previewLocks.add(widgetId);
@@ -22,7 +21,6 @@ export function initWidgetsInScope(root = document, force = false) {
     return;
   }
 
-  // Find all nodes including root itself
   const nodes = [];
   if (root.hasAttribute && root.hasAttribute('data-scrollcrafter-config')) {
     nodes.push(root);
@@ -34,8 +32,6 @@ export function initWidgetsInScope(root = document, force = false) {
   nodes.forEach((node) => {
     const widgetId = node.getAttribute('data-id');
 
-    // CRITICAL: Skip initialization if this widget has active preview
-    // This prevents Elementor hooks from overriding our preview animation
     if (widgetId && previewLocks.has(widgetId)) {
       if (window.ScrollCrafterConfig?.debug) {
         console.log(`[ScrollCrafter] Skipping init for ${widgetId} - preview active`);
@@ -48,36 +44,28 @@ export function initWidgetsInScope(root = document, force = false) {
       return;
     }
 
-    // In force mode, debounce re-initialization per widget
-    // This prevents Elementor's multiple rapid triggers from causing chaos
     if (force) {
       if (widgetId) {
-        // Clear any pending init for this widget
         if (pendingInits.has(widgetId)) {
           clearTimeout(pendingInits.get(widgetId));
         }
 
-        // Schedule the actual init after a short delay
         pendingInits.set(widgetId, setTimeout(() => {
           pendingInits.delete(widgetId);
-          // Double-check lock before delayed init
           if (!previewLocks.has(widgetId)) {
             doInitWidget(node, force);
           }
-        }, 250)); // 250ms debounce
+        }, 250));
 
-        return; // Don't init immediately
+        return;
       }
     }
 
-    // Non-force mode: init immediately
     doInitWidget(node, force);
   });
 }
 
 function doInitWidget(node, force) {
-  // --- Cleanup Stage ---
-  // If we have an existing cleanup function on the node, call it.
   if (typeof node.__sc_cleanup === 'function') {
     try {
       node.__sc_cleanup();
@@ -110,7 +98,6 @@ function doInitWidget(node, force) {
       console.log(`[ScrollCrafter] Initializing widget: "${type}"`, node);
     }
 
-    // Execute registration - it MUST return a cleanup function (or attach it to node)
     const cleanup = registry[type](node, config);
 
     if (typeof cleanup === 'function') {

@@ -152,7 +152,7 @@ class Timeline_Config_Builder
 
     private function extractParams(array $step): array {
         $params = [];
-        $keys = ['duration', 'delay', 'ease', 'stagger', 'startAt', 'yoyo', 'repeat', 'text', 'split'];
+        $keys = ['duration', 'delay', 'ease', 'stagger', 'startAt', 'yoyo', 'repeat', 'text', 'split', 'autoAlpha'];
         foreach ($keys as $k) {
             if (isset($step[$k])) {
                 $params[$k] = $step[$k];

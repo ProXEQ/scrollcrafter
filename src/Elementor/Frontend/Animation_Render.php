@@ -21,7 +21,7 @@ class Animation_Render
     /** @var array<string, array> In-memory cache per request to avoid redundant parsing */
     private array $config_cache = [];
 
-    private const TRANSIENT_PREFIX = 'sc_cfg_';
+    private const TRANSIENT_PREFIX = 'sc_cfg_v5_';
     private const TRANSIENT_TTL   = DAY_IN_SECONDS;
 
     public function __construct()
@@ -77,6 +77,8 @@ class Animation_Render
         // 3. Full parse + build
         try {
             $parsed = $this->parser->parse( $script );
+            // CRITICAL: Normalize data to strip line numbers before processing
+            $parsed = $this->normalizeParsedData( $parsed );
         } catch ( \Throwable $e ) {
             if ( Config::instance()->is_debug() ) {
                 Logger::log_exception( $e, 'animation_parsing' );
@@ -84,7 +86,7 @@ class Animation_Render
             return;
         }
 
-        $target_selector = $parsed['target']['selector']['value'] ?? ( '.elementor-element-' . $widget_id );
+        $target_selector = $parsed['target']['selector'] ?? ( '.elementor-element-' . $widget_id );
         $target_type     = isset( $parsed['target']['selector'] ) ? 'custom' : 'wrapper';
 
         $scroll_config = $parsed['scroll'] ?? [];
@@ -190,5 +192,19 @@ class Animation_Render
         }
 
         return $config;
+    }
+
+    private function normalizeParsedData(array $data): array {
+        $clean = [];
+        foreach ($data as $key => $item) {
+            if (is_array($item) && array_key_exists('value', $item) && array_key_exists('line', $item)) {
+                 $clean[$key] = $item['value'];
+            } elseif (is_array($item)) {
+                 $clean[$key] = $this->normalizeParsedData($item);
+            } else {
+                 $clean[$key] = $item;
+            }
+        }
+        return $clean;
     }
 }

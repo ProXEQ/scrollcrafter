@@ -17,10 +17,6 @@ registerWidget('scroll_animation', (node, config) => {
     console.groupEnd();
   };
 
-  if (debug) {
-    console.log(`${logPrefix} RAW CONFIG`, config);
-  }
-
   let gsap;
   try {
     gsap = getGsap();
@@ -54,8 +50,6 @@ registerWidget('scroll_animation', (node, config) => {
 
     // --- SplitText Support ---
     if (animConfig.split) {
-      if (debug) console.log(`${logPrefix} SplitText requested: ${animConfig.split}, SplitText available: ${typeof window.SplitText}`);
-
       if (window.SplitText) {
         try {
           const requestedType = animConfig.split.toLowerCase();
@@ -63,120 +57,89 @@ registerWidget('scroll_animation', (node, config) => {
           const existingType = elements[0]?._splitTextType;
           let split;
 
-          // Check if existing split matches requested type
           const typeMatches = existingType === requestedType;
           const hasUsableSplit = existingSplit && (existingSplit.chars?.length || existingSplit.words?.length || existingSplit.lines?.length);
 
           if (hasUsableSplit && typeMatches) {
-            // Reuse existing split - same type
-            if (debug) console.log(`${logPrefix} Reusing existing SplitText (type: ${existingType})`);
             split = existingSplit;
           } else {
-            // Type mismatch or no existing split - create fresh
             if (existingSplit) {
-              if (debug) console.log(`${logPrefix} Type mismatch (${existingType} vs ${requestedType}), reverting and creating new`);
               existingSplit.revert();
-            } else {
-              if (debug) console.log(`${logPrefix} Creating fresh SplitText`);
             }
 
             split = new SplitText(elements, { type: requestedType });
 
-            // Store reference AND type for future checks
             elements.forEach(el => {
               el._splitText = split;
               el._splitTextType = requestedType;
             });
           }
 
-          // Select elements based on split type
           if (requestedType.includes('char') && split.chars && split.chars.length) elements = split.chars;
           else if (requestedType.includes('word') && split.words && split.words.length) elements = split.words;
           else if (requestedType.includes('line') && split.lines && split.lines.length) elements = split.lines;
 
-          if (debug) console.log(`${logPrefix} SplitText elements count: ${elements.length}`);
-
-          // Fix: Elements must be inline-block for rotation to work
           if (elements.length) {
-            gsap.set(elements, { display: 'inline-block' });
+            // Elements need to be inline-block or similar for most transforms to work on text
+            gsap.set(elements, { display: 'inline-block', backfaceVisibility: 'hidden' });
           }
         } catch (e) {
-          console.warn(`${logPrefix} SplitText error:`, e);
+          if (debug) console.warn(`${logPrefix} SplitText error:`, e);
         }
       } else {
-        console.warn(`${logPrefix} SplitText not available! Make sure GSAP SplitText is loaded.`);
+        if (debug) console.warn(`${logPrefix} SplitText not found`);
       }
     }
 
     const vars = parseMacros({ ...animConfig.vars }, calcContext);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
 
-    // Fix: Disable CSS transitions and modern CSS transforms to prevent conflict with GSAP
-    gsap.set(elements, {
-      transition: "none",
-      translate: "none",
-      rotate: "none",
-      scale: "none"
-    });
+    // Standardize variables
+    const ensureAutoAlpha = (v) => {
+      if (v && v.opacity !== undefined) {
+        v.autoAlpha = v.opacity;
+        delete v.opacity;
+      }
+    };
+    ensureAutoAlpha(vars);
+    ensureAutoAlpha(vars2);
 
+    // Apply defaults and ScrollTrigger
     if (vars.scrollTrigger) {
       vars.scrollTrigger.trigger = contextNode;
       if (config.id) vars.scrollTrigger.id = 'sc-' + config.id;
-
-      // Pin safety: recalculate positions on refresh and smooth pin activation
       if (typeof vars.scrollTrigger.invalidateOnRefresh === 'undefined') vars.scrollTrigger.invalidateOnRefresh = true;
       if (typeof vars.scrollTrigger.anticipatePin === 'undefined' && vars.scrollTrigger.pin) vars.scrollTrigger.anticipatePin = 0.5;
-
-      // Fix: Disable CSS transitions on pinned element to prevent layout conflicts
-      if (vars.scrollTrigger.pin) {
-        gsap.set(vars.scrollTrigger.pin === true ? contextNode : vars.scrollTrigger.pin, { transition: "none" });
-      }
     }
     if (vars2 && vars2.scrollTrigger) {
       vars2.scrollTrigger.trigger = contextNode;
       if (config.id) vars2.scrollTrigger.id = 'sc-' + config.id;
+    }
 
-      if (typeof vars2.scrollTrigger.invalidateOnRefresh === 'undefined') vars2.scrollTrigger.invalidateOnRefresh = true;
-      if (typeof vars2.scrollTrigger.anticipatePin === 'undefined' && vars2.scrollTrigger.pin) vars2.scrollTrigger.anticipatePin = 0.5;
+    if (method === 'from' || method === 'fromTo') {
+      vars.immediateRender = true;
 
-      if (vars2.scrollTrigger.pin) {
-        gsap.set(vars2.scrollTrigger.pin === true ? contextNode : vars2.scrollTrigger.pin, { transition: "none" });
+      // FAIL-SAFE: Hide elements manually to prevent FOUC before GSAP takes over
+      if (vars.autoAlpha === 0 || vars.opacity === 0) {
+        elements.forEach(el => {
+          if (el.style) el.style.visibility = 'hidden';
+        });
       }
     }
 
-    if (debug) {
-      console.log(`${logPrefix} CreateTween: method=${method}, elements=${elements.length}`, elements);
-      console.log(`${logPrefix} Stagger Value:`, vars.stagger ?? animConfig.stagger ?? 'none');
-      console.log(`${logPrefix} Vars:`, vars);
-      if (vars2) console.log(`${logPrefix} Vars2 (To):`, vars2);
-    }
-
-    // Fix: For 'from' and 'fromTo', enable immediateRender
-    // so initial values (like opacity: 0) are applied immediately
-    if (method === 'from') {
-      if (vars.immediateRender === undefined) vars.immediateRender = true;
-    } else if (method === 'fromTo' && vars2) {
-      if (vars2.immediateRender === undefined) vars2.immediateRender = true;
-    }
-
     let tween;
-    if (method === 'fromTo' && vars2) {
-      tween = gsap.fromTo(elements, vars, vars2);
-    } else if (typeof gsap[method] === 'function') {
-      tween = gsap[method](elements, vars);
-    }
+    const tweenVars = { ...vars, overwrite: 'auto' };
 
-    // Fix: Force all elements in a stagger to their initial state.
-    // This solves the issue where Icon 2 and 3 were visible while Icon 1 was animating.
-    if (tween && (method === 'from' || method === 'fromTo')) {
-      tween.progress(1).progress(0);
+    if (method === 'fromTo' && vars2) {
+      tween = gsap.fromTo(elements, tweenVars, { ...vars2, overwrite: 'auto' });
+    } else if (typeof gsap[method] === 'function') {
+      tween = gsap[method](elements, tweenVars);
     }
 
     if (!tween && debug) console.warn(`${logPrefix} Unknown GSAP method:`, method);
     return tween;
   };
 
-  // Use shared responsive context - eliminates ~75 lines of duplicated code
   const tweens = [];
 
   const handlePreview = (tween) => {

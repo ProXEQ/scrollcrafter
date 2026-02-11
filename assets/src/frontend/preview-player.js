@@ -13,7 +13,6 @@ import { setPreviewLock } from './core/registry';
 const DEBUG = !!window.ScrollCrafterConfig?.debug;
 const log = (...args) => DEBUG && console.log('[SC Preview]', ...args);
 
-// Track active preview animations per widget
 const activePreview = new Map();
 
 /**
@@ -26,18 +25,13 @@ function cleanupPreview(widgetId, releaseLock = true) {
         log(`Cleaning up existing preview for ${widgetId}`);
 
         if (tween) {
-            // Kill ScrollTrigger if present
             if (tween.scrollTrigger) {
                 tween.scrollTrigger.kill(true);
             }
-
-            // Complete the tween to final state before killing
             tween.progress(1);
             tween.kill();
         }
 
-        // Clear GSAP inline styles but DON'T revert SplitText
-        // SplitText structure needs to be preserved for reuse
         if (elements && elements.length) {
             const gsap = getGsap();
             if (gsap) {
@@ -48,16 +42,12 @@ function cleanupPreview(widgetId, releaseLock = true) {
         activePreview.delete(widgetId);
     }
 
-    // Release preview lock so normal init can resume
     if (releaseLock) {
         setPreviewLock(widgetId, false);
         log(`Preview lock released for ${widgetId}`);
     }
 }
 
-/**
- * Create animation from config
- */
 function createAnimation(node, animConfig, config) {
     const gsap = getGsap();
     if (!gsap) {
@@ -84,23 +74,19 @@ function createAnimation(node, animConfig, config) {
     const method = animConfig.method || 'from';
     let split = null;
 
-    // Handle SplitText
     if (animConfig.split && window.SplitText) {
         try {
             const requestedType = animConfig.split.toLowerCase();
             const existingSplit = elements[0]?._splitText;
             const existingType = elements[0]?._splitTextType;
 
-            // Check if existing split matches requested type
             const typeMatches = existingType === requestedType;
             const hasUsableSplit = existingSplit && (existingSplit.chars?.length || existingSplit.words?.length || existingSplit.lines?.length);
 
             if (hasUsableSplit && typeMatches) {
-                // Reuse existing split - same type
                 log(`Reusing existing SplitText (type: ${existingType})`);
                 split = existingSplit;
             } else {
-                // Type mismatch or no existing split - create fresh
                 if (existingSplit) {
                     log(`Type mismatch (${existingType} vs ${requestedType}), reverting and creating new`);
                     existingSplit.revert();
@@ -116,14 +102,12 @@ function createAnimation(node, animConfig, config) {
                     lines: split.lines?.length || 0
                 });
 
-                // Store reference AND type for future checks
                 elements.forEach(el => {
                     el._splitText = split;
                     el._splitTextType = requestedType;
                 });
             }
 
-            // Select elements based on requested type
             if (requestedType.includes('char') && split.chars && split.chars.length > 0) {
                 elements = split.chars;
             } else if (requestedType.includes('word') && split.words && split.words.length > 0) {
@@ -142,11 +126,9 @@ function createAnimation(node, animConfig, config) {
         }
     }
 
-    // Prepare vars
     const vars = parseMacros({ ...animConfig.vars }, elements[0]);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, elements[0]) : null;
 
-    // Disable CSS transitions
     gsap.set(elements, {
         transition: 'none',
         translate: 'none',
@@ -154,11 +136,9 @@ function createAnimation(node, animConfig, config) {
         scale: 'none'
     });
 
-    // Remove scrollTrigger for preview (we play directly)
     delete vars.scrollTrigger;
     if (vars2) delete vars2.scrollTrigger;
 
-    // Enable immediateRender for from animations
     if (method === 'from' && vars.immediateRender === undefined) {
         vars.immediateRender = true;
     }
@@ -172,7 +152,6 @@ function createAnimation(node, animConfig, config) {
         tween = gsap[method](elements, vars);
     }
 
-    // Force initial state for stagger animations
     if (tween && (method === 'from' || method === 'fromTo')) {
         tween.progress(1).progress(0);
     }
@@ -189,11 +168,9 @@ function createAnimation(node, animConfig, config) {
 function scPreview(widgetId, config, breakpoint) {
     log(`Preview requested: widget=${widgetId}, breakpoint=${breakpoint}`);
 
-    // 1. Set preview lock IMMEDIATELY to block any Elementor hooks
     setPreviewLock(widgetId, true);
     log(`Preview lock acquired for ${widgetId}`);
 
-    // 2. Find widget in DOM
     const node = document.querySelector(`[data-id="${widgetId}"]`);
     if (!node) {
         console.error(`[SC Preview] Widget ${widgetId} not found in DOM`);
@@ -201,10 +178,8 @@ function scPreview(widgetId, config, breakpoint) {
         return false;
     }
 
-    // 3. Clean up any existing preview (but don't release lock)
     cleanupPreview(widgetId, false);
 
-    // 4. Resolve config for breakpoint
     const ranges = getBreakpointRanges();
     let targetRange = ranges.find(r => r.slug === breakpoint);
     if (!targetRange && breakpoint === 'desktop') {
@@ -212,7 +187,6 @@ function scPreview(widgetId, config, breakpoint) {
     }
 
     if (!targetRange) {
-        // Fallback to first range
         targetRange = ranges[0];
     }
 
@@ -225,7 +199,6 @@ function scPreview(widgetId, config, breakpoint) {
 
     log('Active config:', activeConfig);
 
-    // 5. Create animation
     const result = createAnimation(node, activeConfig, config);
     if (!result || !result.tween) {
         log('Failed to create animation');
@@ -233,32 +206,25 @@ function scPreview(widgetId, config, breakpoint) {
         return false;
     }
 
-    // 6. Store reference for cleanup
     activePreview.set(widgetId, result);
 
-    // 7. Add onComplete callback to release lock after animation finishes
     const originalOnComplete = result.tween.vars.onComplete;
     result.tween.vars.onComplete = function () {
         log(`Preview animation completed for ${widgetId}`);
         if (originalOnComplete) originalOnComplete.apply(this, arguments);
 
-        // Keep lock for 2 more seconds to prevent immediate re-init
         setTimeout(() => {
             setPreviewLock(widgetId, false);
             log(`Preview lock released for ${widgetId}`);
         }, 2000);
     };
 
-    // 8. Play animation
     log('Playing animation');
     result.tween.restart(true);
 
     return true;
 }
 
-/**
- * Cleanup all active previews
- */
 function cleanupAllPreviews() {
     log(`Cleaning up all previews (${activePreview.size} active)`);
     for (const widgetId of activePreview.keys()) {
@@ -266,7 +232,6 @@ function cleanupAllPreviews() {
     }
 }
 
-// Expose global API
 window.scPreview = scPreview;
 window.scPreviewCleanup = cleanupPreview;
 window.scPreviewCleanupAll = cleanupAllPreviews;
