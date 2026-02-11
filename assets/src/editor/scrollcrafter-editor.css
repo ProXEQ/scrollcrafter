@@ -95,13 +95,26 @@
   opacity: 0.6;
   cursor: pointer;
   transition: 0.2s;
-  font-size: 16px;
   padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sc-dsl-editor__btn-icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
 }
 
 .sc-dsl-editor__btn-icon:hover {
   opacity: 1;
   color: var(--sc-accent);
+}
+
+.sc-dsl-editor__copy:active {
+  transform: scale(0.9);
+  color: var(--sc-success);
 }
 
 .sc-dsl-editor__close {
@@ -239,9 +252,15 @@
 }
 
 .sc-dsl-editor__status-icon {
-  font-size: 14px;
   line-height: 1;
   transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.sc-dsl-editor__status-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .sc-dsl-editor__status--ok .sc-dsl-editor__status-icon {

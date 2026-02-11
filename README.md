@@ -155,6 +155,17 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.1.10
+-   **New (DSL Editor)**: Integrated Elementor Global CSS Variables (colors) into autocomplete suggestions.
+-   **New (DSL Editor)**: Added "Copy to Clipboard" button for quick script export.
+-   **New (DSL Editor UI)**: Replaced emojis with high-quality Material Design SVG icons.
+-   **Perf**: Implemented transient caching for parsed configurations to optimize frontend rendering.
+-   **Perf**: Optimized SVG icons with `currentColor` for seamless theme integration.
+-   **Fix**: Resolved "fail-safe" stagger visibility issues and prevent FOUC during initialization.
+-   **Fix**: Hardened ScrollTrigger pin resilience against lazy-loaded images, custom fonts, and bfcache.
+-   **Fix**: Improved hash navigation handling with `clearScrollMemory` and deferred initialization.
+-   **Fix**: Resolved regressions in SplitText animation re-initialization.
+
 ### 1.1.9
 -   **New (Pro)**: Lenis smooth scroll integration with global and per-page control.
 -   **New (Pro)**: Elementor Page Settings panel for per-page smooth scroll overrides.
