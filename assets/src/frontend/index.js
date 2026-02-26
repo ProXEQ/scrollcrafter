@@ -1,12 +1,116 @@
 import { initWidgetsInScope } from './core/registry';
-import { getScrollTrigger } from './core/gsap-loader';
+import { getGsap, getScrollTrigger } from './core/gsap-loader';
 import './widgets/scroll-animation';
 import './widgets/scroll-timeline';
 import './preview-player';
 import './core/smooth-scroll';
 
+const debug = !!window.ScrollCrafterConfig?.debug;
+const logPrefix = '[ScrollCrafter]';
+
+// ─── ScrollTrigger Configuration ───────────────────────────────────────────────
+// Apply global ScrollTrigger config as early as possible
+function configureScrollTrigger() {
+  const ST = getScrollTrigger();
+  if (!ST) return;
+
+  ST.config({
+    limitCallbacks: true,       // Prevents redundant callback execution during rapid refreshes
+    ignoreMobileResize: true,   // Prevents refresh on mobile address bar show/hide
+  });
+}
+
+// ─── Debounced Refresh ─────────────────────────────────────────────────────────
+let _refreshTimer = null;
+function debouncedSTRefresh(delay = 200, force = false) {
+  clearTimeout(_refreshTimer);
+  _refreshTimer = setTimeout(() => {
+    const ST = getScrollTrigger();
+    if (ST) {
+      if (debug) console.log(`${logPrefix} ScrollTrigger refresh (force=${force})`);
+      ST.refresh(force);
+    }
+  }, delay);
+}
+
+// ─── ResizeObserver for Pin Stability ──────────────────────────────────────────
+// Monitors body height changes caused by lazy images, ads, web fonts, etc.
+// When the page layout shifts, ScrollTrigger pin calculations become stale.
+// This observer catches those shifts and triggers a debounced refresh.
+function setupLayoutShiftObserver() {
+  if (typeof ResizeObserver === 'undefined') return;
+
+  let lastHeight = document.body.scrollHeight;
+  let rafPending = false;
+
+  const observer = new ResizeObserver(() => {
+    if (rafPending) return;
+    rafPending = true;
+
+    requestAnimationFrame(() => {
+      rafPending = false;
+      const currentHeight = document.body.scrollHeight;
+      if (Math.abs(currentHeight - lastHeight) > 50) {
+        if (debug) console.log(`${logPrefix} Layout shift detected: ${lastHeight}px → ${currentHeight}px`);
+        lastHeight = currentHeight;
+        debouncedSTRefresh(150);
+      }
+    });
+  });
+
+  observer.observe(document.body, { box: 'border-box' });
+
+  // Stop observing after page has stabilized (8 seconds) to reduce CPU overhead
+  setTimeout(() => {
+    observer.disconnect();
+    if (debug) console.log(`${logPrefix} Layout observer disconnected (stabilization period ended)`);
+  }, 8000);
+}
+
+// ─── Safety Refresh Sequence ───────────────────────────────────────────────────
+// Catches late-loading content (ads, lazy images that load after DOMContentLoaded)
+function scheduleSafetyRefreshes() {
+  const delays = [500, 1500, 3000];
+
+  delays.forEach(delay => {
+    setTimeout(() => {
+      debouncedSTRefresh(0);
+    }, delay);
+  });
+}
+
+// ─── Image Load Observer ───────────────────────────────────────────────────────
+// Watches for images that finish loading and triggers a refresh if they could
+// have affected layout (images without explicit width/height).
+function observeImageLoads() {
+  const images = document.querySelectorAll('img[loading="lazy"], img:not([width])');
+  if (!images.length) return;
+
+  let pendingRefresh = false;
+
+  images.forEach(img => {
+    if (img.complete) return;
+
+    img.addEventListener('load', () => {
+      if (!pendingRefresh) {
+        pendingRefresh = true;
+        // Batch multiple image loads into a single refresh
+        setTimeout(() => {
+          pendingRefresh = false;
+          debouncedSTRefresh(100);
+        }, 200);
+      }
+    }, { once: true });
+  });
+}
+
+// ─── Initialization ────────────────────────────────────────────────────────────
 function init() {
+  configureScrollTrigger();
   initWidgetsInScope(document);
+  setupLayoutShiftObserver();
+  observeImageLoads();
+  scheduleSafetyRefreshes();
 }
 
 // Early init to ensure GSAP can hide elements immediately (prevents flicker)
@@ -16,20 +120,22 @@ if (document.readyState === 'loading') {
   init();
 }
 
-// Separate logic for hash navigation / refresh
+// ─── Window Load: Final Refresh ────────────────────────────────────────────────
 window.addEventListener('load', () => {
   const ST = getScrollTrigger();
   if (!ST) return;
 
   if (window.location.hash) {
     ST.clearScrollMemory();
+    // Force refresh after hash navigation to recalculate all positions
     setTimeout(() => ST.refresh(true), 200);
   } else {
-    // Normal load: just a quick refresh for any lazy content
-    requestAnimationFrame(() => ST.refresh());
+    // Final forced refresh — all resources are now loaded
+    requestAnimationFrame(() => ST.refresh(true));
   }
 });
 
+// ─── Back/Forward Cache (bfcache) ──────────────────────────────────────────────
 window.addEventListener('pageshow', (e) => {
   if (e.persisted) {
     const ST = getScrollTrigger();
@@ -40,19 +146,20 @@ window.addEventListener('pageshow', (e) => {
   }
 });
 
+// ─── Web Fonts ─────────────────────────────────────────────────────────────────
 if (document.fonts?.ready) {
   document.fonts.ready.then(() => {
-    const ST = getScrollTrigger();
-    if (ST) ST.refresh();
+    debouncedSTRefresh(100);
   });
 }
 
+// ─── Elementor Popup Support ───────────────────────────────────────────────────
 window.addEventListener('elementor/popup/show', (e) => {
   initWidgetsInScope(e.target);
-  const ST = getScrollTrigger();
-  if (ST) ST.refresh();
+  debouncedSTRefresh(100);
 });
 
+// ─── Elementor Editor Hooks ────────────────────────────────────────────────────
 const registerHooks = () => {
   let attempts = 0;
 
@@ -63,15 +170,6 @@ const registerHooks = () => {
       }
       return;
     }
-
-    let refreshTimeout;
-    const debouncedRefresh = () => {
-      clearTimeout(refreshTimeout);
-      refreshTimeout = setTimeout(() => {
-        const ST = getScrollTrigger();
-        if (ST) ST.refresh();
-      }, 200);
-    };
 
     elementorFrontend.hooks.addAction('frontend/element_ready/global', ($scope) => {
       const node = $scope[0];
@@ -109,7 +207,7 @@ const registerHooks = () => {
       initWidgetsInScope(node, elementorFrontend.isEditMode());
 
       if (elementorFrontend.isEditMode()) {
-        debouncedRefresh();
+        debouncedSTRefresh();
       }
     });
   };
