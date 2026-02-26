@@ -12,6 +12,7 @@ use ScrollCrafter\Elementor\Frontend\Animation_Render;
 use ScrollCrafter\Admin\Validation_Controller;
 use ScrollCrafter\Admin\Settings_Page;
 use ScrollCrafter\Elementor\Page_Settings;
+use ScrollCrafter\Support\Cache;
 
 final class Plugin
 {
@@ -63,6 +64,8 @@ final class Plugin
 		$this->validation->hooks();
 
 		$this->settings->hooks();
+
+		Cache::register_hooks();
 
 
 		add_action(

@@ -82,13 +82,23 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
 
     if (step.split && window.SplitText) {
       try {
+        // HIDE original targets immediately to prevent FOUC
+        targets.forEach(el => {
+          if (el.style) el.style.visibility = 'hidden';
+        });
+
         const split = new SplitText(targets, { type: step.split });
         if (split.chars && split.chars.length) targets = split.chars;
         else if (split.words && split.words.length) targets = split.words;
         else if (split.lines && split.lines.length) targets = split.lines;
 
         if (targets.length) {
-          gsap.set(targets, { display: 'inline-block', backfaceVisibility: 'hidden' });
+          gsap.set(targets, {
+            display: 'inline-block',
+            backfaceVisibility: 'hidden',
+            visibility: 'hidden', // Keep hidden until GSAP takes over
+            lazy: false
+          });
         }
       } catch (e) {
         if (debug) console.warn(`${logPrefix} SplitText error:`, e);
@@ -98,8 +108,8 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     if (method === 'from' || method === 'fromTo') {
       vars.immediateRender = true;
 
-      // FAIL-SAFE: Hide elements manually to prevent FOUC before GSAP takes over
-      if (vars.autoAlpha === 0 || vars.opacity === 0) {
+      // FAIL-SAFE: Ensure elements are hidden if they are starting from opacity 0 or if we split them
+      if (vars.autoAlpha === 0 || vars.opacity === 0 || step.split) {
         targets.forEach(el => {
           if (el.style) el.style.visibility = 'hidden';
         });
@@ -108,9 +118,9 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
 
     try {
       let stepTween;
-      const tweenVars = { ...vars, overwrite: 'auto' };
+      const tweenVars = { ...vars, overwrite: 'auto', lazy: false };
       if (method === 'fromTo' && vars2) {
-        stepTween = tl.fromTo(targets, tweenVars, { ...vars2, overwrite: 'auto' }, position);
+        stepTween = tl.fromTo(targets, tweenVars, { ...vars2, overwrite: 'auto', lazy: false }, position);
       } else if (typeof tl[method] === 'function') {
         stepTween = tl[method](targets, tweenVars, position);
       }

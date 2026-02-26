@@ -63,6 +63,11 @@ Example DSL:
 
 == Changelog ==
 
+= 1.2.1 =
+* Fix: Resolved FOUC (Flash of Unstyled Content) and visibility issues for SplitText animations, especially with scrub.
+* New: Native support for popular cache plugins (WP Rocket, LiteSpeed, Autoptimize, etc.) with automatic purging on save.
+* New: Added "Clear All Caches" button in the Performance tab.
+
 = 1.2.0 =
 * Transition: ScrollCrafter is now fully Open Source! All previous Pro features (Smooth Scroll, Special Condition Tags, Custom Breakpoints) are now available to everyone for free.
 * Removal: Completely removed Freemius SDK and all licensing/tracking logic.

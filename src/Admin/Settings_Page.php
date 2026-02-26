@@ -6,6 +6,7 @@ if ( ! defined( "ABSPATH" ) ) {
     exit;
 }
 use ScrollCrafter\Support\Config;
+use ScrollCrafter\Support\Cache;
 
 class Settings_Page
 {
@@ -16,7 +17,22 @@ class Settings_Page
     {
         add_action( 'admin_menu', [ $this, 'add_settings_page' ] );
         add_action( 'admin_init', [ $this, 'register_settings' ] );
+        add_action( 'admin_init', [ $this, 'handle_cache_clear' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_assets' ] );
+    }
+
+    public function handle_cache_clear(): void
+    {
+        if ( ! isset( $_POST['sc_clear_cache'] ) || ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        check_admin_referer( self::OPTION_GROUP . '-options' );
+
+        Cache::purge_all();
+
+        wp_redirect( add_query_arg( [ 'tab' => 'performance', 'sc_cache_cleared' => 1 ], admin_url( 'options-general.php?page=scrollcrafter' ) ) );
+        exit;
     }
 
     public function add_settings_page(): void
@@ -375,6 +391,29 @@ class Settings_Page
                     <p class="sc-field-desc"><?php esc_html_e( 'CDN offers faster global delivery but requires external connection. Local is recommended for GDPR compliance.', 'scrollcrafter' ); ?></p>
                 </div>
             </div>
+
+            <div class="sc-card">
+                <div class="sc-card-header">
+                    <div class="sc-card-icon"><span class="dashicons dashicons-trash"></span></div>
+                    <div>
+                        <h3 class="sc-card-title"><?php esc_html_e( 'Cache Management', 'scrollcrafter' ); ?></h3>
+                        <p class="sc-card-desc"><?php esc_html_e( 'Force clear all website caches', 'scrollcrafter' ); ?></p>
+                    </div>
+                </div>
+                <div class="sc-field">
+                    <button type="submit" name="sc_clear_cache" value="1" class="button button-secondary">
+                        <span class="dashicons dashicons-trash" style="vertical-align: middle; margin-right: 4px;"></span>
+                        <?php esc_html_e( 'Clear All Caches', 'scrollcrafter' ); ?>
+                    </button>
+                    <p class="sc-field-desc"><?php esc_html_e( 'This will attempt to clear caches for popular plugins like WP Rocket, LiteSpeed, etc.', 'scrollcrafter' ); ?></p>
+                </div>
+            </div>
+
+            <?php if ( isset( $_GET['sc_cache_cleared'] ) ) : ?>
+                <div class="notice notice-success is-dismissible" style="margin-left: 0; margin-top: 20px;">
+                    <p><?php esc_html_e( 'All caches have been cleared!', 'scrollcrafter' ); ?></p>
+                </div>
+            <?php endif; ?>
         </div>
         <?php
     }

@@ -157,6 +157,11 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.2.1
+-   **Fix**: Resolved FOUC (Flash of Unstyled Content) and visibility issues for SplitText animations, especially with scrub.
+-   **New**: Native support for popular cache plugins (WP Rocket, LiteSpeed, Autoptimize, etc.) with automatic purging on save.
+-   **New**: Added "Clear All Caches" button in the Performance tab.
+
 ### 1.2.0
 -   **New**: Added "Client Mode" to hide developer-facing tabs (Settings, Changelog) for a cleaner client experience.
 -   **New**: Added "Project Support" link to the sidebar for easy access to Buy Me a Coffee.

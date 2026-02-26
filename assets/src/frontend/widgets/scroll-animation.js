@@ -57,6 +57,11 @@ registerWidget('scroll_animation', (node, config) => {
           const existingType = elements[0]?._splitTextType;
           let split;
 
+          // HIDE original elements immediately to prevent FOUC during split
+          elements.forEach(el => {
+            if (el.style) el.style.visibility = 'hidden';
+          });
+
           const typeMatches = existingType === requestedType;
           const hasUsableSplit = existingSplit && (existingSplit.chars?.length || existingSplit.words?.length || existingSplit.lines?.length);
 
@@ -81,7 +86,12 @@ registerWidget('scroll_animation', (node, config) => {
 
           if (elements.length) {
             // Elements need to be inline-block or similar for most transforms to work on text
-            gsap.set(elements, { display: 'inline-block', backfaceVisibility: 'hidden' });
+            gsap.set(elements, {
+              display: 'inline-block',
+              backfaceVisibility: 'hidden',
+              visibility: 'hidden', // Keep hidden until GSAP tween takes over
+              lazy: false
+            });
           }
         } catch (e) {
           if (debug) console.warn(`${logPrefix} SplitText error:`, e);
@@ -119,16 +129,21 @@ registerWidget('scroll_animation', (node, config) => {
     if (method === 'from' || method === 'fromTo') {
       vars.immediateRender = true;
 
-      // FAIL-SAFE: Hide elements manually to prevent FOUC before GSAP takes over
-      if (vars.autoAlpha === 0 || vars.opacity === 0) {
+      // FAIL-SAFE: Ensure elements are hidden if they are starting from opacity 0 or if we split them
+      if (vars.autoAlpha === 0 || vars.opacity === 0 || animConfig.split) {
         elements.forEach(el => {
           if (el.style) el.style.visibility = 'hidden';
         });
       }
     }
 
+    // Forces GSAP to apply the initial state immediately without waiting for next tick
+    if (vars.scrollTrigger) {
+      vars.immediateRender = true;
+    }
+
     let tween;
-    const tweenVars = { ...vars, overwrite: 'auto' };
+    const tweenVars = { ...vars, overwrite: 'auto', lazy: false };
 
     if (method === 'fromTo' && vars2) {
       tween = gsap.fromTo(elements, tweenVars, { ...vars2, overwrite: 'auto' });
