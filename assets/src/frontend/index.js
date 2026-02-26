@@ -45,8 +45,21 @@ window.addEventListener('touchmove', handleScrollActive, { passive: true });
 window.addEventListener('scroll', handleScrollActive, { passive: true });
 
 function debouncedSTRefresh(delay = 200, force = false) {
-  // If user is actively scrolling, queue the refresh for later
-  if (_isScrolling) {
+  // Check Lenis explicitly to see if smooth scroll inertia is still active
+  let isLenisScrolling = false;
+  try {
+    if (window.ScrollCrafterSmooth) {
+      const lenis = window.ScrollCrafterSmooth.getInstance();
+      if (lenis && (lenis.isScrolling || lenis.isAnimating)) {
+        isLenisScrolling = true;
+        // Keep our own timeout alive if Lenis is moving
+        handleScrollActive();
+      }
+    }
+  } catch (e) { }
+
+  // If user is actively scrolling natively OR via Lenis, queue the refresh for later
+  if (_isScrolling || isLenisScrolling) {
     _refreshQueued = true;
     if (debug) console.log(`${logPrefix} Scroll active, queuing refresh...`);
     return;
@@ -87,6 +100,7 @@ function setupLayoutShiftObserver() {
     requestAnimationFrame(() => {
       rafPending = false;
       if (_isRefreshing) return;
+
       const currentHeight = document.body.scrollHeight;
       if (Math.abs(currentHeight - lastHeight) > 50) {
         if (debug) console.log(`${logPrefix} Layout shift detected: ${lastHeight}px → ${currentHeight}px`);
@@ -97,12 +111,10 @@ function setupLayoutShiftObserver() {
   });
 
   observer.observe(document.body, { box: 'border-box' });
-
-  // Stop observing after page has stabilized (8 seconds) to reduce CPU overhead
-  setTimeout(() => {
-    observer.disconnect();
-    if (debug) console.log(`${logPrefix} Layout observer disconnected (stabilization period ended)`);
-  }, 8000);
+  // Removed the 8 second disconnect timeout. The observer MUST stay active 
+  // because lazy loaded images down the page will break all subsequent pins 
+  // if ScrollTrigger isn't updated. The Scroll-Aware Queue protects it from
+  // causing layout Thrashing during active scrolls.
 }
 
 // ─── Safety Refresh Sequence ───────────────────────────────────────────────────
