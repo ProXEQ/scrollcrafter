@@ -11,7 +11,6 @@ use ScrollCrafter\Elementor\Controls\Animation_Injector;
 use ScrollCrafter\Elementor\Frontend\Animation_Render;
 use ScrollCrafter\Admin\Validation_Controller;
 use ScrollCrafter\Admin\Settings_Page;
-use ScrollCrafter\Premium\License_Manager;
 use ScrollCrafter\Elementor\Page_Settings;
 
 final class Plugin
@@ -27,10 +26,7 @@ final class Plugin
 	private Animation_Render $animation_render;
 
 	private Validation_Controller $validation;
-
 	private Settings_Page $settings;
-
-    private License_Manager $license_manager;
 
 	private function __construct()
 	{
@@ -40,7 +36,6 @@ final class Plugin
 		$this->animation_render = new Animation_Render();
 		$this->validation = new Validation_Controller();
 		$this->settings = new Settings_Page();
-        $this->license_manager = License_Manager::instance();
 	}
 
 	public static function instance(): Plugin
@@ -51,10 +46,6 @@ final class Plugin
 
 		return self::$instance;
 	}
-
-    public function premium(): License_Manager {
-        return $this->license_manager;
-    }
 
 	public function boot(): void
 	{

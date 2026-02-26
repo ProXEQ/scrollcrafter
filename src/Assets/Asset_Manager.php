@@ -75,7 +75,7 @@ class Asset_Manager
                 'debug'       => $config->is_debug(),
                 'breakpoints' => $config->get_frontend_breakpoints(),
                 'enableEditorAnimations' => (bool)$config->get('enable_editor_animations'),
-                'isPro'       => sc_is_pro(),
+                'isPro'       => true,
                 'smoothScroll' => $smooth_scroll_config,
             ]
         );
@@ -102,9 +102,9 @@ class Asset_Manager
             wp_enqueue_script( 'scrollcrafter-gsap-splittext' );
         }
 
-        // Load Lenis for Pro users with smooth scroll enabled
+        // Load Lenis if smooth scroll is enabled
         $config = Config::instance();
-        if ( sc_is_pro() && $config->get('smooth_scroll') ) {
+        if ( $config->get('smooth_scroll') ) {
             wp_enqueue_script( 'scrollcrafter-lenis' );
         }
 
@@ -185,7 +185,7 @@ class Asset_Manager
                 'rest_nonce'  => wp_create_nonce( 'wp_rest' ),
                 'breakpoints' => $config->get_frontend_breakpoints(),
                 'enableEditorAnimations' => (bool)$config->get('enable_editor_animations'),
-                'isPro'       => sc_is_pro(),
+                'isPro'       => true,
             ]
         );
         
@@ -252,9 +252,6 @@ public function fix_loco_js_translation_path( $file, $handle, $domain ) {
      */
     private function build_smooth_scroll_config( Config $config )
     {
-        if ( ! sc_is_pro() ) {
-            return false;
-        }
 
         // Get global settings
         $global_enabled = (bool) $config->get('smooth_scroll');

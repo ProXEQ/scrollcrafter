@@ -268,29 +268,9 @@ class Validation_Controller
         
         $specialTags = ['reduced-motion', 'dark', 'retina', 'no-hover'];
         
-        // Pro-only tags (still recognized but will warn Free users)
-        $proTags = ['dark', 'retina', 'no-hover'];
-        $isPro = sc_is_pro();
-        
         foreach ( $parsed['conditions'] ?? [] as $condition ) {
             $tags = $condition['tags'] ?? [];
             foreach ( $tags as $tag ) {
-                // Check if it's a Pro-only tag
-                if ( in_array( $tag, $proTags, true ) ) {
-                    if ( ! $isPro ) {
-                        $issues[] = $this->create_issue(
-                            sprintf(
-                                /* translators: %s: The Pro tag name */
-                                __( "Tag '@%s' requires ScrollCrafter Pro", 'scrollcrafter' ),
-                                $tag
-                            ),
-                            'warning',
-                            $condition['line'] ?? 1
-                        );
-                    }
-                    continue; // Valid tag
-                }
-                
                 if ( !in_array( $tag, $knownBreakpoints, true ) && !in_array( $tag, $specialTags, true ) ) {
                     $issues[] = $this->create_issue(
                         sprintf(
@@ -321,33 +301,12 @@ class Validation_Controller
             $knownBreakpoints[] = $bp['key'] ?? '';
         }
         
-        // Free special tags
-        $freeTags = ['reduced-motion'];
-        
-        // Pro-only special tags
-        $proTags = ['dark', 'retina', 'no-hover'];
-        
-        $isPro = sc_is_pro();
+        // Valid special tags
+        $specialTags = ['reduced-motion', 'dark', 'retina', 'no-hover'];
         
         foreach ( $disabled as $tag ) {
-            // Check if it's a Pro-only tag
-            if ( in_array( $tag, $proTags, true ) ) {
-                if ( ! $isPro ) {
-                    $issues[] = $this->create_issue(
-                        sprintf(
-                            /* translators: %s: The Pro tag name */
-                            __( "Tag '@%s' requires ScrollCrafter Pro", 'scrollcrafter' ),
-                            $tag
-                        ),
-                        'warning',
-                        1
-                    );
-                }
-                continue; // Valid tag (Pro or not)
-            }
-            
-            // Check if it's a free special tag or known breakpoint
-            if ( in_array( $tag, $freeTags, true ) || in_array( $tag, $knownBreakpoints, true ) ) {
+            // Check if it's a special tag or known breakpoint
+            if ( in_array( $tag, $specialTags, true ) || in_array( $tag, $knownBreakpoints, true ) ) {
                 continue; // Valid tag
             }
             

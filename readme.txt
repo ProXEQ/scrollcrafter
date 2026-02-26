@@ -1,10 +1,10 @@
 === ScrollCrafter – Scroll Animations DSL for Elementor ===
 Contributors: PixelMobs
-Donate link: https://pixelmobs.com/donate
+Donate link: https://buymeacoffee.com/pixelmobs
 Tags: elementor, animation, scroll, gsap, scrolltrigger
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.10
+Stable tag: 1.2.0
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -63,6 +63,11 @@ Example DSL:
 
 == Changelog ==
 
+= 1.2.0 =
+* Transition: ScrollCrafter is now fully Open Source! All previous Pro features (Smooth Scroll, Special Condition Tags, Custom Breakpoints) are now available to everyone for free.
+* Removal: Completely removed Freemius SDK and all licensing/tracking logic.
+* New: Added project support link (BuyMeACoffee).
+
 = 1.1.10 =
 * New (DSL Editor): Integrated Elementor Global CSS Variables (colors) into autocomplete suggestions.
 * New (DSL Editor): Added "Copy to Clipboard" button for quick script export.
@@ -75,8 +80,8 @@ Example DSL:
 * Bugfix: Resolved regressions in SplitText animation re-initialization.
 
 = 1.1.9 =
-* New (Pro): Lenis smooth scroll integration with global and per-page control.
-* New (Pro): Elementor Page Settings panel for per-page smooth scroll overrides.
+* New: Lenis smooth scroll integration with global and per-page control.
+* New: Elementor Page Settings panel for per-page smooth scroll overrides.
 * New: Client Mode toggle in Settings to hide developer-facing tabs for clean client handoff.
 * New: fastScrollEnd and preventOverlaps properties in [scroll] DSL section.
 * New: Comprehensive user documentation (DSL syntax, examples, troubleshooting).

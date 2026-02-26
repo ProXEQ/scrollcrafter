@@ -386,8 +386,8 @@ function dslCompletionSource(context) {
     // Add special condition tags
     const specialTags = [
       { label: '@reduced-motion', type: 'variable', detail: 'Accessibility: prefers-reduced-motion', boost: 1 },
-      { label: '@dark', type: 'variable', detail: 'Pro: Dark mode', boost: 0 },
-      { label: '@retina', type: 'variable', detail: 'Pro: High DPI display', boost: 0 },
+      { label: '@dark', type: 'variable', detail: 'Dark mode', boost: 0 },
+      { label: '@retina', type: 'variable', detail: 'High DPI display', boost: 0 },
     ];
 
     const allOptions = [...bpOptions, ...specialTags];

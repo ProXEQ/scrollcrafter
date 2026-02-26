@@ -3,7 +3,7 @@
  * Plugin Name:       ScrollCrafter for Elementor
  * Plugin URI:        https://pixelmobs.com/scrollcrafter
  * Description:       Create advanced scroll-based animations visually with Elementor and GSAP.
- * Version:           1.1.10
+ * Version:           1.2.0
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            PixelMobs, ProXEQ
@@ -21,61 +21,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'SCROLLCRAFTER_FILE', __FILE__ );
 define( 'SCROLLCRAFTER_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SCROLLCRAFTER_URL', plugin_dir_url( __FILE__ ) );
-define( 'SCROLLCRAFTER_VERSION', '1.1.10' );
+define( 'SCROLLCRAFTER_VERSION', '1.2.0' );
 define( 'SCROLLCRAFTER_MIN_WP_VERSION', '6.0' );
 define( 'SCROLLCRAFTER_MIN_PHP_VERSION', '8.1' );
 define( 'SCROLLCRAFTER_MIN_ELEMENTOR', '3.30.0' );
-if ( ! function_exists( 'scr_fs' ) ) {
-    // Create a helper function for easy SDK access.
-    function scr_fs() {
-        global $scr_fs;
-
-        if ( ! isset( $scr_fs ) ) {
-            // Include Freemius SDK.
-            $fs_path = dirname( __FILE__ ) . '/freemius/start.php';
-            
-            if ( ! file_exists( $fs_path ) ) {
-                return null;
-            }
-
-            require_once $fs_path;
-
-            $scr_fs = fs_dynamic_init( array(
-                'id'                  => '22819',
-                'slug'                => 'scrollcrafter',
-                'type'                => 'plugin',
-                'public_key'          => 'pk_e06556e20e23f076049b8455ed7a6',
-                'is_premium'          => true,
-                'premium_suffix'      => 'Pro',
-                'has_premium_version' => true,
-                'has_addons'          => false,
-                'has_paid_plans'      => true,
-                'wp_org_gatekeeper'   => 'OA7#BoRiBNqdf52FvzEf!!074aRLPs8fspif$7K1#4u4Csys1fQlCecVcUTOs2mcpeVHi#C2j9d09fOTvbC0HloPT7fFee5WdS3G',
-                'menu'                => array(
-                    'slug'           => 'scrollcrafter',
-                    'support'        => false,
-                    'parent'         => array(
-                        'slug' => 'options-general.php',
-                    ),
-                ),
-            ) );
-        }
-
-        return $scr_fs;
-    }
-
-    // Init Freemius.
-    scr_fs();
-    // Signal that SDK was initiated.
-    do_action( 'scr_fs_loaded' );
-}
-
 /**
  * Helper to check if the user is on a Pro plan.
+ * Always returns true as we are now fully open-source.
  */
 if ( ! function_exists( 'sc_is_pro' ) ) {
     function sc_is_pro() {
-        return function_exists( 'scr_fs' ) && scr_fs() && ( scr_fs()->is_premium() || scr_fs()->is_plan( 'pro' ) );
+        return true;
     }
 }
 

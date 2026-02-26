@@ -17,10 +17,6 @@ class Page_Settings
 {
     public function hooks(): void
     {
-        // Only register for Pro users
-        if ( ! sc_is_pro() ) {
-            return;
-        }
 
         add_action( 'elementor/documents/register_controls', [ $this, 'register_page_controls' ] );
     }
@@ -88,9 +84,6 @@ class Page_Settings
      */
     public static function get_page_settings( int $post_id ): ?array
     {
-        if ( ! sc_is_pro() ) {
-            return null;
-        }
 
         $document = \Elementor\Plugin::$instance->documents->get( $post_id );
         if ( ! $document ) {

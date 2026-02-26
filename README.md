@@ -4,6 +4,8 @@ ScrollCrafter transforms Elementor into a powerhouse of motion design. It introd
 
 Say goodbye to messy JavaScript snippets and "spaghetti code" in your Elementor widgets. ScrollCrafter gives you IDE-like superpowers directly inside the builder.
 
+Support the project: [Buy me a coffee](https://buymeacoffee.com/pixelmobs)
+
 ## 🚀 Key Features
 
 ### ⚡ Power & Performance
@@ -155,6 +157,19 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.2.0
+-   **New**: Added "Client Mode" to hide developer-facing tabs (Settings, Changelog) for a cleaner client experience.
+-   **New**: Added "Project Support" link to the sidebar for easy access to Buy Me a Coffee.
+-   **Fix**: Resolved "fail-safe" stagger visibility issues and prevent FOUC during initialization.
+-   **Fix**: Hardened ScrollTrigger pin resilience against lazy-loaded images, custom fonts, and bfcache.
+-   **Fix**: Improved hash navigation handling with `clearScrollMemory` and deferred initialization.
+-   **Fix**: Resolved regressions in SplitText animation re-initialization.
+
+### 1.1.11
+-   **Transition**: ScrollCrafter is now fully Open Source! All previous Pro features (Smooth Scroll, Special Condition Tags, Custom Breakpoints) are now available to everyone for free.
+-   **Removal**: Completely removed Freemius SDK and all licensing/tracking logic.
+-   **New**: Added project support link (BuyMeACoffee).
+
 ### 1.1.10
 -   **New (DSL Editor)**: Integrated Elementor Global CSS Variables (colors) into autocomplete suggestions.
 -   **New (DSL Editor)**: Added "Copy to Clipboard" button for quick script export.
@@ -166,9 +181,8 @@ Check the browser console (F12). Ensure the target element actually exists on th
 -   **Fix**: Improved hash navigation handling with `clearScrollMemory` and deferred initialization.
 -   **Fix**: Resolved regressions in SplitText animation re-initialization.
 
-### 1.1.9
--   **New (Pro)**: Lenis smooth scroll integration with global and per-page control.
--   **New (Pro)**: Elementor Page Settings panel for per-page smooth scroll overrides.
+-   **New**: Lenis smooth scroll integration with global and per-page control.
+-   **New**: Elementor Page Settings panel for per-page smooth scroll overrides.
 -   **New**: Client Mode toggle in Settings to hide developer-facing tabs for clean client handoff.
 -   **New**: `fastScrollEnd` and `preventOverlaps` properties in `[scroll]` DSL section.
 -   **New**: Comprehensive user documentation (DSL syntax, examples, troubleshooting).
