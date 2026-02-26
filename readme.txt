@@ -71,7 +71,9 @@ Example DSL:
 = 1.2.0 =
 * Transition: ScrollCrafter is now fully Open Source! All previous Pro features (Smooth Scroll, Special Condition Tags, Custom Breakpoints) are now available to everyone for free.
 * Removal: Completely removed Freemius SDK and all licensing/tracking logic.
+* UI: Redesigned Admin panel with consolidated features and new "Client Mode".
 * New: Added project support link (BuyMeACoffee).
+* Fix: Resolved GSAP/SplitText re-initialization issues and hardened ScrollTrigger pin resilience.
 
 = 1.1.10 =
 * New (DSL Editor): Integrated Elementor Global CSS Variables (colors) into autocomplete suggestions.

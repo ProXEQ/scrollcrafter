@@ -163,17 +163,12 @@ Check the browser console (F12). Ensure the target element actually exists on th
 -   **New**: Added "Clear All Caches" button in the Performance tab.
 
 ### 1.2.0
--   **New**: Added "Client Mode" to hide developer-facing tabs (Settings, Changelog) for a cleaner client experience.
--   **New**: Added "Project Support" link to the sidebar for easy access to Buy Me a Coffee.
--   **Fix**: Resolved "fail-safe" stagger visibility issues and prevent FOUC during initialization.
--   **Fix**: Hardened ScrollTrigger pin resilience against lazy-loaded images, custom fonts, and bfcache.
--   **Fix**: Improved hash navigation handling with `clearScrollMemory` and deferred initialization.
--   **Fix**: Resolved regressions in SplitText animation re-initialization.
-
-### 1.1.11
--   **Transition**: ScrollCrafter is now fully Open Source! All previous Pro features (Smooth Scroll, Special Condition Tags, Custom Breakpoints) are now available to everyone for free.
--   **Removal**: Completely removed Freemius SDK and all licensing/tracking logic.
--   **New**: Added project support link (BuyMeACoffee).
+- **Transition**: ScrollCrafter is now fully Open Source! All previous Pro features (Smooth Scroll, Special Condition Tags, Custom Breakpoints) are now available to everyone for free.
+- **Removal**: Completely removed Freemius SDK and all licensing/tracking logic.
+- **UI**: Redesigned Admin panel with consolidated features into the General tab.
+- **New**: Added "Client Mode" to hide developer-facing tabs for a cleaner client experience.
+- **New**: Added "Project Support" link to the sidebar.
+- **Fix**: Resolved GSAP/SplitText re-initialization issues and hardened ScrollTrigger pin resilience.
 
 ### 1.1.10
 -   **New (DSL Editor)**: Integrated Elementor Global CSS Variables (colors) into autocomplete suggestions.
