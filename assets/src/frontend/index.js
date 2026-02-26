@@ -21,13 +21,16 @@ function configureScrollTrigger() {
 
 // ─── Debounced Refresh ─────────────────────────────────────────────────────────
 let _refreshTimer = null;
+let _isRefreshing = false;
 function debouncedSTRefresh(delay = 200, force = false) {
   clearTimeout(_refreshTimer);
   _refreshTimer = setTimeout(() => {
     const ST = getScrollTrigger();
     if (ST) {
       if (debug) console.log(`${logPrefix} ScrollTrigger refresh (force=${force})`);
+      _isRefreshing = true;
       ST.refresh(force);
+      _isRefreshing = false;
     }
   }, delay);
 }
@@ -43,16 +46,18 @@ function setupLayoutShiftObserver() {
   let rafPending = false;
 
   const observer = new ResizeObserver(() => {
-    if (rafPending) return;
+    // Skip if we're currently refreshing ST (prevents infinite loop)
+    if (rafPending || _isRefreshing) return;
     rafPending = true;
 
     requestAnimationFrame(() => {
       rafPending = false;
+      if (_isRefreshing) return;
       const currentHeight = document.body.scrollHeight;
       if (Math.abs(currentHeight - lastHeight) > 50) {
         if (debug) console.log(`${logPrefix} Layout shift detected: ${lastHeight}px → ${currentHeight}px`);
         lastHeight = currentHeight;
-        debouncedSTRefresh(150);
+        debouncedSTRefresh(250);
       }
     });
   });
@@ -103,6 +108,10 @@ function observeImageLoads() {
   });
 }
 
+// ─── Lenis Detection ───────────────────────────────────────────────────────────
+// Expose a flag for widgets to detect smooth scrolling and use pinType: 'transform'
+window._scHasSmoothScroll = !!window.ScrollCrafterConfig?.smoothScroll?.enabled;
+
 // ─── Initialization ────────────────────────────────────────────────────────────
 function init() {
   configureScrollTrigger();
@@ -111,18 +120,11 @@ function init() {
   observeImageLoads();
   scheduleSafetyRefreshes();
 
-  // Ensure triggers are in correct order for pinning
-  const ST = getScrollTrigger();
-  if (ST) ST.sort();
-
-  // One-time forced refresh on first user interaction as a final safety measure
-  const finalSafety = () => {
-    if (ST) ST.refresh(true);
-    window.removeEventListener('wheel', finalSafety);
-    window.removeEventListener('touchstart', finalSafety);
-  };
-  window.addEventListener('wheel', finalSafety, { passive: true });
-  window.addEventListener('touchstart', finalSafety, { passive: true });
+  // Ensure triggers are in correct order for pinning (deferred to next frame)
+  requestAnimationFrame(() => {
+    const ST = getScrollTrigger();
+    if (ST) ST.sort();
+  });
 }
 
 // Early init to ensure GSAP can hide elements immediately (prevents flicker)
