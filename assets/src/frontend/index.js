@@ -5,15 +5,22 @@ import './widgets/scroll-timeline';
 import './preview-player';
 import './core/smooth-scroll';
 
+// ─── Browser Scroll Restoration Fix ───────────────────────────────────────────
 const debug = !!window.ScrollCrafterConfig?.debug;
 const logPrefix = '[ScrollCrafter]';
 
-// ─── Browser Scroll Restoration Fix ───────────────────────────────────────────
-// Prevents the browser from jumping down the page on reload BEFORE GSAP can 
+// Prevents the browser from jumping down the page on reload BEFORE GSAP can
+
 // measure the original DOM positions (which breaks pin-spacers).
 if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
+
+// 2026 Ultimate workaround for heavy GSAP sites + Lenis + Lazy Images:
+// Obliterate the scroll position before the page even finishes dying.
+window.addEventListener('beforeunload', () => {
+  window.scrollTo(0, 0);
+});
 
 // ─── ScrollTrigger Configuration ───────────────────────────────────────────────
 
