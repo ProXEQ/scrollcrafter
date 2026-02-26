@@ -33,7 +33,11 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     gsap.set(st.pin, { transition: "none" });
   }
   if (typeof st.invalidateOnRefresh === 'undefined') st.invalidateOnRefresh = true;
-  if (typeof st.anticipatePin === 'undefined') st.anticipatePin = 0.5;
+  if (st.pin) {
+    if (typeof st.anticipatePin === 'undefined') st.anticipatePin = 1.0;
+    if (typeof st.pinSpacing === 'undefined') st.pinSpacing = true;
+    if (typeof st.fastScrollEnd === 'undefined') st.fastScrollEnd = true;
+  }
   if (globalConfig.id && !st.id) st.id = `sc-${globalConfig.id}`;
 
   const tl = gsap.timeline(timelineVars);

@@ -15,7 +15,6 @@ function configureScrollTrigger() {
   if (!ST) return;
 
   ST.config({
-    limitCallbacks: true,       // Prevents redundant callback execution during rapid refreshes
     ignoreMobileResize: true,   // Prevents refresh on mobile address bar show/hide
   });
 }
@@ -111,6 +110,19 @@ function init() {
   setupLayoutShiftObserver();
   observeImageLoads();
   scheduleSafetyRefreshes();
+
+  // Ensure triggers are in correct order for pinning
+  const ST = getScrollTrigger();
+  if (ST) ST.sort();
+
+  // One-time forced refresh on first user interaction as a final safety measure
+  const finalSafety = () => {
+    if (ST) ST.refresh(true);
+    window.removeEventListener('wheel', finalSafety);
+    window.removeEventListener('touchstart', finalSafety);
+  };
+  window.addEventListener('wheel', finalSafety, { passive: true });
+  window.addEventListener('touchstart', finalSafety, { passive: true });
 }
 
 // Early init to ensure GSAP can hide elements immediately (prevents flicker)

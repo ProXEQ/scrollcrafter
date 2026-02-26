@@ -108,7 +108,11 @@ registerWidget('scroll_animation', (node, config) => {
       vars.scrollTrigger.trigger = contextNode;
       if (config.id) vars.scrollTrigger.id = 'sc-' + config.id;
       if (typeof vars.scrollTrigger.invalidateOnRefresh === 'undefined') vars.scrollTrigger.invalidateOnRefresh = true;
-      if (typeof vars.scrollTrigger.anticipatePin === 'undefined' && vars.scrollTrigger.pin) vars.scrollTrigger.anticipatePin = 0.5;
+      if (vars.scrollTrigger.pin) {
+        if (typeof vars.scrollTrigger.anticipatePin === 'undefined') vars.scrollTrigger.anticipatePin = 1.0;
+        if (typeof vars.scrollTrigger.pinSpacing === 'undefined') vars.scrollTrigger.pinSpacing = true;
+        if (typeof vars.scrollTrigger.fastScrollEnd === 'undefined') vars.scrollTrigger.fastScrollEnd = true;
+      }
     }
     if (vars2 && vars2.scrollTrigger) {
       vars2.scrollTrigger.trigger = contextNode;
