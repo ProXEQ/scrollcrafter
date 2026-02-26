@@ -8,11 +8,20 @@ import './core/smooth-scroll';
 const debug = !!window.ScrollCrafterConfig?.debug;
 const logPrefix = '[ScrollCrafter]';
 
+// ─── Browser Scroll Restoration Fix ───────────────────────────────────────────
+// Prevents the browser from jumping down the page on reload BEFORE GSAP can 
+// measure the original DOM positions (which breaks pin-spacers).
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+
 // ─── ScrollTrigger Configuration ───────────────────────────────────────────────
+
 function configureScrollTrigger() {
   const ST = getScrollTrigger();
   if (!ST) return;
 
+  ST.clearScrollMemory();
   ST.config({
     ignoreMobileResize: true,
   });
