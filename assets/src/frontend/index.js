@@ -5,20 +5,30 @@ import './widgets/scroll-timeline';
 import './preview-player';
 import './core/smooth-scroll';
 
+// ─── Browser Scroll Restoration Fix ───────────────────────────────────────────
 const debug = !!window.ScrollCrafterConfig?.debug;
 const logPrefix = '[ScrollCrafter]';
 
-// ─── ScrollTrigger Configuration ───────────────────────────────────────────────
+// 2026 Absolute Zero: Force manual restoration to prevent browser mid-page jumps
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
 
+// ─── ScrollTrigger Configuration ───────────────────────────────────────────────
 
 function configureScrollTrigger() {
   const ST = getScrollTrigger();
   if (!ST) return;
 
-  ST.clearScrollMemory();
+  // Wipe any remembered scroll positions before initializing
+  ST.clearScrollMemory('all');
+
   ST.config({
     ignoreMobileResize: true,
   });
+
+  // Prevent browser/Lenis battle during initial load by normalizing scroll logic
+  ST.normalizeScroll(true);
 }
 
 // ─── Simple debounced refresh (editor-only, popups, etc.) ──────────────────────
@@ -33,6 +43,9 @@ function debouncedEditorRefresh() {
 
 // ─── Initialization ────────────────────────────────────────────────────────────
 function init() {
+  // Hard reset scroll to top immediately to ensure clean parsing of elements
+  window.scrollTo(0, 0);
+
   configureScrollTrigger();
   initWidgetsInScope(document);
 
