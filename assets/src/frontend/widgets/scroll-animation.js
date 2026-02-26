@@ -57,11 +57,6 @@ registerWidget('scroll_animation', (node, config) => {
           const existingType = elements[0]?._splitTextType;
           let split;
 
-          // HIDE original elements immediately to prevent FOUC during split
-          elements.forEach(el => {
-            if (el.style) el.style.visibility = 'hidden';
-          });
-
           const typeMatches = existingType === requestedType;
           const hasUsableSplit = existingSplit && (existingSplit.chars?.length || existingSplit.words?.length || existingSplit.lines?.length);
 
@@ -85,13 +80,7 @@ registerWidget('scroll_animation', (node, config) => {
           else if (requestedType.includes('line') && split.lines && split.lines.length) elements = split.lines;
 
           if (elements.length) {
-            // Elements need to be inline-block or similar for most transforms to work on text
-            gsap.set(elements, {
-              display: 'inline-block',
-              backfaceVisibility: 'hidden',
-              visibility: 'hidden', // Keep hidden until GSAP tween takes over
-              lazy: false
-            });
+            gsap.set(elements, { display: 'inline-block', backfaceVisibility: 'hidden' });
           }
         } catch (e) {
           if (debug) console.warn(`${logPrefix} SplitText error:`, e);
@@ -104,7 +93,7 @@ registerWidget('scroll_animation', (node, config) => {
     const vars = parseMacros({ ...animConfig.vars }, calcContext);
     const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
 
-    // Standardize variables
+    // Standardize variables — map opacity to autoAlpha for visibility-aware handling
     const ensureAutoAlpha = (v) => {
       if (v && v.opacity !== undefined) {
         v.autoAlpha = v.opacity;
@@ -129,8 +118,8 @@ registerWidget('scroll_animation', (node, config) => {
     if (method === 'from' || method === 'fromTo') {
       vars.immediateRender = true;
 
-      // FAIL-SAFE: Ensure elements are hidden if they are starting from opacity 0 or if we split them
-      if (vars.autoAlpha === 0 || vars.opacity === 0 || animConfig.split) {
+      // FAIL-SAFE: Hide elements only if they animate FROM opacity 0
+      if (vars.autoAlpha === 0 || vars.opacity === 0) {
         elements.forEach(el => {
           if (el.style) el.style.visibility = 'hidden';
         });

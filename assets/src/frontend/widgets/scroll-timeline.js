@@ -82,23 +82,13 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
 
     if (step.split && window.SplitText) {
       try {
-        // HIDE original targets immediately to prevent FOUC
-        targets.forEach(el => {
-          if (el.style) el.style.visibility = 'hidden';
-        });
-
         const split = new SplitText(targets, { type: step.split });
         if (split.chars && split.chars.length) targets = split.chars;
         else if (split.words && split.words.length) targets = split.words;
         else if (split.lines && split.lines.length) targets = split.lines;
 
         if (targets.length) {
-          gsap.set(targets, {
-            display: 'inline-block',
-            backfaceVisibility: 'hidden',
-            visibility: 'hidden', // Keep hidden until GSAP takes over
-            lazy: false
-          });
+          gsap.set(targets, { display: 'inline-block', backfaceVisibility: 'hidden' });
         }
       } catch (e) {
         if (debug) console.warn(`${logPrefix} SplitText error:`, e);
@@ -108,8 +98,8 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     if (method === 'from' || method === 'fromTo') {
       vars.immediateRender = true;
 
-      // FAIL-SAFE: Ensure elements are hidden if they are starting from opacity 0 or if we split them
-      if (vars.autoAlpha === 0 || vars.opacity === 0 || step.split) {
+      // FAIL-SAFE: Hide elements only if they animate FROM opacity 0
+      if (vars.autoAlpha === 0 || vars.opacity === 0) {
         targets.forEach(el => {
           if (el.style) el.style.visibility = 'hidden';
         });
