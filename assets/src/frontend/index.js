@@ -19,12 +19,46 @@ function configureScrollTrigger() {
   });
 }
 
-// ─── Debounced Refresh ─────────────────────────────────────────────────────────
+// ─── Scroll-Aware Refresh Queue ────────────────────────────────────────────────
 let _refreshTimer = null;
 let _isRefreshing = false;
+let _isScrolling = false;
+let _scrollTimeout = null;
+let _refreshQueued = false;
+
+// Detect active scrolling to prevent mid-scroll refreshes that corrupt pin-spacers
+function handleScrollActive() {
+  _isScrolling = true;
+  clearTimeout(_scrollTimeout);
+  _scrollTimeout = setTimeout(() => {
+    _isScrolling = false;
+    if (_refreshQueued) {
+      if (debug) console.log(`${logPrefix} Executing queued ScrollTrigger refresh after scroll ends`);
+      _refreshQueued = false;
+      debouncedSTRefresh(0, true);
+    }
+  }, 400); // Wait 400ms after last scroll event before assuming scrolling stopped
+}
+
+window.addEventListener('wheel', handleScrollActive, { passive: true });
+window.addEventListener('touchmove', handleScrollActive, { passive: true });
+window.addEventListener('scroll', handleScrollActive, { passive: true });
+
 function debouncedSTRefresh(delay = 200, force = false) {
+  // If user is actively scrolling, queue the refresh for later
+  if (_isScrolling) {
+    _refreshQueued = true;
+    if (debug) console.log(`${logPrefix} Scroll active, queuing refresh...`);
+    return;
+  }
+
   clearTimeout(_refreshTimer);
   _refreshTimer = setTimeout(() => {
+    // Double check if scrolling started during the timeout
+    if (_isScrolling) {
+      _refreshQueued = true;
+      return;
+    }
     const ST = getScrollTrigger();
     if (ST) {
       if (debug) console.log(`${logPrefix} ScrollTrigger refresh (force=${force})`);

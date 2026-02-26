@@ -37,10 +37,6 @@ function createTimeline(node, configData, globalConfig, debug, logPrefix, gsap) 
     if (typeof st.anticipatePin === 'undefined') st.anticipatePin = 0.8;
     if (typeof st.pinSpacing === 'undefined') st.pinSpacing = true;
     if (typeof st.fastScrollEnd === 'undefined') st.fastScrollEnd = true;
-    // Use transform-based pinning when smooth scrolling (Lenis) is active
-    if (window._scHasSmoothScroll && typeof st.pinType === 'undefined') {
-      st.pinType = 'transform';
-    }
   }
   if (globalConfig.id && !st.id) st.id = `sc-${globalConfig.id}`;
 
