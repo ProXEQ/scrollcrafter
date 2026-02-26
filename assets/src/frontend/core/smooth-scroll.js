@@ -47,6 +47,18 @@ export function initSmoothScroll(options = {}) {
         if (window.ScrollTrigger) {
             lenisInstance.on('scroll', window.ScrollTrigger.update);
 
+            // CRITICAL: Pause Lenis during ScrollTrigger refresh cycle.
+            // When ST.refresh() runs, GSAP temporarily scrolls to Y=0 to measure
+            // pin-spacer positions. If Lenis is active, it fights this temporary
+            // scroll, corrupting all pin calculations. This is the documented
+            // standard integration for Lenis + GSAP.
+            window.ScrollTrigger.addEventListener('refreshInit', () => {
+                if (lenisInstance) lenisInstance.stop();
+            });
+            window.ScrollTrigger.addEventListener('refresh', () => {
+                if (lenisInstance) lenisInstance.start();
+            });
+
             window.addEventListener('resize', () => {
                 window.ScrollTrigger.refresh();
             });
