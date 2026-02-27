@@ -1,7 +1,19 @@
 # ScrollCrafter Legacy (for Elementor)
 
 > [!IMPORTANT]
-> **MAINTENANCE MODE**: This is the **Legacy** version of ScrollCrafter focused on GSAP and Elementor. It is actively maintained for stability and bug fixes. Major new features and full-site/global engine support are moving to the next-generation ScrollCrafter.
+> **MAINTENANCE MODE**: This project represents the original GSAP-based implementation of ScrollCrafter for Elementor. It is now in maintenance mode. 
+> - **ScrollCrafter Legacy**: Focused on stability and bug fixes for existing users.
+> - **ScrollCrafter Global**: Our next-generation, Framer Motion powered engine for all WordPress environments is currently in development.
+
+## 🚀 Recent Changes (v1.2.4 Legacy)
+
+This release stabilizes the project for its long-term open-source status:
+
+- **Open Source Transition**: All "Pro" features (incl. Lenis Smooth Scroll) are now available to everyone. Freemius and tracking are removed.
+- **Improved DSL Editor**: Removed experimental and buggy "Ghost" and "Minimize" modes to focus on core stability.
+- **Console Hygiene**: Cleaned up browser console output; logs now only appear in Debug Mode.
+- **SplitText Fixes**: Better handling of reveal animations to prevent flickering.
+- **Security Audit**: Full review of nonces and data sanitization.
 
 ScrollCrafter transforms Elementor into a powerhouse of motion design. It introduces a dedicated **DSL (Domain Specific Language)** editor that lets you construct advanced, production-grade scroll animations powered by GSAP and ScrollTrigger using a clean, readable, and type-safe syntax.
 

@@ -4,7 +4,7 @@ Donate link: https://buymeacoffee.com/pixelmobs
 Tags: elementor, animation, scroll, gsap, scrolltrigger
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.2.3
+Stable tag: 1.2.4
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,15 +65,24 @@ Example DSL:
 
 == Changelog ==
 
+= 1.2.4 =
+* Fix: Completely decommissioned "Ghost" and "Minimize" modes from the DSL Editor for improved stability and simplicity.
+* Fix: Wrapped all frontend console logs in conditional debug checks to ensure a clean browser console in production.
+* Tweak: Final stabilization and cleanup of the codebase for its long-term open-source status.
+
+= 1.2.3 =
+* Fix: Resolved "hard/stiff" scroll feeling when Lenis smooth scrolling is disabled.
+* Improvement: Maintained absolute zero reload stability without hijacking native scroll momentum.
+
 = 1.2.1 =
-* Fix: Resolved FOUC (Flash of Unstyled Content) and visibility issues for SplitText animations, especially with scrub.
-* New: Native support for popular cache plugins (WP Rocket, LiteSpeed, Autoptimize, etc.) with automatic purging on save.
-* New: Added "Clear All Caches" button in the Performance tab.
+* Tweak: Rebranding to ScrollCrafter Legacy.
+* Feature: All previously "Pro" features are now open-source.
+* Fix: Improved SplitText visibility during scroll scrub.
 
 = 1.2.0 =
 * Transition: ScrollCrafter is now fully Open Source! All previous Pro features (Smooth Scroll, Special Condition Tags, Custom Breakpoints) are now available to everyone for free.
 * Removal: Completely removed Freemius SDK and all licensing/tracking logic.
-* UI: Redesigned Admin panel with consolidated features and new "Client Mode".
+* UI: Redesigned Admin panel with consolidated features into the General tab.
 * New: Added project support link (BuyMeACoffee).
 * Fix: Resolved GSAP/SplitText re-initialization issues and hardened ScrollTrigger pin resilience.
 

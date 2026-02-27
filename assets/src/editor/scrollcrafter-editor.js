@@ -22,10 +22,6 @@ const log = (...args) => {
 const SC_ICONS = {
   copy: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M120-220v-80h80v80h-80Zm0-140v-80h80v80h-80Zm0-140v-80h80v80h-80ZM260-80v-80h80v80h-80Zm100-160q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480Zm40 240v-80h80v80h-80Zm-200 0q-33 0-56.5-23.5T120-160h80v80Zm340 0v-80h80q0 33-23.5 56.5T540-80ZM120-640q0-33 23.5-56.5T200-720v80h-80Zm420 80Z"/></svg>`,
   markers: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m344-60-76-128-144-32 14-148-98-112 98-112-14-148 144-32 76-128 136 58 136-58 76 128 144 32-14 148 98 112-98 112 14 148-144 32-76 128-136-58-136 58Zm94-278 226-226-56-58-170 170-86-84-56 56 142 142Z"/></svg>`,
-  ghost: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M607.5-372.5Q660-425 660-500t-52.5-127.5Q555-680 480-680t-127.5 52.5Q300-575 300-500t52.5 127.5Q405-320 480-320t127.5-52.5Zm-204-51Q372-455 372-500t31.5-76.5Q435-608 480-608t76.5 31.5Q588-545 588-500t-31.5 76.5Q525-392 480-392t-76.5-31.5ZM214-281.5Q94-363 40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200q-146 0-266-81.5ZM480-500Zm207.5 160.5Q782-399 832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280q113 0 207.5-59.5Z"/></svg>`,
-  ghost_off: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m644-428-58-58q9-47-27-88t-93-32l-58-58q17-8 34.5-12t37.5-4q75 0 127.5 52.5T660-500q0 20-4 37.5T644-428Zm128 126-58-56q38-29 67.5-63.5T832-500q-50-101-143.5-160.5T480-720q-29 0-57 4t-55 12l-62-62q41-17 84-25.5t90-8.5q151 0 269 83.5T920-500q-23 59-60.5 109.5T772-302Zm20 246L624-222q-35 11-70.5 16.5T480-200q-151 0-269-83.5T40-500q21-53 53-98.5t73-81.5L56-792l56-56 736 736-56 56ZM222-624q-29 26-53 57t-41 67q50 101 143.5 160.5T480-280q20 0 39-2.5t39-5.5l-36-38q-11 3-21 4.5t-21 1.5q-75 0-127.5-52.5T300-500q0-11 1.5-21t4.5-21l-84-82Zm319 93Zm-151 75Z"/></svg>`,
-  minimize: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M240-440v-80h480v80H240Z"/></svg>`,
-  maximize: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M120-120v-320h80v184l504-504H520v-80h320v320h-80v-184L256-200h184v80H120Z"/></svg>`,
   close: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>`,
   check: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M400-304 240-464l56-56 104 104 264-264 56 56-320 320Z"/></svg>`,
   bug: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M480-120q-65 0-120.5-32T272-240H160v-80h84q-3-20-3.5-40t-.5-40h-80v-80h80q0-20 .5-40t3.5-40h-84v-80h112q14-23 31.5-43t40.5-35l-64-66 56-56 86 86q28-9 57-9t57 9l88-86 56 56-66 66q23 15 41.5 34.5T688-640h112v80h-84q3 20 3.5 40t.5 40h80v80h-80q0 20-.5 40t-3.5 40h84v80H688q-32 56-87.5 88T480-120Zm-80-200h160v-80H400v80Zm0-160h160v-80H400v80Z"/></svg>`,
@@ -672,8 +668,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
           <div class="sc-dsl-editor__header-actions">
               <button type="button" class="sc-dsl-editor__btn-icon sc-dsl-editor__copy" title="${__('Copy to Clipboard', 'scrollcrafter')}">${SC_ICONS.copy}</button>
               <button type="button" class="sc-dsl-editor__btn-icon sc-dsl-editor__markers-toggle" title="${__('Show GSAP Markers (Ctrl+K)', 'scrollcrafter')}">${SC_ICONS.bug}</button>
-              <button type="button" class="sc-dsl-editor__btn-icon sc-dsl-editor__ghost-toggle" title="${__('Ghost Mode (Ctrl+G)', 'scrollcrafter')}">${SC_ICONS.ghost}</button>
-              <button type="button" class="sc-dsl-editor__btn-icon sc-dsl-editor__minimize" title="${__('Minimize (Ctrl+M)', 'scrollcrafter')}">${SC_ICONS.minimize}</button>
               <button type="button" class="sc-dsl-editor__close" title="${__('Close', 'scrollcrafter')}">${SC_ICONS.close}</button>
           </div>
         </div>
@@ -749,15 +743,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        if (modal.classList.contains('sc-dsl-editor--ghost')) {
-          modal.classList.remove('sc-dsl-editor--ghost');
-          return;
-        }
-        if (modal.classList.contains('sc-dsl-editor--minimized')) {
-          modal.classList.remove('sc-dsl-editor--minimized');
-          return;
-        }
-
         if (confirm(__('Are you sure you want to discard changes and close?', 'scrollcrafter'))) {
           close();
         }
@@ -765,14 +750,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
 
       // Keyboard Shortcuts (Ctrl/Cmd + ...)
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'g' || e.key === 'G') {
-          e.preventDefault();
-          toggleGhost();
-        }
-        if (e.key === 'm' || e.key === 'M') {
-          e.preventDefault();
-          toggleMinimize();
-        }
         if (e.key === 's' || e.key === 'S') {
           e.preventDefault();
           handleApply();
@@ -834,29 +811,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       statusText.textContent = isMarkers ? __('Markers enabled for preview', 'scrollcrafter') : __('Ready', 'scrollcrafter');
     };
 
-    const toggleMinimize = () => {
-      modal.classList.toggle('sc-dsl-editor--minimized');
-      const isMinimized = modal.classList.contains('sc-dsl-editor--minimized');
-      const minimizeBtn = modal.querySelector('.sc-dsl-editor__minimize');
-      if (minimizeBtn) {
-        minimizeBtn.innerHTML = isMinimized ? SC_ICONS.maximize : SC_ICONS.minimize;
-        minimizeBtn.title = isMinimized ? __('Restore (Ctrl+M)', 'scrollcrafter') : __('Minimize (Ctrl+M)', 'scrollcrafter');
-      }
-
-      if (isMinimized) {
-        // When minimized, some users might find it hard to restore.
-        // We make the whole panel clickable to restore.
-        const panel = modal.querySelector('.sc-dsl-editor__panel');
-        const restoreHandler = (e) => {
-          if (modal.classList.contains('sc-dsl-editor--minimized')) {
-            toggleMinimize();
-            panel.removeEventListener('click', restoreHandler);
-          }
-        };
-        panel.addEventListener('click', restoreHandler);
-      }
-    };
-
     const handlePreview = async () => {
       if (lastValidationState.hasCriticalErrors) {
         showShake();
@@ -912,14 +866,8 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
     const previewBtn = modal.querySelector('.sc-dsl-editor__preview');
     if (previewBtn) previewBtn.onclick = handlePreview;
 
-    const ghostBtn = modal.querySelector('.sc-dsl-editor__ghost-toggle');
-    if (ghostBtn) ghostBtn.onclick = toggleGhost;
-
     const markersBtn = modal.querySelector('.sc-dsl-editor__markers-toggle');
     if (markersBtn) markersBtn.onclick = toggleMarkers;
-
-    const minimizeBtn = modal.querySelector('.sc-dsl-editor__minimize');
-    if (minimizeBtn) minimizeBtn.onclick = toggleMinimize;
 
     const copyBtn = modal.querySelector('.sc-dsl-editor__copy');
     if (copyBtn) {

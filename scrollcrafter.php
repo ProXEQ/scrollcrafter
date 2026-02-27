@@ -3,7 +3,7 @@
  * Plugin Name:       ScrollCrafter Legacy (for Elementor)
  * Plugin URI:        https://pixelmobs.com/scrollcrafter
  * Description:       Create advanced scroll-based animations visually with Elementor and GSAP.
- * Version:           1.2.3
+ * Version:           1.2.4
  * Requires at least: 6.0
  * Requires PHP:      8.1
  * Author:            PixelMobs, ProXEQ
