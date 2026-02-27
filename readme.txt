@@ -1,4 +1,4 @@
-=== ScrollCrafter – Scroll Animations DSL for Elementor ===
+=== ScrollCrafter Legacy (for Elementor) ===
 Contributors: PixelMobs
 Donate link: https://buymeacoffee.com/pixelmobs
 Tags: elementor, animation, scroll, gsap, scrolltrigger
@@ -10,6 +10,8 @@ License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 Professional GSAP ScrollTrigger animations in Elementor using a powerful, type-safe DSL Editor.
+
+**Note:** This is the **Legacy** version of ScrollCrafter. It is now in maintenance mode, focusing on stability and bug fixes for Elementor and GSAP. New features and the next-generation global motion engine will be available in the upcoming ScrollCrafter.
 
 == Description ==
 

@@ -1,7 +1,7 @@
 {
   "name": "scrollcrafter",
   "version": "1.2.3",
-  "description": "ScrollCrafter for Elementor - GSAP scroll animations",
+  "description": "ScrollCrafter Legacy for Elementor - GSAP scroll animations (Maintenance Mode)",
   "author": "PixelMobs <connect@pixelmobs.com>",
   "scripts": {
     "build": "node esbuild.config.mjs",

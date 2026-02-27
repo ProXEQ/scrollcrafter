@@ -1,4 +1,7 @@
-# ScrollCrafter – The Ultimate GSAP Scroll Animation DSL for Elementor
+# ScrollCrafter Legacy (for Elementor)
+
+> [!IMPORTANT]
+> **MAINTENANCE MODE**: This is the **Legacy** version of ScrollCrafter focused on GSAP and Elementor. It is actively maintained for stability and bug fixes. Major new features and full-site/global engine support are moving to the next-generation ScrollCrafter.
 
 ScrollCrafter transforms Elementor into a powerhouse of motion design. It introduces a dedicated **DSL (Domain Specific Language)** editor that lets you construct advanced, production-grade scroll animations powered by GSAP and ScrollTrigger using a clean, readable, and type-safe syntax.
 

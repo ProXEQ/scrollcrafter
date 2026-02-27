@@ -1,6 +1,6 @@
-# ScrollCrafter Documentation
+# ScrollCrafter Legacy Documentation
 
-Welcome to the ScrollCrafter documentation! This guide will help you master scroll animations in Elementor using our powerful DSL (Domain Specific Language).
+Welcome to the ScrollCrafter Legacy documentation! This guide covers the GSAP-powered version of ScrollCrafter for Elementor. 
 
 ## 📚 Table of Contents
 
