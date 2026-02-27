@@ -25,8 +25,6 @@ function configureScrollTrigger() {
   ST.config({
     ignoreMobileResize: true,
   });
-
-  ST.normalizeScroll(true);
 }
 
 // ─── Simple debounced refresh (editor-only, popups, etc.) ──────────────────────

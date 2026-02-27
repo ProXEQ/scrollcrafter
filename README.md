@@ -157,6 +157,10 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.2.3
+-   **Fix**: Resolved "hard/stiff" scroll feeling when Lenis is disabled. Restored native browser scrolling by removing global `normalizeScroll`.
+-   **Improvement**: Maintained "Absolute Zero" reload stability using manual scroll restoration and early initialization resets, without hijacking the native scroll momentum.
+
 ### 1.2.2
 -   **Fix**: Implemented "Absolute Zero" reload stability fix using `normalizeScroll` and manual restoration to prevent pin overlap when refreshing mid-page.
 -   **Fix**: Synchronized Lenis smooth scroll with ScrollTrigger refresh cycles to prevent layout corruption during measurement phases.
