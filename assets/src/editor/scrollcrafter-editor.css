@@ -28,6 +28,7 @@
   inset: 0;
   background: rgba(15, 17, 19, 0.75);
   backdrop-filter: blur(4px);
+  pointer-events: auto;
 }
 
 .sc-dsl-editor__panel {
@@ -472,21 +473,31 @@
 }
 
 /* Ghost Mode */
+.sc-dsl-editor--ghost {
+  pointer-events: none;
+}
+
 .sc-dsl-editor--ghost .sc-dsl-editor__backdrop {
   background: transparent;
   backdrop-filter: none;
+  pointer-events: none;
 }
 
 .sc-dsl-editor--ghost .sc-dsl-editor__panel {
-  opacity: 0.1;
+  opacity: 0.15;
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
 
 .sc-dsl-editor--ghost .sc-dsl-editor__header {
-  pointer-events: all;
+  pointer-events: auto;
   /* Keep header clickable to exit ghost */
-  opacity: 0.8 !important;
+  opacity: 1 !important;
+  background: rgba(20, 22, 27, 0.8) !important;
+}
+
+.sc-dsl-editor--ghost .sc-dsl-editor__header:hover {
+  opacity: 1 !important;
 }
 
 /* Active toggle button state (for markers) */
@@ -501,20 +512,38 @@
   bottom: 0;
   right: 20px;
   top: auto;
-  height: 40px;
-  width: 300px;
+  height: 48px;
+  width: 350px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+}
+
+.sc-dsl-editor--minimized .sc-dsl-editor__panel:hover {
+  background: #1a1d25;
+}
+
+.sc-dsl-editor--minimized .sc-dsl-editor__backdrop {
+  display: none;
 }
 
 .sc-dsl-editor--minimized .sc-dsl-editor__body,
 .sc-dsl-editor--minimized .sc-dsl-editor__footer {
-  display: none;
+  display: none !important;
 }
 
 .sc-dsl-editor--minimized .sc-dsl-editor__header {
   height: 100%;
-  padding: 0 12px;
+  padding: 0 16px;
+  pointer-events: none;
+  /* Let the panel handle the click for restoration */
+}
+
+.sc-dsl-editor--minimized .sc-dsl-editor__header-actions {
+  pointer-events: auto;
+  /* Allow clicking the buttons even when minimized? maybe just close? */
 }
 
 @media (max-width: 800px) {
