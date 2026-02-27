@@ -5,7 +5,7 @@ This guide will walk you through creating your first scroll animation in Element
 ## Prerequisites
 
 - WordPress 6.0+
-- Elementor (Free or Pro)
+- Elementor (6.0+)
 - ScrollCrafter plugin installed and activated
 
 ## Step 1: Open the DSL Editor

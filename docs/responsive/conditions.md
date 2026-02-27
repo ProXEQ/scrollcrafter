@@ -1,8 +1,6 @@
 # Multi-Tag Conditions
 
-ScrollCrafter supports advanced conditions that combine multiple breakpoints or special tags.
-
-> **Note:** Some conditions require ScrollCrafter Pro.
+ScrollCrafter supports advanced conditions that combine multiple breakpoints or special tags. 
 
 ## OR Conditions
 
@@ -15,7 +13,7 @@ from: y=50, opacity=0
 
 This is equivalent to: "on mobile OR tablet, use this animation"
 
-## AND Conditions (Pro)
+## AND Conditions
 
 Apply animation when ALL conditions match:
 
@@ -30,12 +28,12 @@ This means: "on mobile AND when dark mode is preferred"
 
 ## Special Tags
 
-| Tag | Description | Availability |
-|-----|-------------|--------------|
-| `@reduced-motion` | User prefers reduced motion | ✅ Free |
-| `@dark` | User prefers dark color scheme | 🔒 Pro |
-| `@retina` | High DPI display (2x+) | 🔒 Pro |
-| `@no-hover` | Touch device (no hover) | 🔒 Pro |
+| Tag | Description |
+|-----|-------------|
+| `@reduced-motion` | User prefers reduced motion |
+| `@dark` | User prefers dark color scheme |
+| `@retina` | High DPI display (2x+) |
+| `@no-hover` | Touch device (no hover capability) |
 
 ## Priority
 
@@ -62,7 +60,7 @@ duration: 0.3
 
 Users with "reduce motion" enabled get a simple fade instead.
 
-### Dark Mode Variations (Pro)
+### Dark Mode Variations
 ```ini
 [animation]
 from: opacity=0, y=30
@@ -73,7 +71,7 @@ from: opacity=0, scale=1.1
 // Different effect for dark mode users
 ```
 
-### Mobile Dark Mode (Pro)
+### Mobile Dark Mode
 ```ini
 [animation @mobile+@dark]
 from: opacity=0
@@ -81,7 +79,7 @@ duration: 0.2
 // Minimal animation for mobile dark mode
 ```
 
-### Touch Device Handling (Pro)
+### Touch Device Handling
 ```ini
 [animation]
 from: scale=0.9, opacity=0
