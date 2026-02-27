@@ -11,13 +11,14 @@
 let lenisInstance = null;
 
 export function initSmoothScroll(options = {}) {
+    const debug = !!window.ScrollCrafterConfig?.debug;
     if (typeof window.Lenis === 'undefined') {
-        console.warn('[ScrollCrafter] Lenis not loaded. Smooth scroll unavailable.');
+        if (debug) console.warn('[ScrollCrafter] Lenis not loaded. Smooth scroll unavailable.');
         return null;
     }
 
     if (lenisInstance) {
-        console.log('[ScrollCrafter] Lenis already initialized, returning existing instance.');
+        if (debug) console.log('[ScrollCrafter] Lenis already initialized, returning existing instance.');
         return lenisInstance;
     }
 
@@ -70,7 +71,9 @@ export function initSmoothScroll(options = {}) {
 
         return lenisInstance;
     } catch (error) {
-        console.error('[ScrollCrafter] Failed to initialize Lenis:', error);
+        if (window.ScrollCrafterConfig?.debug) {
+            console.error('[ScrollCrafter] Failed to initialize Lenis:', error);
+        }
         return null;
     }
 }

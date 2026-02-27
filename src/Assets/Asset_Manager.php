@@ -46,7 +46,7 @@ class Asset_Manager
             wp_register_script('scrollcrafter-gsap-splittext', SCROLLCRAFTER_URL . 'assets/vendor/gsap/SplitText.min.js', ['scrollcrafter-gsap'], SCROLLCRAFTER_VERSION, true);
         }
 
-        // Register Lenis for smooth scrolling (Pro feature)
+        // Register Lenis for smooth scrolling
         wp_register_script(
             'scrollcrafter-lenis',
             SCROLLCRAFTER_URL . 'assets/vendor/lenis/lenis.min.js',
@@ -65,7 +65,7 @@ class Asset_Manager
 
         wp_set_script_translations( 'scrollcrafter-frontend', 'scrollcrafter', SCROLLCRAFTER_PATH . 'languages' );
 
-        // Build smooth scroll config for Pro users
+        // Build smooth scroll config
         $smooth_scroll_config = $this->build_smooth_scroll_config( $config );
 
         wp_localize_script(

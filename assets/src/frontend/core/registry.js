@@ -70,7 +70,9 @@ function doInitWidget(node, force) {
     try {
       node.__sc_cleanup();
     } catch (e) {
-      console.warn('[ScrollCrafter] Cleanup error:', e);
+      if (window.ScrollCrafterConfig?.debug) {
+        console.warn('[ScrollCrafter] Cleanup error:', e);
+      }
     }
     delete node.__sc_cleanup;
   }
@@ -113,6 +115,8 @@ function doInitWidget(node, force) {
       }),
     );
   } catch (e) {
-    console.error(`[ScrollCrafter] Init error for "${type}":`, e);
+    if (window.ScrollCrafterConfig?.debug) {
+      console.error(`[ScrollCrafter] Init error for "${type}":`, e);
+    }
   }
 }
