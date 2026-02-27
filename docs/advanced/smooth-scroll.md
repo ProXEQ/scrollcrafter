@@ -1,6 +1,6 @@
-# Smooth Scroll (Pro Feature)
+# Smooth Scroll
 
-ScrollCrafter Pro includes built-in smooth scrolling powered by [Lenis](https://lenis.darkroom.engineering/), making scroll-linked animations buttery smooth on all devices.
+ScrollCrafter includes built-in smooth scrolling powered by [Lenis](https://lenis.darkroom.engineering/), making scroll-linked animations buttery smooth on all devices.
 
 ## Why Smooth Scroll?
 
@@ -29,6 +29,13 @@ ScrollCrafter Pro includes built-in smooth scrolling powered by [Lenis](https://
 
 > [!TIP]
 > Start with the default `0.1` and adjust based on your preference.
+
+## GSAP Synchronization
+
+ScrollCrafter automatically handles the synchronization between Lenis and ScrollTrigger. 
+
+- **Refresh Pause**: When `ScrollTrigger.refresh()` runs, Lenis is automatically paused. This prevents "measure fights" where GSAP tries to scroll to Y=0 to calculate pins while Lenis tries to maintain position.
+- **RAF Integration**: Lenis is integrated into the GSAP ticker for perfectly synced frame updates.
 
 ## JavaScript API
 

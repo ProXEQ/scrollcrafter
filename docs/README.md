@@ -21,6 +21,7 @@ Welcome to the ScrollCrafter documentation! This guide will help you master scro
 
 ### Advanced Topics
 - [Calc Expressions](./advanced/calc.md) - Dynamic values with `calc()`
+- [Smooth Scroll](./advanced/smooth-scroll.md) - Buttery smooth scrolling with Lenis
 - [SplitText](./advanced/splittext.md) - Text reveal animations
 - [Timeline Steps](./advanced/timeline-steps.md) - Complex sequenced animations
 

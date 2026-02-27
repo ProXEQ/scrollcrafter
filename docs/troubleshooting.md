@@ -108,18 +108,25 @@ Adjust start position:
 start: top 80%    // Try different values: 70%, 90%, center
 ```
 
-### Pinning Doesn't Work
+### Pinning Overlaps on Page Reload
 
-1. **Need enough scroll distance**:
-   ```ini
-   end: +=1000    // At least this
-   ```
+If you refresh the page while a pinned element is visible and sections start overlapping:
 
-2. **Element must be in normal flow** (not fixed/absolute)
+1. **The "Absolute Zero" Fix**: ScrollCrafter (v1.2.2+) automatically implements this. It forces a scroll to the top and clears memory to ensure accurate pixel-perfect measurements.
+2. **Lazy Loading Images**: If you have images below the pinned section, ensure they have fixed aspect ratios or `min-height` set. If they load *after* GSAP calculates the pin, they will push the layout and break the pin.
+3. **Lenis Synchronization**: If using Smooth Scroll, ScrollCrafter automatically pauses Lenis during the measurement phase to prevent conflicts.
+
+### Element "Falls Off Tracks" / Jittery Pin
+
+Often happens in Chrome with Smooth Scroll enabled:
+
+1. **Check Transition CSS**: Ensure the element (and its parents) do not have CSS `transition` applied to `transform`, `margin`, or `padding`.
+2. **Horizontal Scroll Jitter**: If using very fast scrolls, avoid `fastScrollEnd: true` unless necessary, as it can cause abrupt jumps.
+3. **Invalidate on Refresh**: Ensure `invalidateOnRefresh: true` is set (this is default in recent versions) for responsive sections.
 
 ### Markers Not Showing
 
-1. Only visible to logged-in WordPress users (security)
+1. Only visible to logged-in WordPress users (security).
 2. Enable in editor with `Ctrl+K` or in DSL:
    ```ini
    [scroll]

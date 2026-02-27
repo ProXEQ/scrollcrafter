@@ -152,8 +152,28 @@ snap: 0.25             // Snap every 25%
 Pre-offset pinning to prevent jumping (in pixels).
 
 ```ini
-anticipatePin: 1       // Usually 1 is enough
+anticipatePin: 0.5     // Default is 0.5, try 1 if jumping persists
 ```
+
+### fastScrollEnd
+
+Force the animation to jump to the end if the user scrolls past the trigger very quickly. Prevents "ghost" animations sticking around.
+
+```ini
+fastScrollEnd: true
+```
+
+### preventOverlaps
+
+Prevents multiple ScrollTriggers from being active at the same time if they overlap in the viewport.
+
+```ini
+preventOverlaps: true
+```
+
+### invalidateOnRefresh
+
+Recalculates positions on resize/refresh. Always `true` by default in ScrollCrafter for stability.
 
 ## Examples
 
