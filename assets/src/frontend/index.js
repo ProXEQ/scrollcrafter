@@ -20,14 +20,12 @@ function configureScrollTrigger() {
   const ST = getScrollTrigger();
   if (!ST) return;
 
-  // Wipe any remembered scroll positions before initializing
   ST.clearScrollMemory('all');
 
   ST.config({
     ignoreMobileResize: true,
   });
 
-  // Prevent browser/Lenis battle during initial load by normalizing scroll logic
   ST.normalizeScroll(true);
 }
 
@@ -43,7 +41,6 @@ function debouncedEditorRefresh() {
 
 // ─── Initialization ────────────────────────────────────────────────────────────
 function init() {
-  // Hard reset scroll to top immediately to ensure clean parsing of elements
   window.scrollTo(0, 0);
 
   configureScrollTrigger();

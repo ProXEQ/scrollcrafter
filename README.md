@@ -157,6 +157,12 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
+### 1.2.2
+-   **Fix**: Implemented "Absolute Zero" reload stability fix using `normalizeScroll` and manual restoration to prevent pin overlap when refreshing mid-page.
+-   **Fix**: Synchronized Lenis smooth scroll with ScrollTrigger refresh cycles to prevent layout corruption during measurement phases.
+-   **Fix**: Resolved Chrome-specific pin jitter and element "falling off tracks" during fast scrolling.
+-   **Improvement**: Streamlined and simplified ScrollTrigger refresh logic for better performance and stability.
+
 ### 1.2.1
 -   **Fix**: Resolved FOUC (Flash of Unstyled Content) and visibility issues for SplitText animations, especially with scrub.
 -   **New**: Native support for popular cache plugins (WP Rocket, LiteSpeed, Autoptimize, etc.) with automatic purging on save.

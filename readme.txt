@@ -4,7 +4,7 @@ Donate link: https://buymeacoffee.com/pixelmobs
 Tags: elementor, animation, scroll, gsap, scrolltrigger
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.2.0
+Stable tag: 1.2.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -117,9 +117,22 @@ Example DSL:
 
 = 1.1.6 =
 *   **New**: Official Freemius integration for licensing and seamless updates.
-*   **Improvement**: Prepared foundation for Pro version features.
+= 1.2.2 =
+*   **Fix**: Implemented "Absolute Zero" reload stability to prevent pin overlap when refreshing mid-page.
+*   **Fix**: Synchronized Lenis smooth scroll with ScrollTrigger refresh cycles to prevent layout corruption.
+*   **Fix**: Resolved Chrome-specific pin jitter and element "falling off tracks" during fast scrolling.
+*   **Improvement**: Streamlined ScrollTrigger refresh logic for better performance.
 
-= 1.1.4 =
+= 1.2.1 =
+*   **Fix**: Resolved FOUC (Flash of Unstyled Content) and visibility issues for SplitText animations.
+*   **New**: Native support for popular cache plugins (WP Rocket, LiteSpeed, etc.) with automatic purging.
+
+= 1.2.0 =
+*   **Transition**: ScrollCrafter is now fully Open Source! All previous Pro features are free.
+*   **Removal**: Completely removed Freemius SDK and licensing logic.
+*   **UI**: Redesigned Admin panel with consolidated features.
+
+= 1.1.10 =
 *   **New**: Preview button in Code Editor modal for instant animation preview.
 *   **New**: Markers toggle (Ctrl+K) - shows GSAP markers during preview only.
 *   **New**: Loading overlay during preview initialization.
