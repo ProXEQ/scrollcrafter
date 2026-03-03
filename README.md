@@ -5,10 +5,11 @@
 > - **ScrollCrafter Legacy**: Focused on stability and bug fixes for existing users.
 > - **ScrollCrafter Global**: Our next-generation, Framer Motion powered engine for all WordPress environments is currently in development.
 
-## 🚀 Recent Changes (v1.2.4.1 Legacy)
+## 🚀 Recent Changes (v1.2.4.2 Legacy)
 
 This release stabilizes the project for its long-term open-source status:
 
+- **Fix**: Resolved "Expired Link" error when saving settings caused by nested form nonce collision.
 - **Fix**: Resolved issue where Lenis smooth scroll bypassed Elementor's "Disable Page Scrolling" setting in popups.
 - **Fix**: Completely decommissioned "Ghost" and "Minimize" modes from the DSL Editor for improved stability and simplicity.
 - **Fix**: Wrapped all frontend console logs in conditional debug checks to ensure a clean browser console in production.
@@ -173,7 +174,7 @@ Check the browser console (F12). Ensure the target element actually exists on th
 
 ## 📝 Changelog
 
-### 1.2.4.1
+### 1.2.4.2
 -   **Fix**: Resolved "hard/stiff" scroll feeling when Lenis is disabled. Restored native browser scrolling by removing global `normalizeScroll`.
 -   **Improvement**: Maintained "Absolute Zero" reload stability using manual scroll restoration and early initialization resets, without hijacking the native scroll momentum.
 

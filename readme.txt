@@ -4,7 +4,7 @@ Donate link: https://buymeacoffee.com/pixelmobs
 Tags: elementor, animation, scroll, gsap, scrolltrigger
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.2.4.1
+Stable tag: 1.2.4.2
 Requires PHP: 8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -65,7 +65,8 @@ Example DSL:
 
 == Changelog ==
 
-= 1.2.4.1 =
+= 1.2.4.2 =
+* Fix: Resolved "Expired Link" error when saving settings caused by nested form nonce collision.
 * Fix: Resolved issue where Lenis smooth scroll bypassed Elementor's "Disable Page Scrolling" setting in popups.
 * Fix: Completely decommissioned "Ghost" and "Minimize" modes from the DSL Editor for improved stability and simplicity.
 * Fix: Wrapped all frontend console logs in conditional debug checks to ensure a clean browser console in production.

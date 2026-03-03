@@ -23,7 +23,7 @@ class Settings_Page
 
     public function handle_cache_clear(): void
     {
-        if ( ! isset( $_POST['sc_clear_cache'] ) || ! current_user_can( 'manage_options' ) ) {
+        if ( ! isset( $_GET['sc_clear_cache'] ) || ! current_user_can( 'manage_options' ) ) {
             return;
         }
 
@@ -401,13 +401,16 @@ class Settings_Page
                     </div>
                 </div>
                 <div class="sc-field">
-                    <form action="<?php echo esc_url( admin_url( 'options-general.php?page=scrollcrafter&tab=performance' ) ); ?>" method="post">
-                        <?php wp_nonce_field( 'sc_clear_cache_action' ); ?>
-                        <button type="submit" name="sc_clear_cache" value="1" class="button button-secondary">
-                            <span class="dashicons dashicons-trash" style="vertical-align: middle; margin-right: 4px;"></span>
-                            <?php esc_html_e( 'Clear All Caches', 'scrollcrafter' ); ?>
-                        </button>
-                    </form>
+                    <?php 
+                    $clear_url = wp_nonce_url( 
+                        add_query_arg( [ 'sc_clear_cache' => 1 ], admin_url( 'options-general.php?page=scrollcrafter&tab=performance' ) ), 
+                        'sc_clear_cache_action' 
+                    ); 
+                    ?>
+                    <a href="<?php echo esc_url( $clear_url ); ?>" class="button button-secondary">
+                        <span class="dashicons dashicons-trash" style="vertical-align: middle; margin-right: 4px;"></span>
+                        <?php esc_html_e( 'Clear All Caches', 'scrollcrafter' ); ?>
+                    </a>
                     <p class="sc-field-desc"><?php esc_html_e( 'This will attempt to clear caches for popular plugins like WP Rocket, LiteSpeed, etc.', 'scrollcrafter' ); ?></p>
                 </div>
             </div>
