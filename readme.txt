@@ -66,6 +66,7 @@ Example DSL:
 == Changelog ==
 
 = 1.2.4 =
+* Fix: Resolved issue where Lenis smooth scroll bypassed Elementor's "Disable Page Scrolling" setting in popups.
 * Fix: Completely decommissioned "Ghost" and "Minimize" modes from the DSL Editor for improved stability and simplicity.
 * Fix: Wrapped all frontend console logs in conditional debug checks to ensure a clean browser console in production.
 * Tweak: Final stabilization and cleanup of the codebase for its long-term open-source status.

@@ -1,1 +1,1091 @@
-(()=>{var U={},X=new WeakSet,O=new Map,q=new Set;function $(e,r){r?q.add(e):q.delete(e)}function I(e,r){U[e]=r}function W(e=document,r=!1){if(!e)return;let o=[];e.hasAttribute&&e.hasAttribute("data-scrollcrafter-config")&&o.push(e),e.querySelectorAll&&e.querySelectorAll("[data-scrollcrafter-config]").forEach(t=>o.push(t)),o.forEach(t=>{var a;let n=t.getAttribute("data-id");if(n&&q.has(n)){(a=window.ScrollCrafterConfig)!=null&&a.debug&&console.log(`[ScrollCrafter] Skipping init for ${n} - preview active`);return}let s=X.has(t);if(!(!r&&s)){if(r&&n){O.has(n)&&clearTimeout(O.get(n)),O.set(n,setTimeout(()=>{O.delete(n),q.has(n)||K(t,r)},250));return}K(t,r)}})}function K(e,r){var s,a;if(typeof e.__sc_cleanup=="function"){try{e.__sc_cleanup()}catch(l){console.warn("[ScrollCrafter] Cleanup error:",l)}delete e.__sc_cleanup}let o=e.getAttribute("data-scrollcrafter-config");if(!o)return;let t;try{t=JSON.parse(o)}catch(l){(s=window.ScrollCrafterConfig)!=null&&s.debug&&console.warn("[ScrollCrafter] Invalid config JSON:",l,e);return}let n=t.widget;if(!(!n||typeof U[n]!="function"))try{(a=window.ScrollCrafterConfig)!=null&&a.debug&&console.log(`[ScrollCrafter] Initializing widget: "${n}"`,e);let l=U[n](e,t);typeof l=="function"&&(e.__sc_cleanup=l),X.add(e),e.dispatchEvent(new CustomEvent("scrollcrafter:init",{bubbles:!0,detail:{type:n,config:t}}))}catch(l){console.error(`[ScrollCrafter] Init error for "${n}":`,l)}}function M(){if(typeof window=="undefined")return null;let{gsap:e}=window;if(!e)return console.error("[ScrollCrafter] GSAP core not found! Make sure gsap.min.js is loaded."),null;if(window.ScrollTrigger&&e.registerPlugin)try{e.registerPlugin(window.ScrollTrigger)}catch(r){}return e}function P(){return typeof window=="undefined"?null:window.ScrollTrigger?window.ScrollTrigger:(console.warn("[ScrollCrafter] ScrollTrigger not found! Animations may not work."),null)}var Y=new Map;function fe(e,r){if(typeof e!="string")return e;e==="calc_scroll_width_neg"&&(e="calc(sw * -1)"),e==="calc_scroll_width"&&(e="calc(sw)"),e==="calc_100vh"&&(e="calc(vh)");let o=e.match(/^calc\s*\((.*)\)$/i);if(o){let t=o[1].replace(/(\d)\s*(sw|cw|ch|vw|vh)\b/gi,"$1 * $2");return(n,s)=>{let a=s||r,l=window.innerWidth,h=window.innerHeight,g=a.clientWidth||0,c=a.clientHeight||0,p={sw:Math.max(0,a.scrollWidth-g),cw:g,ch:c,vw:l,vh:h,center:(l-g)/2,vcenter:(h-c)/2,end:l-g},i=t;["vcenter","center","sw","cw","ch","vw","vh","end"].forEach(y=>{i=i.replace(new RegExp(`\\b${y}\\b`,"gi"),p[y])});let w=Y.get(i);if(!w){let y=i.replace(/[0-9\.\+\-\*\/\(\)\s]/g,"");if(y.length>0)return console.warn("[ScrollCrafter] Unsafe characters in result expression:",y),0;try{w=new Function("return "+i),Y.set(i,w)}catch(T){return console.error("[ScrollCrafter] Compile error:",T,i),0}}try{return w()}catch(y){return console.error("[ScrollCrafter] Calc exec error:",y),0}}}return e}function A(e,r){if(!e||typeof e!="object")return e;let o={...e};return Object.keys(o).forEach(t=>{let n=o[t];if(n&&typeof n=="object"&&!Array.isArray(n)){o[t]=A(n,r);return}o[t]=fe(n,r)}),o}var V=null,L=null,ue={"reduced-motion":"(prefers-reduced-motion: reduce)"},de={dark:"(prefers-color-scheme: dark)",retina:"(-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi)","no-hover":"(hover: none)"};function pe(){var n;let e=((n=window.ScrollCrafterConfig)==null?void 0:n.breakpoints)||[];if(!e.length)return[{slug:"_default_desktop",query:"(min-width: 1px)",min:1,max:1/0}];let r=[...e].sort((s,a)=>s.value-a.value),o=[],t=0;return r.forEach(s=>{let a=t+1,l=s.value;t=l;let h=a===1?`(max-width: ${l}px)`:`(min-width: ${a}px) and (max-width: ${l}px)`;o.push({slug:s.key,query:h,min:a,max:l})}),o.push({slug:"_default_desktop",query:`(min-width: ${t+1}px)`,min:t+1,max:1/0}),o}function j(){return V===null&&(V=pe()),V}function ge(){var e;return!!((e=window.ScrollCrafterConfig)!=null&&e.isPro)}function we(e){let r=ue[e];return!r&&ge()&&(r=de[e]),r?(L===null&&(L={}),L[e]===void 0&&(L[e]=window.matchMedia(r).matches),L[e]):!1}function he(){return we("reduced-motion")}function B(e,r){var o;if(e.disabled&&e.disabled.includes(r.slug))return null;if(he()&&((o=e.conditions)!=null&&o["reduced-motion"]))return e.conditions["reduced-motion"];if(r.slug!=="_default_desktop"){if(e.conditions){for(let t of Object.values(e.conditions))if(t.tags&&t.tags.includes(r.slug))return t.config||t}if(e.media&&e.media[r.slug])return e.media[r.slug]}return e.animation||e}function z(e,r,o,t=null){var c,f,p;let n=!!((c=window.ScrollCrafterConfig)!=null&&c.debug),s=j(),a=[],l=r.disabled||[],h=((f=t==null?void 0:t.getAttribute)==null?void 0:f.call(t,"data-scrollcrafter-force-breakpoint"))||((p=t==null?void 0:t.attr)==null?void 0:p.call(t,"data-scrollcrafter-force-breakpoint"))||null;if(h){n&&console.log(`[SC Responsive] Force breakpoint detected: ${h}`);let i=s.find(d=>d.slug===h);if(!i&&h==="desktop"&&(i=s.find(d=>d.slug==="_default_desktop")),i&&!l.includes(i.slug)){let d=B(r,i);if(d){n&&console.log(`[SC Responsive] Active (forced): ${i.slug}`,d);let w=o(d,i);w&&a.push(w)}}return()=>(n&&console.log("[SC Responsive] Cleanup (forced mode - no matchMedia)"),a)}let g=e.matchMedia();return s.forEach(i=>{if(l.includes(i.slug)){n&&console.log(`[SC Responsive] Skipping disabled: ${i.slug}`);return}g.add(i.query,()=>{let d=B(r,i);if(d){n&&console.log(`[SC Responsive] Active: ${i.slug}`,d);let w=o(d,i);w&&a.push(w)}})}),()=>(n&&console.log("[SC Responsive] Cleaning up matchMedia contexts"),g.revert(),a)}I("scroll_animation",(e,r)=>{var c;let o=!!((c=window.ScrollCrafterConfig)!=null&&c.debug),t=`[ScrollCrafter][${r.id||"anim"}]`,n=(f,p)=>{var i,d,w;o&&(console.group(`${t} ${f}`),console.log("Method:",(i=p.animation)==null?void 0:i.method),console.log("Vars:",(d=p.animation)==null?void 0:d.vars),console.log("Vars2:",(w=p.animation)==null?void 0:w.vars2),console.log("Target:",p.target||r.target),console.groupEnd())},s;try{s=M(),P()}catch(f){o&&console.error(`${t} GSAP missing`,f);return}let a=(f,p)=>{var G,F,H,N,Q;let i=f.target||r.target||{},d=[];if(i.type==="wrapper"?d=[p]:i.selector?d=p.querySelectorAll(i.selector):d=[p],!d.length)return o&&console.warn(`${t} No elements found for selector:`,i.selector),null;let w=f.animation||{},y=w.method||"from",T=d[0];if(w.split)if(window.SplitText)try{let b=w.split.toLowerCase(),E=(G=d[0])==null?void 0:G._splitText,ce=(F=d[0])==null?void 0:F._splitTextType,k,ae=ce===b;E&&(((H=E.chars)==null?void 0:H.length)||((N=E.words)==null?void 0:N.length)||((Q=E.lines)==null?void 0:Q.length))&&ae?k=E:(E&&E.revert(),k=new SplitText(d,{type:b}),d.forEach(J=>{J._splitText=k,J._splitTextType=b})),b.includes("char")&&k.chars&&k.chars.length?d=k.chars:b.includes("word")&&k.words&&k.words.length?d=k.words:b.includes("line")&&k.lines&&k.lines.length&&(d=k.lines),d.length&&s.set(d,{display:"inline-block",backfaceVisibility:"hidden"})}catch(b){o&&console.warn(`${t} SplitText error:`,b)}else o&&console.warn(`${t} SplitText not found`);let m=A({...w.vars},T),S=w.vars2?A({...w.vars2},T):null,x=b=>{b&&b.opacity!==void 0&&(b.autoAlpha=b.opacity,delete b.opacity)};x(m),x(S),m.scrollTrigger&&(m.scrollTrigger.trigger=p,r.id&&(m.scrollTrigger.id="sc-"+r.id),typeof m.scrollTrigger.invalidateOnRefresh=="undefined"&&(m.scrollTrigger.invalidateOnRefresh=!0),m.scrollTrigger.pin&&typeof m.scrollTrigger.anticipatePin=="undefined"&&(m.scrollTrigger.anticipatePin=.5)),S&&S.scrollTrigger&&(S.scrollTrigger.trigger=p,r.id&&(S.scrollTrigger.id="sc-"+r.id)),(y==="from"||y==="fromTo")&&(m.immediateRender=!0,(m.autoAlpha===0||m.opacity===0)&&d.forEach(b=>{b.style&&(b.style.visibility="hidden")})),m.scrollTrigger&&(m.immediateRender=!0);let u,_={...m,overwrite:"auto",lazy:!1};return y==="fromTo"&&S?u=s.fromTo(d,_,{...S,overwrite:"auto"}):typeof s[y]=="function"&&(u=s[y](d,_)),!u&&o&&console.warn(`${t} Unknown GSAP method:`,y),u},l=[],h=f=>{if((window.ScrollCrafterForcePreview===r.id||window.parent&&window.parent.ScrollCrafterForcePreview===r.id||e.getAttribute("data-sc-preview")==="yes")&&f)if(o&&console.log(`${t} Manual preview detected, force playing animation`),f.scrollTrigger){let i=f.scrollTrigger;i.pin||i.vars&&i.vars.scrub?(o&&console.log(`${t} Pin/Scrub detected, animating progress`),s.fromTo(i,{progress:0},{progress:1,duration:1.5,ease:"power1.inOut"})):(i.disable(),f.restart(!0))}else f.restart(!0)},g=z(s,r,(f,p)=>{n(`Active: ${p.slug}`,{...r,animation:f});let i=a({...r,animation:f},e);return i&&(l.push(i),h(i)),i},e);return()=>{o&&console.log(`${t} Cleaning up...`),g(),l.forEach(f=>{f.scrollTrigger&&f.scrollTrigger.kill(!0),f.kill()})}});function me(e,r,o,t,n,s){let a=e,l=r.target||o.target||{},h=[a];if(l.selector&&l.type!=="wrapper"){let i=a.querySelectorAll(l.selector);i.length&&(h=Array.from(i))}let g={...r.timelineVars||{}};g.defaults&&(g.defaults=A(g.defaults,a)),g.scrollTrigger||(g.scrollTrigger={});let c=g.scrollTrigger;c.trigger||(c.trigger=a),c.pin===!0&&(c.pin=a),c.pin&&s.set(c.pin,{transition:"none"}),typeof c.invalidateOnRefresh=="undefined"&&(c.invalidateOnRefresh=!0),c.pin&&typeof c.anticipatePin=="undefined"&&(c.anticipatePin=.5),o.id&&!c.id&&(c.id=`sc-${o.id}`);let f=s.timeline(g);return(r.steps||[]).forEach((i,d)=>{let w=i.method||"to",y=i.position;if(w==="addLabel"){let u=i.vars;typeof u=="string"&&f.addLabel(u,y);return}if(w==="call")return;let T=h;if(i.selector){let u=a.querySelectorAll(i.selector);if(!u.length){t&&console.warn(`${n} Step ${d+1}: selector "${i.selector}" not found`);return}T=Array.from(u)}let m=A(i.vars||{},a),S=i.vars2?A(i.vars2,a):null,x=u=>{u&&u.opacity!==void 0&&(u.autoAlpha=u.opacity,delete u.opacity)};if(x(m),x(S),s.set(T,{transition:"none",translate:"none",rotate:"none",scale:"none"}),i.split&&window.SplitText)try{let u=new SplitText(T,{type:i.split});u.chars&&u.chars.length?T=u.chars:u.words&&u.words.length?T=u.words:u.lines&&u.lines.length&&(T=u.lines),T.length&&s.set(T,{display:"inline-block",backfaceVisibility:"hidden"})}catch(u){t&&console.warn(`${n} SplitText error:`,u)}(w==="from"||w==="fromTo")&&(m.immediateRender=!0,(m.autoAlpha===0||m.opacity===0)&&T.forEach(u=>{u.style&&(u.style.visibility="hidden")}));try{let u,_={...m,overwrite:"auto",lazy:!1};w==="fromTo"&&S?u=f.fromTo(T,_,{...S,overwrite:"auto",lazy:!1},y):typeof f[w]=="function"&&(u=f[w](T,_,y))}catch(u){t&&console.error(`${n} Error step ${d+1}`,u)}}),f}I("scroll_timeline",(e,r)=>{var g;let o=!!((g=window.ScrollCrafterConfig)!=null&&g.debug),t=`[ScrollCrafter][timeline:${r.id||"tl"}]`,n=(c,f)=>{o&&(console.group(`${t} ${c}`),console.log("Details:",f),console.groupEnd())},s;try{s=M(),P()}catch(c){o&&console.error(`${t} GSAP missing`,c);return}let a=[],l=c=>{if((window.ScrollCrafterForcePreview===r.id||window.parent&&window.parent.ScrollCrafterForcePreview===r.id||e.getAttribute("data-sc-preview")==="yes")&&c)if(o&&console.log(`${t} Manual preview detected, force playing timeline`),c.scrollTrigger){let p=c.scrollTrigger;p.pin||p.vars&&p.vars.scrub?(o&&console.log(`${t} Pin/Scrub detected, animating progress`),s.fromTo(p,{progress:0},{progress:1,duration:1.5,ease:"power1.inOut"})):(p.disable(),c.restart(!0))}else c.restart(!0)},h=z(s,r,(c,f)=>{let p=c.steps?c:r;if(!p.steps||p.steps.length===0)return null;n(`Active: ${f.slug}`,c);let i=me(e,p,r,o,t+`[${f.slug}]`,s);return i&&(a.push(i),l(i)),i},e);return()=>{o&&console.log(`${t} Cleaning up...`),h(),a.forEach(c=>{c.scrollTrigger&&c.scrollTrigger.kill(!0),c.kill()})}});var Z,Se=!!((Z=window.ScrollCrafterConfig)!=null&&Z.debug),C=(...e)=>Se&&console.log("[SC Preview]",...e),R=new Map;function D(e,r=!0){if(R.has(e)){let{tween:o,elements:t}=R.get(e);if(C(`Cleaning up existing preview for ${e}`),o&&(o.scrollTrigger&&o.scrollTrigger.kill(!0),o.progress(1),o.kill()),t&&t.length){let n=M();n&&n.set(t,{clearProps:"all"})}R.delete(e)}r&&($(e,!1),C(`Preview lock released for ${e}`))}function ye(e,r,o){var f,p,i,d,w,y,T,m;let t=M();if(!t)return console.error("[SC Preview] GSAP not available"),null;let n=o.target||{},s=[];if(n.type==="wrapper"?s=[e]:n.selector?s=e.querySelectorAll(n.selector):s=[e],!s.length)return C("No target elements found"),null;let a=r.method||"from",l=null;if(r.split&&window.SplitText)try{let S=r.split.toLowerCase(),x=(f=s[0])==null?void 0:f._splitText,u=(p=s[0])==null?void 0:p._splitTextType,_=u===S;x&&(((i=x.chars)==null?void 0:i.length)||((d=x.words)==null?void 0:d.length)||((w=x.lines)==null?void 0:w.length))&&_?(C(`Reusing existing SplitText (type: ${u})`),l=x):(x?(C(`Type mismatch (${u} vs ${S}), reverting and creating new`),x.revert()):C("Creating fresh SplitText with type:",S),l=new SplitText(s,{type:S}),C("SplitText result:",{chars:((y=l.chars)==null?void 0:y.length)||0,words:((T=l.words)==null?void 0:T.length)||0,lines:((m=l.lines)==null?void 0:m.length)||0}),s.forEach(F=>{F._splitText=l,F._splitTextType=S})),S.includes("char")&&l.chars&&l.chars.length>0?s=l.chars:S.includes("word")&&l.words&&l.words.length>0?s=l.words:S.includes("line")&&l.lines&&l.lines.length>0&&(s=l.lines),C(`SplitText: ${s.length} elements (type: ${S})`),s.length>0&&t.set(s,{display:"inline-block"})}catch(S){console.warn("[SC Preview] SplitText error:",S)}let h=A({...r.vars},s[0]),g=r.vars2?A({...r.vars2},s[0]):null;t.set(s,{transition:"none",translate:"none",rotate:"none",scale:"none"}),delete h.scrollTrigger,g&&delete g.scrollTrigger,a==="from"&&h.immediateRender===void 0&&(h.immediateRender=!0),C(`Creating ${a} tween for ${s.length} elements`);let c;return a==="fromTo"&&g?c=t.fromTo(s,h,g):typeof t[a]=="function"&&(c=t[a](s,h)),c&&(a==="from"||a==="fromTo")&&c.progress(1).progress(0),{tween:c,elements:s}}function ve(e,r,o){C(`Preview requested: widget=${e}, breakpoint=${o}`),$(e,!0),C(`Preview lock acquired for ${e}`);let t=document.querySelector(`[data-id="${e}"]`);if(!t)return console.error(`[SC Preview] Widget ${e} not found in DOM`),$(e,!1),!1;D(e,!1);let n=j(),s=n.find(g=>g.slug===o);!s&&o==="desktop"&&(s=n.find(g=>g.slug==="_default_desktop")),s||(s=n[0]);let a=B(r,s);if(!a)return C("No active config for breakpoint:",o),$(e,!1),!1;C("Active config:",a);let l=ye(t,a,r);if(!l||!l.tween)return C("Failed to create animation"),$(e,!1),!1;R.set(e,l);let h=l.tween.vars.onComplete;return l.tween.vars.onComplete=function(){C(`Preview animation completed for ${e}`),h&&h.apply(this,arguments),setTimeout(()=>{$(e,!1),C(`Preview lock released for ${e}`)},2e3)},C("Playing animation"),l.tween.restart(!0),!0}function Te(){C(`Cleaning up all previews (${R.size} active)`);for(let e of R.keys())D(e,!0)}window.scPreview=ve;window.scPreviewCleanup=D;window.scPreviewCleanupAll=Te;C("Direct Preview API initialized");var v=null;function te(e={}){var t;if(typeof window.Lenis=="undefined")return console.warn("[ScrollCrafter] Lenis not loaded. Smooth scroll unavailable."),null;if(v)return console.log("[ScrollCrafter] Lenis already initialized, returning existing instance."),v;let o={...{lerp:.1,duration:1.2,smoothWheel:!0,smoothTouch:!1,wheelMultiplier:1,touchMultiplier:2,infinite:!1},...e};try{return v=new window.Lenis(o),window.gsap&&(window.gsap.ticker.add(n=>{v.raf(n*1e3)}),window.gsap.ticker.lagSmoothing(0)),window.ScrollTrigger&&(v.on("scroll",window.ScrollTrigger.update),window.ScrollTrigger.addEventListener("refreshInit",()=>{v&&v.stop()}),window.ScrollTrigger.addEventListener("refresh",()=>{v&&v.start()}),window.addEventListener("resize",()=>{window.ScrollTrigger.refresh()})),(t=window.ScrollCrafterConfig)!=null&&t.debug&&console.log("[ScrollCrafter] Lenis smooth scroll initialized",o),v}catch(n){return console.error("[ScrollCrafter] Failed to initialize Lenis:",n),null}}function Ce(){var e;v&&(v.destroy(),v=null,(e=window.ScrollCrafterConfig)!=null&&e.debug&&console.log("[ScrollCrafter] Lenis destroyed"))}function be(){return v}function xe(){v&&v.stop()}function Pe(){v&&v.start()}function ke(e,r={}){v&&v.scrollTo(e,{offset:0,duration:1.2,easing:o=>Math.min(1,1.001-Math.pow(2,-10*o)),...r})}var ee,re;if(typeof window!="undefined"&&((re=(ee=window.ScrollCrafterConfig)==null?void 0:ee.smoothScroll)==null?void 0:re.enabled)){let r=()=>{var t,n;let o=((n=(t=window.ScrollCrafterConfig)==null?void 0:t.smoothScroll)==null?void 0:n.options)||{};te(o)};document.readyState==="loading"?document.addEventListener("DOMContentLoaded",r):setTimeout(r,100)}typeof window!="undefined"&&(window.ScrollCrafterSmooth={init:te,destroy:Ce,getInstance:be,pause:xe,resume:Pe,scrollTo:ke});var ne,Ae=!!((ne=window.ScrollCrafterConfig)!=null&&ne.debug),_e="[ScrollCrafter]";"scrollRestoration"in history&&(history.scrollRestoration="manual");function Ee(){let e=P();e&&(e.clearScrollMemory("all"),e.config({ignoreMobileResize:!0}))}var oe=null;function $e(){clearTimeout(oe),oe=setTimeout(()=>{let e=P();e&&e.refresh()},200)}function ie(){window.scrollTo(0,0),Ee(),W(document),requestAnimationFrame(()=>{let e=P();e&&e.sort()})}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",ie):ie();window.addEventListener("load",()=>{let e=P();e&&(window.location.hash&&e.clearScrollMemory(),requestAnimationFrame(()=>{e.refresh(!0),Ae&&console.log(`${_e} Final ScrollTrigger refresh on window.load`)}))});window.addEventListener("pageshow",e=>{if(e.persisted){let r=P();r&&(r.clearScrollMemory(),r.refresh(!0))}});var se;(se=document.fonts)!=null&&se.ready&&document.fonts.ready.then(()=>{let e=P();e&&e.refresh()});window.addEventListener("elementor/popup/show",e=>{W(e.target);let r=P();r&&r.refresh()});var le=()=>{let e=0,r=()=>{var o;if(!((o=window.elementorFrontend)!=null&&o.hooks)){++e<50&&setTimeout(r,100);return}elementorFrontend.hooks.addAction("frontend/element_ready/global",t=>{var s;let n=t[0];if(n){if(elementorFrontend.isEditMode()){let a=n.getAttribute("data-id");a&&Me(a);let l=c=>{var f,p;try{if(window.ScrollCrafterForcePreview===c||((f=window.parent)==null?void 0:f.ScrollCrafterForcePreview)===c||((p=window.top)==null?void 0:p.ScrollCrafterForcePreview)===c||sessionStorage.getItem("sc_force_preview")===c)return!0}catch(i){}return!1},h=!!((s=window.ScrollCrafterConfig)!=null&&s.enableEditorAnimations),g=n.getAttribute("data-sc-preview")==="yes"||l(a);if(!h&&!g)return;g&&setTimeout(()=>{var c,f;window.ScrollCrafterForcePreview===a&&(window.ScrollCrafterForcePreview=!1),((c=window.parent)==null?void 0:c.ScrollCrafterForcePreview)===a&&(window.parent.ScrollCrafterForcePreview=!1),((f=window.top)==null?void 0:f.ScrollCrafterForcePreview)===a&&(window.top.ScrollCrafterForcePreview=!1),sessionStorage.removeItem("sc_force_preview")},100)}W(n,elementorFrontend.isEditMode()),elementorFrontend.isEditMode()&&$e()}})};r()};le();window.addEventListener("elementor/frontend/init",le);function Me(e){try{let r=P();if(!r)return;let o=r.getById("sc-"+e);o&&o.kill(!0)}catch(r){}}})();
+(() => {
+  // assets/src/frontend/core/registry.js
+  var registry = {};
+  var initializedNodes = /* @__PURE__ */ new WeakSet();
+  var pendingInits = /* @__PURE__ */ new Map();
+  var previewLocks = /* @__PURE__ */ new Set();
+  function setPreviewLock(widgetId, locked) {
+    if (locked) {
+      previewLocks.add(widgetId);
+    } else {
+      previewLocks.delete(widgetId);
+    }
+  }
+  function registerWidget(type, initFn) {
+    registry[type] = initFn;
+  }
+  function initWidgetsInScope(root = document, force = false) {
+    if (!root) {
+      return;
+    }
+    const nodes = [];
+    if (root.hasAttribute && root.hasAttribute("data-scrollcrafter-config")) {
+      nodes.push(root);
+    }
+    if (root.querySelectorAll) {
+      root.querySelectorAll("[data-scrollcrafter-config]").forEach((n) => nodes.push(n));
+    }
+    nodes.forEach((node) => {
+      var _a5;
+      const widgetId = node.getAttribute("data-id");
+      if (widgetId && previewLocks.has(widgetId)) {
+        if ((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.debug) {
+          console.log(`[ScrollCrafter] Skipping init for ${widgetId} - preview active`);
+        }
+        return;
+      }
+      const isAlreadyInit = initializedNodes.has(node);
+      if (!force && isAlreadyInit) {
+        return;
+      }
+      if (force) {
+        if (widgetId) {
+          if (pendingInits.has(widgetId)) {
+            clearTimeout(pendingInits.get(widgetId));
+          }
+          pendingInits.set(widgetId, setTimeout(() => {
+            pendingInits.delete(widgetId);
+            if (!previewLocks.has(widgetId)) {
+              doInitWidget(node, force);
+            }
+          }, 250));
+          return;
+        }
+      }
+      doInitWidget(node, force);
+    });
+  }
+  function doInitWidget(node, force) {
+    var _a5, _b2, _c, _d;
+    if (typeof node.__sc_cleanup === "function") {
+      try {
+        node.__sc_cleanup();
+      } catch (e) {
+        if ((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.debug) {
+          console.warn("[ScrollCrafter] Cleanup error:", e);
+        }
+      }
+      delete node.__sc_cleanup;
+    }
+    const raw = node.getAttribute("data-scrollcrafter-config");
+    if (!raw) return;
+    let config;
+    try {
+      config = JSON.parse(raw);
+    } catch (e) {
+      if ((_b2 = window.ScrollCrafterConfig) == null ? void 0 : _b2.debug) {
+        console.warn("[ScrollCrafter] Invalid config JSON:", e, node);
+      }
+      return;
+    }
+    const type = config.widget;
+    if (!type || typeof registry[type] !== "function") {
+      return;
+    }
+    try {
+      if ((_c = window.ScrollCrafterConfig) == null ? void 0 : _c.debug) {
+        console.log(`[ScrollCrafter] Initializing widget: "${type}"`, node);
+      }
+      const cleanup = registry[type](node, config);
+      if (typeof cleanup === "function") {
+        node.__sc_cleanup = cleanup;
+      }
+      initializedNodes.add(node);
+      node.dispatchEvent(
+        new CustomEvent("scrollcrafter:init", {
+          bubbles: true,
+          detail: { type, config }
+        })
+      );
+    } catch (e) {
+      if ((_d = window.ScrollCrafterConfig) == null ? void 0 : _d.debug) {
+        console.error(`[ScrollCrafter] Init error for "${type}":`, e);
+      }
+    }
+  }
+
+  // assets/src/frontend/core/gsap-loader.js
+  function getGsap() {
+    if (typeof window === "undefined") return null;
+    const { gsap } = window;
+    if (!gsap) {
+      console.error("[ScrollCrafter] GSAP core not found! Make sure gsap.min.js is loaded.");
+      return null;
+    }
+    if (window.ScrollTrigger && gsap.registerPlugin) {
+      try {
+        gsap.registerPlugin(window.ScrollTrigger);
+      } catch (e) {
+      }
+    }
+    return gsap;
+  }
+  function getScrollTrigger() {
+    if (typeof window === "undefined") return null;
+    if (!window.ScrollTrigger) {
+      console.warn("[ScrollCrafter] ScrollTrigger not found! Animations may not work.");
+      return null;
+    }
+    return window.ScrollTrigger;
+  }
+
+  // assets/src/frontend/core/utils.js
+  var compiledCalcs = /* @__PURE__ */ new Map();
+  function parseSmartValue(val, contextNode) {
+    if (typeof val !== "string") return val;
+    if (val === "calc_scroll_width_neg") val = "calc(sw * -1)";
+    if (val === "calc_scroll_width") val = "calc(sw)";
+    if (val === "calc_100vh") val = "calc(vh)";
+    const calcMatch = val.match(/^calc\s*\((.*)\)$/i);
+    if (calcMatch) {
+      const expression = calcMatch[1].replace(/(\d)\s*(sw|cw|ch|vw|vh)\b/gi, "$1 * $2");
+      return (index, target) => {
+        const el = target || contextNode;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const cw = el.clientWidth || 0;
+        const ch = el.clientHeight || 0;
+        const sw = Math.max(0, el.scrollWidth - cw);
+        const varsMap = {
+          sw,
+          cw,
+          ch,
+          vw,
+          vh,
+          center: (vw - cw) / 2,
+          vcenter: (vh - ch) / 2,
+          end: vw - cw
+        };
+        let finalExpr = expression;
+        const sortedKeys = ["vcenter", "center", "sw", "cw", "ch", "vw", "vh", "end"];
+        sortedKeys.forEach((key) => {
+          finalExpr = finalExpr.replace(new RegExp(`\\b${key}\\b`, "gi"), varsMap[key]);
+        });
+        let fn = compiledCalcs.get(finalExpr);
+        if (!fn) {
+          const safetyCheck = finalExpr.replace(/[0-9\.\+\-\*\/\(\)\s]/g, "");
+          if (safetyCheck.length > 0) {
+            console.warn("[ScrollCrafter] Unsafe characters in result expression:", safetyCheck);
+            return 0;
+          }
+          try {
+            fn = new Function("return " + finalExpr);
+            compiledCalcs.set(finalExpr, fn);
+          } catch (e) {
+            console.error("[ScrollCrafter] Compile error:", e, finalExpr);
+            return 0;
+          }
+        }
+        try {
+          return fn();
+        } catch (e) {
+          console.error("[ScrollCrafter] Calc exec error:", e);
+          return 0;
+        }
+      };
+    }
+    return val;
+  }
+  function parseMacros(vars, contextNode) {
+    if (!vars || typeof vars !== "object") return vars;
+    const out = { ...vars };
+    Object.keys(out).forEach((key) => {
+      const val = out[key];
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        out[key] = parseMacros(val, contextNode);
+        return;
+      }
+      out[key] = parseSmartValue(val, contextNode);
+    });
+    return out;
+  }
+
+  // assets/src/frontend/core/responsive.js
+  var cachedRanges = null;
+  var cachedSpecialConditions = null;
+  var SPECIAL_QUERIES = {
+    "reduced-motion": "(prefers-reduced-motion: reduce)"
+  };
+  var PRO_SPECIAL_QUERIES = {
+    "dark": "(prefers-color-scheme: dark)",
+    "retina": "(-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi)",
+    "no-hover": "(hover: none)"
+  };
+  function buildBreakpointRanges() {
+    var _a5;
+    const sysBreakpoints = ((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.breakpoints) || [];
+    if (!sysBreakpoints.length) {
+      return [{ slug: "_default_desktop", query: "(min-width: 1px)", min: 1, max: Infinity }];
+    }
+    const sortedBps = [...sysBreakpoints].sort((a, b) => a.value - b.value);
+    const ranges = [];
+    let prevMax = 0;
+    sortedBps.forEach((bp) => {
+      const min = prevMax + 1;
+      const max = bp.value;
+      prevMax = max;
+      const query = min === 1 ? `(max-width: ${max}px)` : `(min-width: ${min}px) and (max-width: ${max}px)`;
+      ranges.push({ slug: bp.key, query, min, max });
+    });
+    ranges.push({
+      slug: "_default_desktop",
+      query: `(min-width: ${prevMax + 1}px)`,
+      min: prevMax + 1,
+      max: Infinity
+    });
+    return ranges;
+  }
+  function getBreakpointRanges() {
+    if (cachedRanges === null) {
+      cachedRanges = buildBreakpointRanges();
+    }
+    return cachedRanges;
+  }
+  function isPro() {
+    var _a5;
+    return !!((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.isPro);
+  }
+  function isSpecialConditionActive(tag) {
+    let query = SPECIAL_QUERIES[tag];
+    if (!query && isPro()) {
+      query = PRO_SPECIAL_QUERIES[tag];
+    }
+    if (!query) return false;
+    if (cachedSpecialConditions === null) {
+      cachedSpecialConditions = {};
+    }
+    if (cachedSpecialConditions[tag] === void 0) {
+      cachedSpecialConditions[tag] = window.matchMedia(query).matches;
+    }
+    return cachedSpecialConditions[tag];
+  }
+  function isReducedMotionPreferred() {
+    return isSpecialConditionActive("reduced-motion");
+  }
+  function resolveConfigForBreakpoint(config, range) {
+    var _a5;
+    if (config.disabled && config.disabled.includes(range.slug)) {
+      return null;
+    }
+    if (isReducedMotionPreferred() && ((_a5 = config.conditions) == null ? void 0 : _a5["reduced-motion"])) {
+      return config.conditions["reduced-motion"];
+    }
+    if (range.slug !== "_default_desktop") {
+      if (config.conditions) {
+        for (const condition of Object.values(config.conditions)) {
+          if (condition.tags && condition.tags.includes(range.slug)) {
+            return condition.config || condition;
+          }
+        }
+      }
+      if (config.media && config.media[range.slug]) {
+        return config.media[range.slug];
+      }
+    }
+    return config.animation || config;
+  }
+  function createResponsiveContext(gsap, config, callback, $widget = null) {
+    var _a5, _b2, _c;
+    const debug2 = !!((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.debug);
+    const ranges = getBreakpointRanges();
+    const results = [];
+    const disabledBreakpoints = config.disabled || [];
+    const forceBreakpoint = ((_b2 = $widget == null ? void 0 : $widget.getAttribute) == null ? void 0 : _b2.call($widget, "data-scrollcrafter-force-breakpoint")) || ((_c = $widget == null ? void 0 : $widget.attr) == null ? void 0 : _c.call($widget, "data-scrollcrafter-force-breakpoint")) || null;
+    if (forceBreakpoint) {
+      if (debug2) console.log(`[SC Responsive] Force breakpoint detected: ${forceBreakpoint}`);
+      let targetRange = ranges.find((r) => r.slug === forceBreakpoint);
+      if (!targetRange && forceBreakpoint === "desktop") {
+        targetRange = ranges.find((r) => r.slug === "_default_desktop");
+      }
+      if (targetRange && !disabledBreakpoints.includes(targetRange.slug)) {
+        const activeConfig = resolveConfigForBreakpoint(config, targetRange);
+        if (activeConfig) {
+          if (debug2) console.log(`[SC Responsive] Active (forced): ${targetRange.slug}`, activeConfig);
+          const result = callback(activeConfig, targetRange);
+          if (result) results.push(result);
+        }
+      }
+      return () => {
+        if (debug2) console.log("[SC Responsive] Cleanup (forced mode - no matchMedia)");
+        return results;
+      };
+    }
+    const mm = gsap.matchMedia();
+    ranges.forEach((range) => {
+      if (disabledBreakpoints.includes(range.slug)) {
+        if (debug2) console.log(`[SC Responsive] Skipping disabled: ${range.slug}`);
+        return;
+      }
+      mm.add(range.query, () => {
+        const activeConfig = resolveConfigForBreakpoint(config, range);
+        if (activeConfig) {
+          if (debug2) {
+            console.log(`[SC Responsive] Active: ${range.slug}`, activeConfig);
+          }
+          const result = callback(activeConfig, range);
+          if (result) results.push(result);
+        }
+      });
+    });
+    return () => {
+      if (debug2) console.log("[SC Responsive] Cleaning up matchMedia contexts");
+      mm.revert();
+      return results;
+    };
+  }
+
+  // assets/src/frontend/widgets/scroll-animation.js
+  registerWidget("scroll_animation", (node, config) => {
+    var _a5;
+    const debug2 = !!((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.debug);
+    const logPrefix2 = `[ScrollCrafter][${config.id || "anim"}]`;
+    const logConfig = (label, cfg) => {
+      var _a6, _b2, _c;
+      if (!debug2) return;
+      console.group(`${logPrefix2} ${label}`);
+      console.log("Method:", (_a6 = cfg.animation) == null ? void 0 : _a6.method);
+      console.log("Vars:", (_b2 = cfg.animation) == null ? void 0 : _b2.vars);
+      console.log("Vars2:", (_c = cfg.animation) == null ? void 0 : _c.vars2);
+      console.log("Target:", cfg.target || config.target);
+      console.groupEnd();
+    };
+    let gsap;
+    try {
+      gsap = getGsap();
+      getScrollTrigger();
+    } catch (e) {
+      if (debug2) console.error(`${logPrefix2} GSAP missing`, e);
+      return;
+    }
+    const createTween = (cfg, contextNode) => {
+      var _a6, _b2, _c, _d, _e;
+      const targetConfig = cfg.target || config.target || {};
+      let elements = [];
+      if (targetConfig.type === "wrapper") {
+        elements = [contextNode];
+      } else if (targetConfig.selector) {
+        elements = contextNode.querySelectorAll(targetConfig.selector);
+      } else {
+        elements = [contextNode];
+      }
+      if (!elements.length) {
+        if (debug2) console.warn(`${logPrefix2} No elements found for selector:`, targetConfig.selector);
+        return null;
+      }
+      const animConfig = cfg.animation || {};
+      const method = animConfig.method || "from";
+      const calcContext = elements[0];
+      if (animConfig.split) {
+        if (window.SplitText) {
+          try {
+            const requestedType = animConfig.split.toLowerCase();
+            const existingSplit = (_a6 = elements[0]) == null ? void 0 : _a6._splitText;
+            const existingType = (_b2 = elements[0]) == null ? void 0 : _b2._splitTextType;
+            let split;
+            const typeMatches = existingType === requestedType;
+            const hasUsableSplit = existingSplit && (((_c = existingSplit.chars) == null ? void 0 : _c.length) || ((_d = existingSplit.words) == null ? void 0 : _d.length) || ((_e = existingSplit.lines) == null ? void 0 : _e.length));
+            if (hasUsableSplit && typeMatches) {
+              split = existingSplit;
+            } else {
+              if (existingSplit) {
+                existingSplit.revert();
+              }
+              split = new SplitText(elements, { type: requestedType });
+              elements.forEach((el) => {
+                el._splitText = split;
+                el._splitTextType = requestedType;
+              });
+            }
+            if (requestedType.includes("char") && split.chars && split.chars.length) elements = split.chars;
+            else if (requestedType.includes("word") && split.words && split.words.length) elements = split.words;
+            else if (requestedType.includes("line") && split.lines && split.lines.length) elements = split.lines;
+            if (elements.length) {
+              gsap.set(elements, { display: "inline-block", backfaceVisibility: "hidden" });
+            }
+          } catch (e) {
+            if (debug2) console.warn(`${logPrefix2} SplitText error:`, e);
+          }
+        } else {
+          if (debug2) console.warn(`${logPrefix2} SplitText not found`);
+        }
+      }
+      const vars = parseMacros({ ...animConfig.vars }, calcContext);
+      const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, calcContext) : null;
+      const ensureAutoAlpha = (v) => {
+        if (v && v.opacity !== void 0) {
+          v.autoAlpha = v.opacity;
+          delete v.opacity;
+        }
+      };
+      ensureAutoAlpha(vars);
+      ensureAutoAlpha(vars2);
+      if (vars.scrollTrigger) {
+        vars.scrollTrigger.trigger = contextNode;
+        if (config.id) vars.scrollTrigger.id = "sc-" + config.id;
+        if (typeof vars.scrollTrigger.invalidateOnRefresh === "undefined") vars.scrollTrigger.invalidateOnRefresh = true;
+        if (vars.scrollTrigger.pin) {
+          if (typeof vars.scrollTrigger.anticipatePin === "undefined") vars.scrollTrigger.anticipatePin = 0.5;
+        }
+      }
+      if (vars2 && vars2.scrollTrigger) {
+        vars2.scrollTrigger.trigger = contextNode;
+        if (config.id) vars2.scrollTrigger.id = "sc-" + config.id;
+      }
+      if (method === "from" || method === "fromTo") {
+        vars.immediateRender = true;
+        if (vars.autoAlpha === 0 || vars.opacity === 0) {
+          elements.forEach((el) => {
+            if (el.style) el.style.visibility = "hidden";
+          });
+        }
+      }
+      if (vars.scrollTrigger) {
+        vars.immediateRender = true;
+      }
+      let tween;
+      const tweenVars = { ...vars, overwrite: "auto", lazy: false };
+      if (method === "fromTo" && vars2) {
+        tween = gsap.fromTo(elements, tweenVars, { ...vars2, overwrite: "auto" });
+      } else if (typeof gsap[method] === "function") {
+        tween = gsap[method](elements, tweenVars);
+      }
+      if (!tween && debug2) console.warn(`${logPrefix2} Unknown GSAP method:`, method);
+      return tween;
+    };
+    const tweens = [];
+    const handlePreview = (tween) => {
+      const isManualPreview = window.ScrollCrafterForcePreview === config.id || window.parent && window.parent.ScrollCrafterForcePreview === config.id || node.getAttribute("data-sc-preview") === "yes";
+      if (isManualPreview && tween) {
+        if (debug2) console.log(`${logPrefix2} Manual preview detected, force playing animation`);
+        if (tween.scrollTrigger) {
+          const st = tween.scrollTrigger;
+          if (st.pin || st.vars && st.vars.scrub) {
+            if (debug2) console.log(`${logPrefix2} Pin/Scrub detected, animating progress`);
+            gsap.fromTo(st, { progress: 0 }, {
+              progress: 1,
+              duration: 1.5,
+              ease: "power1.inOut"
+            });
+          } else {
+            st.disable();
+            tween.restart(true);
+          }
+        } else {
+          tween.restart(true);
+        }
+      }
+    };
+    const cleanup = createResponsiveContext(gsap, config, (activeConfig, range) => {
+      logConfig(`Active: ${range.slug}`, { ...config, animation: activeConfig });
+      const tween = createTween({ ...config, animation: activeConfig }, node);
+      if (tween) {
+        tweens.push(tween);
+        handlePreview(tween);
+      }
+      return tween;
+    }, node);
+    return () => {
+      if (debug2) console.log(`${logPrefix2} Cleaning up...`);
+      cleanup();
+      tweens.forEach((t) => {
+        if (t.scrollTrigger) {
+          t.scrollTrigger.kill(true);
+        }
+        t.kill();
+      });
+    };
+  });
+
+  // assets/src/frontend/widgets/scroll-timeline.js
+  function getPinElement(node) {
+    return node;
+  }
+  function createTimeline(node, configData, globalConfig, debug2, logPrefix2, gsap) {
+    const pinElem = getPinElement(node);
+    const targetCfg = configData.target || globalConfig.target || {};
+    let mainTargets = [pinElem];
+    if (targetCfg.selector && targetCfg.type !== "wrapper") {
+      const found = pinElem.querySelectorAll(targetCfg.selector);
+      if (found.length) mainTargets = Array.from(found);
+    }
+    const timelineVars = { ...configData.timelineVars || {} };
+    if (timelineVars.defaults) {
+      timelineVars.defaults = parseMacros(timelineVars.defaults, pinElem);
+    }
+    if (!timelineVars.scrollTrigger) timelineVars.scrollTrigger = {};
+    const st = timelineVars.scrollTrigger;
+    if (!st.trigger) st.trigger = pinElem;
+    if (st.pin === true) st.pin = pinElem;
+    if (st.pin) {
+      gsap.set(st.pin, { transition: "none" });
+    }
+    if (typeof st.invalidateOnRefresh === "undefined") st.invalidateOnRefresh = true;
+    if (st.pin) {
+      if (typeof st.anticipatePin === "undefined") st.anticipatePin = 0.5;
+    }
+    if (globalConfig.id && !st.id) st.id = `sc-${globalConfig.id}`;
+    const tl = gsap.timeline(timelineVars);
+    const steps = configData.steps || [];
+    steps.forEach((step, index) => {
+      const method = step.method || "to";
+      const position = step.position;
+      if (method === "addLabel") {
+        const label = step.vars;
+        if (typeof label === "string") tl.addLabel(label, position);
+        return;
+      }
+      if (method === "call") return;
+      let targets = mainTargets;
+      if (step.selector) {
+        const found = pinElem.querySelectorAll(step.selector);
+        if (!found.length) {
+          if (debug2) console.warn(`${logPrefix2} Step ${index + 1}: selector "${step.selector}" not found`);
+          return;
+        }
+        targets = Array.from(found);
+      }
+      const vars = parseMacros(step.vars || {}, pinElem);
+      const vars2 = step.vars2 ? parseMacros(step.vars2, pinElem) : null;
+      const ensureAutoAlpha = (v) => {
+        if (v && v.opacity !== void 0) {
+          v.autoAlpha = v.opacity;
+          delete v.opacity;
+        }
+      };
+      ensureAutoAlpha(vars);
+      ensureAutoAlpha(vars2);
+      gsap.set(targets, {
+        transition: "none",
+        translate: "none",
+        rotate: "none",
+        scale: "none"
+      });
+      if (step.split && window.SplitText) {
+        try {
+          const split = new SplitText(targets, { type: step.split });
+          if (split.chars && split.chars.length) targets = split.chars;
+          else if (split.words && split.words.length) targets = split.words;
+          else if (split.lines && split.lines.length) targets = split.lines;
+          if (targets.length) {
+            gsap.set(targets, { display: "inline-block", backfaceVisibility: "hidden" });
+          }
+        } catch (e) {
+          if (debug2) console.warn(`${logPrefix2} SplitText error:`, e);
+        }
+      }
+      if (method === "from" || method === "fromTo") {
+        vars.immediateRender = true;
+        if (vars.autoAlpha === 0 || vars.opacity === 0) {
+          targets.forEach((el) => {
+            if (el.style) el.style.visibility = "hidden";
+          });
+        }
+      }
+      try {
+        let stepTween;
+        const tweenVars = { ...vars, overwrite: "auto", lazy: false };
+        if (method === "fromTo" && vars2) {
+          stepTween = tl.fromTo(targets, tweenVars, { ...vars2, overwrite: "auto", lazy: false }, position);
+        } else if (typeof tl[method] === "function") {
+          stepTween = tl[method](targets, tweenVars, position);
+        }
+      } catch (e) {
+        if (debug2) console.error(`${logPrefix2} Error step ${index + 1}`, e);
+      }
+    });
+    return tl;
+  }
+  registerWidget("scroll_timeline", (node, config) => {
+    var _a5;
+    const debug2 = !!((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.debug);
+    const logPrefix2 = `[ScrollCrafter][timeline:${config.id || "tl"}]`;
+    const logConfig = (label, cfg) => {
+      if (!debug2) return;
+      console.group(`${logPrefix2} ${label}`);
+      console.log("Details:", cfg);
+      console.groupEnd();
+    };
+    let gsap;
+    try {
+      gsap = getGsap();
+      getScrollTrigger();
+    } catch (e) {
+      if (debug2) console.error(`${logPrefix2} GSAP missing`, e);
+      return;
+    }
+    const timelines = [];
+    const handlePreview = (tl) => {
+      const isManualPreview = window.ScrollCrafterForcePreview === config.id || window.parent && window.parent.ScrollCrafterForcePreview === config.id || node.getAttribute("data-sc-preview") === "yes";
+      if (isManualPreview && tl) {
+        if (debug2) console.log(`${logPrefix2} Manual preview detected, force playing timeline`);
+        if (tl.scrollTrigger) {
+          const st = tl.scrollTrigger;
+          if (st.pin || st.vars && st.vars.scrub) {
+            if (debug2) console.log(`${logPrefix2} Pin/Scrub detected, animating progress`);
+            gsap.fromTo(st, { progress: 0 }, {
+              progress: 1,
+              duration: 1.5,
+              ease: "power1.inOut"
+            });
+          } else {
+            st.disable();
+            tl.restart(true);
+          }
+        } else {
+          tl.restart(true);
+        }
+      }
+    };
+    const cleanup = createResponsiveContext(gsap, config, (activeConfig, range) => {
+      const configWithSteps = activeConfig.steps ? activeConfig : config;
+      if (!configWithSteps.steps || configWithSteps.steps.length === 0) {
+        return null;
+      }
+      logConfig(`Active: ${range.slug}`, activeConfig);
+      const tl = createTimeline(node, configWithSteps, config, debug2, logPrefix2 + `[${range.slug}]`, gsap);
+      if (tl) {
+        timelines.push(tl);
+        handlePreview(tl);
+      }
+      return tl;
+    }, node);
+    return () => {
+      if (debug2) console.log(`${logPrefix2} Cleaning up...`);
+      cleanup();
+      timelines.forEach((t) => {
+        if (t.scrollTrigger) {
+          t.scrollTrigger.kill(true);
+        }
+        t.kill();
+      });
+    };
+  });
+
+  // assets/src/frontend/preview-player.js
+  var _a;
+  var DEBUG = !!((_a = window.ScrollCrafterConfig) == null ? void 0 : _a.debug);
+  var log = (...args) => DEBUG && console.log("[SC Preview]", ...args);
+  var activePreview = /* @__PURE__ */ new Map();
+  function cleanupPreview(widgetId, releaseLock = true) {
+    if (activePreview.has(widgetId)) {
+      const { tween, elements } = activePreview.get(widgetId);
+      log(`Cleaning up existing preview for ${widgetId}`);
+      if (tween) {
+        if (tween.scrollTrigger) {
+          tween.scrollTrigger.kill(true);
+        }
+        tween.progress(1);
+        tween.kill();
+      }
+      if (elements && elements.length) {
+        const gsap = getGsap();
+        if (gsap) {
+          gsap.set(elements, { clearProps: "all" });
+        }
+      }
+      activePreview.delete(widgetId);
+    }
+    if (releaseLock) {
+      setPreviewLock(widgetId, false);
+      log(`Preview lock released for ${widgetId}`);
+    }
+  }
+  function createAnimation(node, animConfig, config) {
+    var _a5, _b2, _c, _d, _e, _f, _g, _h;
+    const gsap = getGsap();
+    if (!gsap) {
+      console.error("[SC Preview] GSAP not available");
+      return null;
+    }
+    const targetConfig = config.target || {};
+    let elements = [];
+    if (targetConfig.type === "wrapper") {
+      elements = [node];
+    } else if (targetConfig.selector) {
+      elements = node.querySelectorAll(targetConfig.selector);
+    } else {
+      elements = [node];
+    }
+    if (!elements.length) {
+      log("No target elements found");
+      return null;
+    }
+    const method = animConfig.method || "from";
+    let split = null;
+    if (animConfig.split && window.SplitText) {
+      try {
+        const requestedType = animConfig.split.toLowerCase();
+        const existingSplit = (_a5 = elements[0]) == null ? void 0 : _a5._splitText;
+        const existingType = (_b2 = elements[0]) == null ? void 0 : _b2._splitTextType;
+        const typeMatches = existingType === requestedType;
+        const hasUsableSplit = existingSplit && (((_c = existingSplit.chars) == null ? void 0 : _c.length) || ((_d = existingSplit.words) == null ? void 0 : _d.length) || ((_e = existingSplit.lines) == null ? void 0 : _e.length));
+        if (hasUsableSplit && typeMatches) {
+          log(`Reusing existing SplitText (type: ${existingType})`);
+          split = existingSplit;
+        } else {
+          if (existingSplit) {
+            log(`Type mismatch (${existingType} vs ${requestedType}), reverting and creating new`);
+            existingSplit.revert();
+          } else {
+            log("Creating fresh SplitText with type:", requestedType);
+          }
+          split = new SplitText(elements, { type: requestedType });
+          log("SplitText result:", {
+            chars: ((_f = split.chars) == null ? void 0 : _f.length) || 0,
+            words: ((_g = split.words) == null ? void 0 : _g.length) || 0,
+            lines: ((_h = split.lines) == null ? void 0 : _h.length) || 0
+          });
+          elements.forEach((el) => {
+            el._splitText = split;
+            el._splitTextType = requestedType;
+          });
+        }
+        if (requestedType.includes("char") && split.chars && split.chars.length > 0) {
+          elements = split.chars;
+        } else if (requestedType.includes("word") && split.words && split.words.length > 0) {
+          elements = split.words;
+        } else if (requestedType.includes("line") && split.lines && split.lines.length > 0) {
+          elements = split.lines;
+        }
+        log(`SplitText: ${elements.length} elements (type: ${requestedType})`);
+        if (elements.length > 0) {
+          gsap.set(elements, { display: "inline-block" });
+        }
+      } catch (e) {
+        console.warn("[SC Preview] SplitText error:", e);
+      }
+    }
+    const vars = parseMacros({ ...animConfig.vars }, elements[0]);
+    const vars2 = animConfig.vars2 ? parseMacros({ ...animConfig.vars2 }, elements[0]) : null;
+    gsap.set(elements, {
+      transition: "none",
+      translate: "none",
+      rotate: "none",
+      scale: "none"
+    });
+    delete vars.scrollTrigger;
+    if (vars2) delete vars2.scrollTrigger;
+    if (method === "from" && vars.immediateRender === void 0) {
+      vars.immediateRender = true;
+    }
+    log(`Creating ${method} tween for ${elements.length} elements`);
+    let tween;
+    if (method === "fromTo" && vars2) {
+      tween = gsap.fromTo(elements, vars, vars2);
+    } else if (typeof gsap[method] === "function") {
+      tween = gsap[method](elements, vars);
+    }
+    if (tween && (method === "from" || method === "fromTo")) {
+      tween.progress(1).progress(0);
+    }
+    return { tween, elements };
+  }
+  function scPreview(widgetId, config, breakpoint) {
+    log(`Preview requested: widget=${widgetId}, breakpoint=${breakpoint}`);
+    setPreviewLock(widgetId, true);
+    log(`Preview lock acquired for ${widgetId}`);
+    const node = document.querySelector(`[data-id="${widgetId}"]`);
+    if (!node) {
+      console.error(`[SC Preview] Widget ${widgetId} not found in DOM`);
+      setPreviewLock(widgetId, false);
+      return false;
+    }
+    cleanupPreview(widgetId, false);
+    const ranges = getBreakpointRanges();
+    let targetRange = ranges.find((r) => r.slug === breakpoint);
+    if (!targetRange && breakpoint === "desktop") {
+      targetRange = ranges.find((r) => r.slug === "_default_desktop");
+    }
+    if (!targetRange) {
+      targetRange = ranges[0];
+    }
+    const activeConfig = resolveConfigForBreakpoint(config, targetRange);
+    if (!activeConfig) {
+      log("No active config for breakpoint:", breakpoint);
+      setPreviewLock(widgetId, false);
+      return false;
+    }
+    log("Active config:", activeConfig);
+    const result = createAnimation(node, activeConfig, config);
+    if (!result || !result.tween) {
+      log("Failed to create animation");
+      setPreviewLock(widgetId, false);
+      return false;
+    }
+    activePreview.set(widgetId, result);
+    const originalOnComplete = result.tween.vars.onComplete;
+    result.tween.vars.onComplete = function() {
+      log(`Preview animation completed for ${widgetId}`);
+      if (originalOnComplete) originalOnComplete.apply(this, arguments);
+      setTimeout(() => {
+        setPreviewLock(widgetId, false);
+        log(`Preview lock released for ${widgetId}`);
+      }, 2e3);
+    };
+    log("Playing animation");
+    result.tween.restart(true);
+    return true;
+  }
+  function cleanupAllPreviews() {
+    log(`Cleaning up all previews (${activePreview.size} active)`);
+    for (const widgetId of activePreview.keys()) {
+      cleanupPreview(widgetId, true);
+    }
+  }
+  window.scPreview = scPreview;
+  window.scPreviewCleanup = cleanupPreview;
+  window.scPreviewCleanupAll = cleanupAllPreviews;
+  log("Direct Preview API initialized");
+
+  // assets/src/frontend/core/smooth-scroll.js
+  var lenisInstance = null;
+  function initSmoothScroll(options = {}) {
+    var _a5, _b2, _c;
+    const debug2 = !!((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.debug);
+    if (typeof window.Lenis === "undefined") {
+      if (debug2) console.warn("[ScrollCrafter] Lenis not loaded. Smooth scroll unavailable.");
+      return null;
+    }
+    if (lenisInstance) {
+      if (debug2) console.log("[ScrollCrafter] Lenis already initialized, returning existing instance.");
+      return lenisInstance;
+    }
+    const defaultOptions = {
+      lerp: 0.1,
+      duration: 1.2,
+      smoothWheel: true,
+      smoothTouch: false,
+      wheelMultiplier: 1,
+      touchMultiplier: 2,
+      infinite: false
+    };
+    const finalOptions = { ...defaultOptions, ...options };
+    try {
+      lenisInstance = new window.Lenis(finalOptions);
+      if (window.gsap) {
+        window.gsap.ticker.add((time) => {
+          lenisInstance.raf(time * 1e3);
+        });
+        window.gsap.ticker.lagSmoothing(0);
+      }
+      if (window.ScrollTrigger) {
+        lenisInstance.on("scroll", window.ScrollTrigger.update);
+        window.ScrollTrigger.addEventListener("refreshInit", () => {
+          if (lenisInstance) lenisInstance.stop();
+        });
+        window.ScrollTrigger.addEventListener("refresh", () => {
+          if (lenisInstance) lenisInstance.start();
+        });
+        window.addEventListener("resize", () => {
+          window.ScrollTrigger.refresh();
+        });
+        window.addEventListener("elementor/popup/show", () => {
+          if (lenisInstance) lenisInstance.stop();
+        });
+        window.addEventListener("elementor/popup/hide", () => {
+          if (lenisInstance) lenisInstance.start();
+        });
+      }
+      if ((_b2 = window.ScrollCrafterConfig) == null ? void 0 : _b2.debug) {
+        console.log("[ScrollCrafter] Lenis smooth scroll initialized", finalOptions);
+      }
+      return lenisInstance;
+    } catch (error) {
+      if ((_c = window.ScrollCrafterConfig) == null ? void 0 : _c.debug) {
+        console.error("[ScrollCrafter] Failed to initialize Lenis:", error);
+      }
+      return null;
+    }
+  }
+  function destroySmoothScroll() {
+    var _a5;
+    if (lenisInstance) {
+      lenisInstance.destroy();
+      lenisInstance = null;
+      if ((_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.debug) {
+        console.log("[ScrollCrafter] Lenis destroyed");
+      }
+    }
+  }
+  function getLenisInstance() {
+    return lenisInstance;
+  }
+  function pauseSmoothScroll() {
+    if (lenisInstance) {
+      lenisInstance.stop();
+    }
+  }
+  function resumeSmoothScroll() {
+    if (lenisInstance) {
+      lenisInstance.start();
+    }
+  }
+  function scrollTo(target, options = {}) {
+    if (lenisInstance) {
+      lenisInstance.scrollTo(target, {
+        offset: 0,
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        // Expo ease out
+        ...options
+      });
+    }
+  }
+  var _a2, _b;
+  if (typeof window !== "undefined") {
+    const shouldInit = (_b = (_a2 = window.ScrollCrafterConfig) == null ? void 0 : _a2.smoothScroll) == null ? void 0 : _b.enabled;
+    if (shouldInit) {
+      const init2 = () => {
+        var _a5, _b2;
+        const options = ((_b2 = (_a5 = window.ScrollCrafterConfig) == null ? void 0 : _a5.smoothScroll) == null ? void 0 : _b2.options) || {};
+        initSmoothScroll(options);
+      };
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init2);
+      } else {
+        setTimeout(init2, 100);
+      }
+    }
+  }
+  if (typeof window !== "undefined") {
+    window.ScrollCrafterSmooth = {
+      init: initSmoothScroll,
+      destroy: destroySmoothScroll,
+      getInstance: getLenisInstance,
+      pause: pauseSmoothScroll,
+      resume: resumeSmoothScroll,
+      scrollTo
+    };
+  }
+
+  // assets/src/frontend/index.js
+  var _a3;
+  var debug = !!((_a3 = window.ScrollCrafterConfig) == null ? void 0 : _a3.debug);
+  var logPrefix = "[ScrollCrafter]";
+  if ("scrollRestoration" in history) {
+    history.scrollRestoration = "manual";
+  }
+  function configureScrollTrigger() {
+    const ST = getScrollTrigger();
+    if (!ST) return;
+    ST.clearScrollMemory("all");
+    ST.config({
+      ignoreMobileResize: true
+    });
+  }
+  var _editorRefreshTimer = null;
+  function debouncedEditorRefresh() {
+    clearTimeout(_editorRefreshTimer);
+    _editorRefreshTimer = setTimeout(() => {
+      const ST = getScrollTrigger();
+      if (ST) ST.refresh();
+    }, 200);
+  }
+  function init() {
+    window.scrollTo(0, 0);
+    configureScrollTrigger();
+    initWidgetsInScope(document);
+    requestAnimationFrame(() => {
+      const ST = getScrollTrigger();
+      if (ST) ST.sort();
+    });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+  window.addEventListener("load", () => {
+    const ST = getScrollTrigger();
+    if (!ST) return;
+    if (window.location.hash) {
+      ST.clearScrollMemory();
+    }
+    requestAnimationFrame(() => {
+      ST.refresh(true);
+      if (debug) console.log(`${logPrefix} Final ScrollTrigger refresh on window.load`);
+    });
+  });
+  window.addEventListener("pageshow", (e) => {
+    if (e.persisted) {
+      const ST = getScrollTrigger();
+      if (ST) {
+        ST.clearScrollMemory();
+        ST.refresh(true);
+      }
+    }
+  });
+  var _a4;
+  if ((_a4 = document.fonts) == null ? void 0 : _a4.ready) {
+    document.fonts.ready.then(() => {
+      const ST = getScrollTrigger();
+      if (ST) ST.refresh();
+    });
+  }
+  window.addEventListener("elementor/popup/show", (e) => {
+    initWidgetsInScope(e.target);
+    const ST = getScrollTrigger();
+    if (ST) ST.refresh();
+  });
+  var registerHooks = () => {
+    let attempts = 0;
+    const tryRegister = () => {
+      var _a5;
+      if (!((_a5 = window.elementorFrontend) == null ? void 0 : _a5.hooks)) {
+        if (++attempts < 50) {
+          setTimeout(tryRegister, 100);
+        }
+        return;
+      }
+      elementorFrontend.hooks.addAction("frontend/element_ready/global", ($scope) => {
+        var _a6;
+        const node = $scope[0];
+        if (!node) return;
+        if (elementorFrontend.isEditMode()) {
+          const widgetId = node.getAttribute("data-id");
+          if (widgetId) killTriggerByWidgetId(widgetId);
+          const getForcePreviewFlag = (id) => {
+            var _a7, _b2;
+            try {
+              if (window.ScrollCrafterForcePreview === id) return true;
+              if (((_a7 = window.parent) == null ? void 0 : _a7.ScrollCrafterForcePreview) === id) return true;
+              if (((_b2 = window.top) == null ? void 0 : _b2.ScrollCrafterForcePreview) === id) return true;
+              if (sessionStorage.getItem("sc_force_preview") === id) return true;
+            } catch (e) {
+            }
+            return false;
+          };
+          const allowLive = !!((_a6 = window.ScrollCrafterConfig) == null ? void 0 : _a6.enableEditorAnimations);
+          const isManualPreview = node.getAttribute("data-sc-preview") === "yes" || getForcePreviewFlag(widgetId);
+          if (!allowLive && !isManualPreview) return;
+          if (isManualPreview) {
+            setTimeout(() => {
+              var _a7, _b2;
+              if (window.ScrollCrafterForcePreview === widgetId) window.ScrollCrafterForcePreview = false;
+              if (((_a7 = window.parent) == null ? void 0 : _a7.ScrollCrafterForcePreview) === widgetId) window.parent.ScrollCrafterForcePreview = false;
+              if (((_b2 = window.top) == null ? void 0 : _b2.ScrollCrafterForcePreview) === widgetId) window.top.ScrollCrafterForcePreview = false;
+              sessionStorage.removeItem("sc_force_preview");
+            }, 100);
+          }
+        }
+        initWidgetsInScope(node, elementorFrontend.isEditMode());
+        if (elementorFrontend.isEditMode()) {
+          debouncedEditorRefresh();
+        }
+      });
+    };
+    tryRegister();
+  };
+  registerHooks();
+  window.addEventListener("elementor/frontend/init", registerHooks);
+  function killTriggerByWidgetId(widgetId) {
+    try {
+      const ST = getScrollTrigger();
+      if (!ST) return;
+      const st = ST.getById("sc-" + widgetId);
+      if (st) st.kill(true);
+    } catch (e) {
+    }
+  }
+})();
+//# sourceMappingURL=frontend.bundle.js.map

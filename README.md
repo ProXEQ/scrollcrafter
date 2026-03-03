@@ -9,10 +9,11 @@
 
 This release stabilizes the project for its long-term open-source status:
 
-- **Open Source Transition**: All "Pro" features (incl. Lenis Smooth Scroll) are now available to everyone. Freemius and tracking are removed.
-- **Improved DSL Editor**: Removed experimental and buggy "Ghost" and "Minimize" modes to focus on core stability.
-- **Console Hygiene**: Cleaned up browser console output; logs now only appear in Debug Mode.
-- **SplitText Fixes**: Better handling of reveal animations to prevent flickering.
+- **Fix**: Resolved issue where Lenis smooth scroll bypassed Elementor's "Disable Page Scrolling" setting in popups.
+- **Fix**: Completely decommissioned "Ghost" and "Minimize" modes from the DSL Editor for improved stability and simplicity.
+- **Fix**: Wrapped all frontend console logs in conditional debug checks to ensure a clean browser console in production.
+- **Tweak**: Final stabilization and cleanup of the codebase for its long-term open-source status.
+- **Fix**: Better handling of reveal animations to prevent flickering.
 - **Security Audit**: Full review of nonces and data sanitization.
 
 ScrollCrafter transforms Elementor into a powerhouse of motion design. It introduces a dedicated **DSL (Domain Specific Language)** editor that lets you construct advanced, production-grade scroll animations powered by GSAP and ScrollTrigger using a clean, readable, and type-safe syntax.

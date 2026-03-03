@@ -63,6 +63,16 @@ export function initSmoothScroll(options = {}) {
             window.addEventListener('resize', () => {
                 window.ScrollTrigger.refresh();
             });
+
+            // Elementor Popup Support: Pause Lenis when a popup is shown, resume when hidden.
+            // This ensures Elementor's "Disable Page Scrolling" setting works with Lenis.
+            window.addEventListener('elementor/popup/show', () => {
+                if (lenisInstance) lenisInstance.stop();
+            });
+
+            window.addEventListener('elementor/popup/hide', () => {
+                if (lenisInstance) lenisInstance.start();
+            });
         }
 
         if (window.ScrollCrafterConfig?.debug) {
