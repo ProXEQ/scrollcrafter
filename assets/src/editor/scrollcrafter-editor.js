@@ -763,6 +763,10 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
 
     const close = () => {
       modal.classList.remove('sc-dsl-editor--open');
+      modal.classList.add('sc-dsl-editor--closing');
+      setTimeout(() => {
+        modal.classList.remove('sc-dsl-editor--closing');
+      }, 300);
       window.removeEventListener('keydown', handleGlobalKey, { capture: true });
     };
 
@@ -785,17 +789,6 @@ function getEditorDoc() { return cmView ? cmView.state.doc.toString() : ''; }
       }
     };
 
-    const toggleGhost = () => {
-      modal.classList.toggle('sc-dsl-editor--ghost');
-      const isGhost = modal.classList.contains('sc-dsl-editor--ghost');
-      statusText.textContent = isGhost ? __('Ghost Mode Active (Scroll now!)', 'scrollcrafter') : __('Ready', 'scrollcrafter');
-
-      const ghostBtn = modal.querySelector('.sc-dsl-editor__ghost-toggle');
-      if (ghostBtn) {
-        ghostBtn.innerHTML = isGhost ? SC_ICONS.ghost_off : SC_ICONS.ghost;
-        ghostBtn.classList.toggle('sc-btn--active', isGhost);
-      }
-    };
 
     const toggleMarkers = () => {
       modal.classList.toggle('sc-dsl-editor--markers');

@@ -1,5 +1,8 @@
 # ScrollCrafter Legacy Documentation
 
+> [!IMPORTANT]
+> **MAINTENANCE MODE**: This documentation is for the original GSAP-powered ScrollCrafter for Elementor. This version is in maintenance mode, focusing on stability and critical bug fixes. For the future of ScrollCrafter, follow our work on **ScrollCrafter Global**.
+
 Welcome to the ScrollCrafter Legacy documentation! This guide covers the GSAP-powered version of ScrollCrafter for Elementor. 
 
 ## 📚 Table of Contents

@@ -1,5 +1,8 @@
 # Getting Started with ScrollCrafter
 
+> [!NOTE]
+> This guide applies to **ScrollCrafter Legacy** (GSAP-powered version for Elementor).
+
 This guide will walk you through creating your first scroll animation in Elementor using ScrollCrafter.
 
 ## Prerequisites
